@@ -487,4 +487,11 @@ public class BlobClientTest extends TestLogger {
 			validateGetAndClose(blobClient.getInternal(jobId, blobKeys.get(0)), testFile);
 		}
 	}
+
+	@Test
+	public void testUnresolvedInetSocketAddress() throws Exception {
+		try (BlobClient client = new BlobClient(
+			InetSocketAddress.createUnresolved("localhost", getBlobServer().getPort()), getBlobClientConfig())) {
+		}
+	}
 }

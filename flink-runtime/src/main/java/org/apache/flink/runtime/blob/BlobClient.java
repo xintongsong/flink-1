@@ -87,12 +87,13 @@ public final class BlobClient implements Closeable {
 				LOG.info("Using ssl connection to the blob server");
 
 				socket = SSLUtils.createSSLClientSocketFactory(clientConfig).createSocket(
-					serverAddress.getAddress(),
+					serverAddress.getHostName(),
 					serverAddress.getPort());
 			}
 			else {
-				socket = new Socket();
-				socket.connect(serverAddress);
+				// Establish the socket using the hostname and port. This avoids a potential issue where the
+				// InetSocketAddress can cache a failure in hostname resolution forever.
+				socket = new Socket(serverAddress.getHostName(), serverAddress.getPort());
 			}
 		}
 		catch (Exception e) {
