@@ -186,6 +186,10 @@ public final class BlobClient implements Closeable {
 		return this.socket.isClosed();
 	}
 
+	public boolean isConnected() {
+		return socket.isConnected();
+	}
+
 	// --------------------------------------------------------------------------------------------
 	//  GET
 	// --------------------------------------------------------------------------------------------

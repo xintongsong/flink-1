@@ -51,6 +51,7 @@ import static org.apache.flink.runtime.blob.BlobKeyTest.verifyKeyDifferentHashEq
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -492,6 +493,7 @@ public class BlobClientTest extends TestLogger {
 	public void testUnresolvedInetSocketAddress() throws Exception {
 		try (BlobClient client = new BlobClient(
 			InetSocketAddress.createUnresolved("localhost", getBlobServer().getPort()), getBlobClientConfig())) {
+			assertTrue(client.isConnected());
 		}
 	}
 }
