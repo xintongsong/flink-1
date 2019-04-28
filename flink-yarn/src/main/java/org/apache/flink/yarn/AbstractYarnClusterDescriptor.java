@@ -44,6 +44,7 @@ import org.apache.flink.runtime.taskexecutor.TaskManagerServices;
 import org.apache.flink.util.FlinkException;
 import org.apache.flink.util.Preconditions;
 import org.apache.flink.util.ShutdownHookUtil;
+import org.apache.flink.util.StringUtils;
 import org.apache.flink.yarn.configuration.YarnConfigOptions;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -158,7 +159,6 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 
 		this.flinkConfiguration = Preconditions.checkNotNull(flinkConfiguration);
 		userJarInclusion = getUserJarInclusionMode(flinkConfiguration);
-
 		this.configurationDirectory = Preconditions.checkNotNull(configurationDirectory);
 	}
 
@@ -197,7 +197,7 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	 * Adds the given files to the list of files to ship.
 	 *
 	 * <p>Note that any file matching "<tt>flink-dist*.jar</tt>" will be excluded from the upload by
-	 * {@link #uploadAndRegisterFiles(Collection, FileSystem, Path, ApplicationId, List, Map, StringBuilder)}
+	 * {@link #uploadAndRegisterFiles(Collection, FileSystem, Path, ApplicationId, List, Map, StringBuilder, int)}
 	 * since we upload the Flink uber jar ourselves and do not need to deploy it multiple times.
 	 *
 	 * @param shipFiles files to ship
@@ -747,6 +747,17 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		// ship list that enables reuse of resources for task manager containers
 		StringBuilder envShipFileList = new StringBuilder();
 
+		int fileReplication = yarnConfiguration.getInt("dfs.replication", 3);
+		final String replication = flinkConfiguration.getString(YarnConfigOptions.FILE_REPLICATION);
+		if (!StringUtils.isNullOrWhitespaceOnly(replication)) {
+			try {
+				fileReplication = Integer.parseInt(replication);
+			} catch (NumberFormatException e) {
+				throw new RuntimeException(
+					"The yarn configuration yarn.file-replication has to be a positive integer", e);
+			}
+		}
+
 		// upload and register ship files
 		List<String> systemClassPaths = uploadAndRegisterFiles(
 			systemShipFiles,
@@ -755,7 +766,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			appId,
 			paths,
 			localResources,
-			envShipFileList);
+			envShipFileList,
+			fileReplication);
 
 		final List<String> userClassPaths = uploadAndRegisterFiles(
 			userJarFiles,
@@ -764,7 +776,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			appId,
 			paths,
 			localResources,
-			envShipFileList);
+			envShipFileList,
+			fileReplication);
 
 		if (userJarInclusion == YarnConfigOptions.UserJarInclusion.ORDER) {
 			systemClassPaths.addAll(userClassPaths);
@@ -793,7 +806,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			flinkJarPath,
 			localResources,
 			homeDir,
-			"");
+			"",
+			fileReplication);
 
 		// set the right configuration values for the TaskManager
 		configuration.setInteger(
@@ -817,7 +831,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			new Path(tmpConfigurationFile.getAbsolutePath()),
 			localResources,
 			homeDir,
-			"");
+			"",
+			fileReplication);
 
 		paths.add(remotePathJar);
 		classPathBuilder.append("flink.jar").append(File.pathSeparator);
@@ -851,7 +866,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 					new Path(fp.toURI()),
 					localResources,
 					homeDir,
-					"");
+					"",
+					fileReplication);
 				paths.add(pathFromYarnURL);
 				classPathBuilder.append(jobGraphFilename).append(File.pathSeparator);
 			} catch (Exception e) {
@@ -882,7 +898,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 				yarnSitePath,
 				localResources,
 				homeDir,
-				"");
+				"",
+				fileReplication);
 
 			String krb5Config = System.getProperty("java.security.krb5.conf");
 			if (krb5Config != null && krb5Config.length() != 0) {
@@ -896,7 +913,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 					krb5ConfPath,
 					localResources,
 					homeDir,
-					"");
+					"",
+					fileReplication);
 				hasKrb5 = true;
 			}
 		}
@@ -913,7 +931,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 				new Path(keytab),
 				localResources,
 				homeDir,
-				"");
+				"",
+				fileReplication);
 		}
 
 		final ContainerLaunchContext amContainer = setupApplicationMasterContainer(
@@ -1083,6 +1102,10 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	 * 		local path to the file
 	 * @param localResources
 	 * 		map of resources
+	 * @param relativeTargetPath
+	 *      relative target path
+	 * @param replication
+	 *      file replication number
 	 *
 	 * @return the remote path to the uploaded resource
 	 */
@@ -1093,13 +1116,15 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			Path localSrcPath,
 			Map<String, LocalResource> localResources,
 			Path targetHomeDir,
-			String relativeTargetPath) throws IOException {
+			String relativeTargetPath,
+			int replication) throws IOException {
 		Tuple2<Path, LocalResource> resource = Utils.setupLocalResource(
 			fs,
 			appId.toString(),
 			localSrcPath,
 			targetHomeDir,
-			relativeTargetPath);
+			relativeTargetPath,
+			replication);
 
 		localResources.put(key, resource.f1);
 
@@ -1134,6 +1159,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	 * 		map of resources (uploaded resources will be added)
 	 * @param envShipFileList
 	 * 		list of shipped files in a format understood by {@link Utils#createTaskExecutorContext}
+	 * @param replication
+	 *      number of replications of a file to be created
 	 *
 	 * @return list of class paths with the the proper resource keys from the registration
 	 */
@@ -1144,9 +1171,11 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			ApplicationId appId,
 			List<Path> remotePaths,
 			Map<String, LocalResource> localResources,
-			StringBuilder envShipFileList) throws IOException {
+			StringBuilder envShipFileList,
+			int replication) throws IOException {
 		final List<Path> localPaths = new ArrayList<>();
 		final List<Path> relativePaths = new ArrayList<>();
+
 		for (File shipFile : shipFiles) {
 			if (shipFile.isDirectory()) {
 				// add directories to the classpath
@@ -1157,10 +1186,37 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 					public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs) {
 						localPaths.add(new Path(file.toUri()));
 						relativePaths.add(new Path(parentPath.relativize(file).toString()));
-						return FileVisitResult.CONTINUE;
+					public FileVisitResult visitFile(java.nio.file.Path file, BasicFileAttributes attrs)
+						throws IOException {
+						String fileName = file.getFileName().toString();
+						if (!(fileName.startsWith("flink-dist") &&
+								fileName.endsWith("jar"))) {
+
+							java.nio.file.Path relativePath = parentPath.relativize(file);
+
+							String key = relativePath.toString();
+							try {
+								Path remotePath = setupSingleLocalResource(
+									key,
+									fs,
+									appId,
+									new Path(file.toUri()),
+									localResources,
+									targetHomeDir,
+									relativePath.getParent().toString(),
+									replication);
+								remotePaths.add(remotePath);
+								envShipFileList.append(key).append("=")
+									.append(remotePath).append(",");
+
+								// add files to the classpath
+								classPaths.add(key);
+							} catch (URISyntaxException e) {
+								throw new IOException(e);
+							}
+						}
 					}
-				});
-			} else {
+				}
 				localPaths.add(new Path(shipFile.toURI()));
 				relativePaths.add(new Path(shipFile.getName()));
 			}
@@ -1180,7 +1236,8 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 					localPath,
 					localResources,
 					targetHomeDir,
-					relativePath.getParent().toString());
+					relativePath.getParent().toString(),
+					replication);
 				remotePaths.add(remotePath);
 				envShipFileList.append(key).append("=").append(remotePath).append(",");
 				// add files to the classpath
@@ -1651,4 +1708,3 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			org.apache.flink.configuration.Configuration flinkConfiguration,
 			boolean perJobCluster) throws Exception;
 }
-
