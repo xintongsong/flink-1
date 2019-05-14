@@ -87,9 +87,9 @@ public class KinesisConfigUtil {
 
 		validateAwsConfiguration(config);
 
-		if (!(config.containsKey(AWSConfigConstants.AWS_REGION) ^ config.containsKey(ConsumerConfigConstants.AWS_ENDPOINT))) {
+		if (!(config.containsKey(AWSConfigConstants.AWS_REGION) || config.containsKey(ConsumerConfigConstants.AWS_ENDPOINT))) {
 			// per validation in AwsClientBuilder
-			throw new IllegalArgumentException(String.format("For FlinkKinesisConsumer either AWS region ('%s') or AWS endpoint ('%s') must be set in the config.",
+			throw new IllegalArgumentException(String.format("For FlinkKinesisConsumer AWS region ('%s') and/or AWS endpoint ('%s') must be set in the config.",
 					AWSConfigConstants.AWS_REGION, AWSConfigConstants.AWS_ENDPOINT));
 		}
 
