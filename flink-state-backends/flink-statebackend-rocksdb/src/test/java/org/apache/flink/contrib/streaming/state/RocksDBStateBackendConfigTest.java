@@ -36,6 +36,7 @@ import org.apache.flink.runtime.query.KvStateRegistry;
 import org.apache.flink.runtime.state.AbstractKeyedStateBackend;
 import org.apache.flink.runtime.state.KeyGroupRange;
 import org.apache.flink.runtime.state.StateBackend;
+import org.apache.flink.runtime.state.StateBackendLoader;
 import org.apache.flink.runtime.state.TestTaskStateManager;
 import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.runtime.state.heap.HeapPriorityQueueSetFactory;
@@ -170,6 +171,40 @@ public class RocksDBStateBackendConfigTest {
 			RocksDBPriorityQueueSetFactory.class,
 			keyedBackend.getPriorityQueueFactory().getClass());
 		keyedBackend.dispose();
+	}
+
+	/**
+	 * Validates that user custom configuration from code should override the flink-conf.yaml.
+	 * @throws Exception
+	 */
+	@Test
+	public void testConfigureTimerServiceLoadingFromApplication() throws Exception {
+		final Environment env = getMockEnvironment(tempFolder.newFolder());
+
+		RocksDBStateBackend backend = new RocksDBStateBackend(tempFolder.newFolder().toURI().toString());
+		Configuration config = new Configuration();
+		config.setString(
+			RocksDBOptions.TIMER_SERVICE_FACTORY,
+			RocksDBStateBackend.PriorityQueueStateType.ROCKSDB.toString());
+		backend = backend.configure(config, Thread.currentThread().getContextClassLoader());
+
+		RocksDBKeyedStateBackend<Integer> keyedBackend = createKeyedStateBackend(backend, env);
+
+		Assert.assertEquals(RocksDBPriorityQueueSetFactory.class, keyedBackend.getPriorityQueueFactory().getClass());
+
+		Configuration configFromConfFile = new Configuration();
+		configFromConfFile.setString(
+			RocksDBOptions.TIMER_SERVICE_FACTORY,
+			RocksDBStateBackend.PriorityQueueStateType.HEAP.toString());
+
+		StateBackend loadedBackend = StateBackendLoader.fromApplicationOrConfigOrDefault(backend, configFromConfFile,
+			Thread.currentThread().getContextClassLoader(), null);
+
+		assertTrue(loadedBackend instanceof RocksDBStateBackend);
+		final RocksDBStateBackend rocksDBStateBackend = (RocksDBStateBackend) loadedBackend;
+
+		RocksDBKeyedStateBackend<Integer> keyedBackend2 = createKeyedStateBackend(rocksDBStateBackend, env);
+		Assert.assertEquals(RocksDBPriorityQueueSetFactory.class, keyedBackend2.getPriorityQueueFactory().getClass());
 	}
 
 	@Test

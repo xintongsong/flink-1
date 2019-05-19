@@ -114,6 +114,8 @@ public class RocksDBStateBackend extends AbstractStateBackend implements Configu
 	// ------------------------------------------------------------------------
 
 	// -- configuration values, set in the application / configuration
+	/** This backend associated configuration. */
+	private Configuration configuration;
 
 	/** The state backend that we use for creating checkpoint streams. */
 	private final StateBackend checkpointStreamBackend;
@@ -295,6 +297,7 @@ public class RocksDBStateBackend extends AbstractStateBackend implements Configu
 	 * @param classLoader The class loader.
 	 */
 	private RocksDBStateBackend(RocksDBStateBackend original, Configuration config, ClassLoader classLoader) {
+		this.configuration = config;
 		// reconfigure the state backend backing the streams
 		final StateBackend originalStreamBackend = original.checkpointStreamBackend;
 		this.checkpointStreamBackend = originalStreamBackend instanceof ConfigurableStateBackend ?
@@ -373,6 +376,11 @@ public class RocksDBStateBackend extends AbstractStateBackend implements Configu
 	@Override
 	public RocksDBStateBackend configure(Configuration config, ClassLoader classLoader) {
 		return new RocksDBStateBackend(this, config, classLoader);
+	}
+
+	@Override
+	public Configuration getConfigure() {
+		return this.configuration;
 	}
 
 	// ------------------------------------------------------------------------

@@ -109,6 +109,9 @@ public class FsStateBackend extends AbstractFileStateBackend implements Configur
 	 * A value of '-1' means not yet configured, in which case the default will be used. */
 	private final int fileStateThreshold;
 
+	/** This backend associated configuration. */
+	private Configuration configuration;
+
 	/** Switch to chose between synchronous and asynchronous snapshots.
 	 * A value of 'undefined' means not yet configured, in which case the default will be used. */
 	private final TernaryBoolean asynchronousSnapshots;
@@ -343,6 +346,7 @@ public class FsStateBackend extends AbstractFileStateBackend implements Configur
 	private FsStateBackend(FsStateBackend original, Configuration configuration, ClassLoader classLoader) {
 		super(original.getCheckpointPath(), original.getSavepointPath(), configuration);
 
+		this.configuration = configuration;
 		// if asynchronous snapshots were configured, use that setting,
 		// else check the configuration
 		this.asynchronousSnapshots = original.asynchronousSnapshots.resolveUndefined(
@@ -438,6 +442,11 @@ public class FsStateBackend extends AbstractFileStateBackend implements Configur
 	@Override
 	public FsStateBackend configure(Configuration config, ClassLoader classLoader) {
 		return new FsStateBackend(this, config, classLoader);
+	}
+
+	@Override
+	public Configuration getConfigure() {
+		return this.configuration;
 	}
 
 	// ------------------------------------------------------------------------

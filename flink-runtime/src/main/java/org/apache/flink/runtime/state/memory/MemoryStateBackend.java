@@ -113,6 +113,9 @@ public class MemoryStateBackend extends AbstractFileStateBackend implements Conf
 	/** The maximal size that the snapshotted memory state may have. */
 	private final int maxStateSize;
 
+	/** This backend associated configuration. */
+	private Configuration configuration;
+
 	/** Switch to chose between synchronous and asynchronous snapshots.
 	 * A value of 'UNDEFINED' means not yet configured, in which case the default will be used. */
 	private final TernaryBoolean asynchronousSnapshots;
@@ -236,6 +239,7 @@ public class MemoryStateBackend extends AbstractFileStateBackend implements Conf
 	 */
 	private MemoryStateBackend(MemoryStateBackend original, Configuration configuration, ClassLoader classLoader) {
 		super(original.getCheckpointPath(), original.getSavepointPath(), configuration);
+		this.configuration = configuration;
 
 		this.maxStateSize = original.maxStateSize;
 
@@ -284,6 +288,11 @@ public class MemoryStateBackend extends AbstractFileStateBackend implements Conf
 	@Override
 	public MemoryStateBackend configure(Configuration config, ClassLoader classLoader) {
 		return new MemoryStateBackend(this, config, classLoader);
+	}
+
+	@Override
+	public Configuration getConfigure() {
+		return this.configuration;
 	}
 
 	// ------------------------------------------------------------------------

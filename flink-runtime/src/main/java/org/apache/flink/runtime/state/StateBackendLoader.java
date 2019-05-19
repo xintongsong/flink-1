@@ -171,6 +171,7 @@ public class StateBackendLoader {
 	 * <p>Refer to {@link #loadStateBackendFromConfig(Configuration, ClassLoader, Logger)} for details on
 	 * how the state backend is loaded from the configuration.
 	 *
+	 * @param fromApplication The state backend defined in user code
 	 * @param config The configuration to load the state backend from
 	 * @param classLoader The class loader that should be used to load the state backend
 	 * @param logger Optionally, a logger to log actions to (may be null)
@@ -208,6 +209,11 @@ public class StateBackendLoader {
 				// needs to pick up configuration
 				if (logger != null) {
 					logger.info("Configuring application-defined state backend with job/cluster config");
+				}
+
+				Configuration configurationFromApplication = ((ConfigurableStateBackend) fromApplication).getConfigure();
+				if (null != configurationFromApplication) {
+					config.addAll(configurationFromApplication);
 				}
 
 				backend = ((ConfigurableStateBackend) fromApplication).configure(config, classLoader);
