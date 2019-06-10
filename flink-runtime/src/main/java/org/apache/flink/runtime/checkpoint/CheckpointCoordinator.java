@@ -111,6 +111,7 @@ public class CheckpointCoordinator {
 	private final ExecutionVertex[] tasksToWaitFor;
 
 	/** Tasks who need to be sent a message when a checkpoint is confirmed. */
+	// TODO currently we use commit vertices to receive "abort checkpoint" messages.
 	private final ExecutionVertex[] tasksToCommitTo;
 
 	/** Map from checkpoint ID to the pending checkpoint. */
@@ -1372,6 +1373,13 @@ public class CheckpointCoordinator {
 
 		if (!haveMoreRecentPending) {
 			triggerQueuedRequests();
+		}
+
+		for (ExecutionVertex ev : tasksToCommitTo) {
+			Execution ee = ev.getCurrentExecutionAttempt();
+			if (ee != null) {
+				ee.notifyCheckpointAbort(checkpointId, pendingCheckpoint.getCheckpointTimestamp());
+			}
 		}
 	}
 

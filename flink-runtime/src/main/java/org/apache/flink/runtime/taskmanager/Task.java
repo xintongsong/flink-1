@@ -1180,6 +1180,33 @@ public class Task implements Runnable, TaskActions, PartitionProducerStateProvid
 		}
 	}
 
+	@Override
+	public void notifyCheckpointAbort(final long checkpointID) {
+		final AbstractInvokable invokable = this.invokable;
+
+		if (executionState == ExecutionState.RUNNING && invokable != null) {
+			try {
+				invokable.notifyCheckpointAbortAsync(checkpointID);
+			}
+			catch (RejectedExecutionException ex) {
+				// This may happen if the mailbox is closed. It means that the task is shutting down, so we just ignore it.
+				LOG.debug(
+					"Notify checkpoint abort {} for {} ({}) was rejected by the mailbox",
+					checkpointID, taskNameWithSubtask, executionId);
+			} catch (Throwable t) {
+				if (getExecutionState() == ExecutionState.RUNNING) {
+					// fail task if checkpoint confirmation failed.
+					failExternally(new RuntimeException(
+						"Error while aborting checkpoint",
+						t));
+				}
+			}
+		}
+		else {
+			LOG.info("Ignoring checkpoint commit notification for non-running task {}.", taskNameWithSubtask);
+		}
+	}
+
 	// ------------------------------------------------------------------------
 	//  Utilities
 	// ------------------------------------------------------------------------

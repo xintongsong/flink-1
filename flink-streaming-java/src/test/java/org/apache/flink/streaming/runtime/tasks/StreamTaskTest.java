@@ -347,6 +347,24 @@ public class StreamTaskTest extends TestLogger {
 	}
 
 	@Test
+	public void testCheckpointNotifyAbortManyTimes() throws Exception {
+		StreamOperator<?> operator = mock(StreamOperator.class);
+		when(operator.getOperatorID()).thenReturn(new OperatorID());
+
+		final AcknowledgeDummyEnvironment mockEnvironment = new AcknowledgeDummyEnvironment();
+		RunningTask<MockStreamTask> task = runTask(() -> createMockStreamTask(
+			mockEnvironment,
+			operatorChain(operator)));
+
+		waitTaskIsRunning(task.streamTask, task.invocationFuture);
+		long notifyAbortedTimes = StreamTask.DEFAULT_MAX_RECORDED_ABOTRED_CHECKPOINTS + 10;
+		for (long i = 1; i < notifyAbortedTimes; i++) {
+			task.streamTask.notifyCheckpointAbortAsync(i).get();
+			assertEquals(Math.min(StreamTask.DEFAULT_MAX_RECORDED_ABOTRED_CHECKPOINTS, i), task.streamTask.getAbortedCheckpointSize());
+		}
+	}
+
+	@Test
 	public void testDecliningCheckpointStreamOperator() throws Exception {
 		DeclineDummyEnvironment declineDummyEnvironment = new DeclineDummyEnvironment();
 

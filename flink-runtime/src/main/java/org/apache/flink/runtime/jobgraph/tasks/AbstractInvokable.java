@@ -268,4 +268,16 @@ public abstract class AbstractInvokable {
 	public Future<Void> notifyCheckpointCompleteAsync(long checkpointId) {
 		throw new UnsupportedOperationException(String.format("notifyCheckpointCompleteAsync not supported by %s", this.getClass().getName()));
 	}
+
+	/**
+	 * Invoked when a checkpoint has been aborted, i.e., when the checkpoint coordinator has received a decline message
+	 * from one task and try to abort the targeted checkpoint by notification.
+	 *
+	 * @param checkpointId The ID of the checkpoint that is aborted.
+	 *
+	 * @return future that completes when the notification has been processed by the task.
+	 */
+	public Future<Void> notifyCheckpointAbortAsync(long checkpointId) {
+		throw new UnsupportedOperationException(String.format("notifyCheckpointAbortAsync not supported by %s", this.getClass().getName()));
+	}
 }
