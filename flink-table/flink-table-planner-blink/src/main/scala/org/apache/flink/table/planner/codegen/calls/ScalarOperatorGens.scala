@@ -186,7 +186,12 @@ object ScalarOperatorGens {
 
       case (TIME_WITHOUT_TIME_ZONE, INTERVAL_DAY_TIME) =>
         generateOperatorIfNotNull(ctx, new TimeType(), left, right) {
-          (l, r) => s"$l $op ((int) ($r))"
+          (l, r) => s"($l $op ((int) ($r))) % ${MILLIS_PER_DAY}"
+        }
+
+      case (TIME_WITHOUT_TIME_ZONE, INTERVAL_YEAR_MONTH) =>
+        generateOperatorIfNotNull(ctx, new TimeType(), left, right) {
+          (l, r) => s"$l"
         }
 
       case (TIMESTAMP_WITHOUT_TIME_ZONE, INTERVAL_DAY_TIME) =>
