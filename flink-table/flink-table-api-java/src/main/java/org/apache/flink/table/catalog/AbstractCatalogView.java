@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.catalog;
 
+import org.apache.flink.table.api.SqlDialect;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.util.StringUtils;
 
@@ -42,9 +43,15 @@ public abstract class AbstractCatalogView implements CatalogView {
 	private final TableSchema schema;
 	private final Map<String, String> properties;
 	private final String comment;
+	private final SqlDialect dialect;
 
-	public AbstractCatalogView(String originalQuery, String expandedQuery, TableSchema schema,
-			Map<String, String> properties, String comment) {
+	public AbstractCatalogView(
+			String originalQuery,
+			String expandedQuery,
+			SqlDialect dialect,
+			TableSchema schema,
+			Map<String, String> properties,
+			String comment) {
 		checkArgument(!StringUtils.isNullOrWhitespaceOnly(originalQuery), "originalQuery cannot be null or empty");
 		checkArgument(!StringUtils.isNullOrWhitespaceOnly(expandedQuery), "expandedQuery cannot be null or empty");
 
@@ -53,6 +60,7 @@ public abstract class AbstractCatalogView implements CatalogView {
 		this.schema = checkNotNull(schema, "schema cannot be null");
 		this.properties = checkNotNull(properties, "properties cannot be null");
 		this.comment = comment;
+		this.dialect = checkNotNull(dialect, "SQL dialect must be provided");
 	}
 
 	@Override
@@ -79,4 +87,8 @@ public abstract class AbstractCatalogView implements CatalogView {
 		return this.comment;
 	}
 
+	@Override
+	public SqlDialect getViewDialect() {
+		return dialect;
+	}
 }

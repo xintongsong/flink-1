@@ -19,6 +19,8 @@
 package org.apache.flink.table.catalog;
 
 import org.apache.flink.table.api.TableException;
+import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.calcite.FlinkTypeFactory;
 import org.apache.flink.table.catalog.exceptions.CatalogException;
 import org.apache.flink.table.catalog.exceptions.DatabaseNotExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
@@ -28,6 +30,7 @@ import org.apache.flink.table.factories.TableSourceFactory;
 import org.apache.flink.table.plan.schema.TableSinkTable;
 import org.apache.flink.table.plan.schema.TableSourceTable;
 import org.apache.flink.table.plan.stats.FlinkStatistic;
+import org.apache.flink.table.planner.FlinkViewTable;
 import org.apache.flink.table.sources.StreamTableSource;
 import org.apache.flink.table.sources.TableSource;
 
@@ -40,6 +43,7 @@ import org.apache.calcite.schema.SchemaVersion;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.Table;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
@@ -86,6 +90,8 @@ class DatabaseCalciteSchema implements Schema {
 				return convertConnectorTable((ConnectorCatalogTable<?, ?>) table);
 			} else if (table instanceof CatalogTable) {
 				return convertCatalogTable(tablePath, (CatalogTable) table);
+			} else if (table instanceof CatalogView) {
+				return convertCatalogView(tableName, (CatalogView) table);
 			} else {
 				throw new TableException("Unsupported table type: " + table);
 			}
@@ -148,6 +154,17 @@ class DatabaseCalciteSchema implements Schema {
 			// itself to determine if it is a streaming or batch source.
 			isStreamingMode,
 			FlinkStatistic.UNKNOWN()
+		);
+	}
+
+	private Table convertCatalogView(String tableName, CatalogView table) {
+		TableSchema schema = table.getSchema();
+		return new FlinkViewTable(
+			table.getViewDialect(),
+			typeFactory -> ((FlinkTypeFactory) typeFactory).buildLogicalRowType(schema),
+			table.getExpandedQuery(),
+			Arrays.asList(catalogName, databaseName),
+			Arrays.asList(catalogName, databaseName, tableName)
 		);
 	}
 

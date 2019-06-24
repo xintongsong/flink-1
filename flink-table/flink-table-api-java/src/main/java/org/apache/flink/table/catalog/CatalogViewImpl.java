@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.catalog;
 
+import org.apache.flink.table.api.SqlDialect;
 import org.apache.flink.table.api.TableSchema;
 
 import java.util.HashMap;
@@ -31,10 +32,11 @@ public class CatalogViewImpl extends AbstractCatalogView {
 	public CatalogViewImpl(
 			String originalQuery,
 			String expandedQuery,
+			SqlDialect dialect,
 			TableSchema schema,
 			Map<String, String> properties,
 			String comment) {
-		super(originalQuery, expandedQuery, schema, properties, comment);
+		super(originalQuery, expandedQuery, dialect, schema, properties, comment);
 	}
 
 	@Override
@@ -42,6 +44,7 @@ public class CatalogViewImpl extends AbstractCatalogView {
 		return new CatalogViewImpl(
 			getOriginalQuery(),
 			getExpandedQuery(),
+			getViewDialect(),
 			getSchema().copy(),
 			new HashMap<>(getProperties()),
 			getComment()

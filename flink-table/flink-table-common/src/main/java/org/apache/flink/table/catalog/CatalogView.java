@@ -18,6 +18,8 @@
 
 package org.apache.flink.table.catalog;
 
+import org.apache.flink.table.api.SqlDialect;
+
 /**
  * Represents a view in a catalog.
  */
@@ -43,5 +45,14 @@ public interface CatalogView extends CatalogBaseTable {
 	 * @return the view definition in expanded text.
 	 */
 	String getExpandedQuery();
+
+	/**
+	 * Returns the SQL dialect in which the view is expressed. This allows to maintain semantic
+	 * compatibility within a dialect. This is important because e.g. functions may behave
+	 * differently based on the used dialect.
+	 *
+	 * @return The sql dialect of this view.
+	 */
+	SqlDialect getViewDialect();
 
 }

@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.catalog;
 
+import org.apache.flink.table.api.SqlDialect;
 import org.apache.flink.table.catalog.config.CatalogConfig;
 
 import java.util.HashMap;
@@ -105,6 +106,7 @@ public abstract class CatalogTestBase extends CatalogTest {
 		return new CatalogViewImpl(
 			String.format("select * from %s", t1),
 			String.format("select * from %s.%s", TEST_CATALOG_NAME, path1.getFullName()),
+			SqlDialect.DEFAULT,
 			createTableSchema(),
 			getBatchTableProperties(),
 			"This is a view");
@@ -115,6 +117,7 @@ public abstract class CatalogTestBase extends CatalogTest {
 		return new CatalogViewImpl(
 			String.format("select * from %s", t2),
 			String.format("select * from %s.%s", TEST_CATALOG_NAME, path2.getFullName()),
+			SqlDialect.DEFAULT,
 			createAnotherTableSchema(),
 			getBatchTableProperties(),
 			"This is another view");
