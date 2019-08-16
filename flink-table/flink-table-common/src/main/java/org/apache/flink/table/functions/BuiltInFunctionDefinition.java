@@ -26,6 +26,7 @@ import org.apache.flink.table.types.inference.TypeStrategy;
 import org.apache.flink.util.Preconditions;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Definition of a built-in function. It enables unique identification across different
@@ -41,15 +42,19 @@ public final class BuiltInFunctionDefinition implements FunctionDefinition {
 
 	private final String name;
 
+	private final String standardSql;
+
 	private final FunctionKind kind;
 
 	private final TypeInference typeInference;
 
 	private BuiltInFunctionDefinition(
 			String name,
+			String standardSql,
 			FunctionKind kind,
 			TypeInference typeInference) {
 		this.name = Preconditions.checkNotNull(name, "Name must not be null.");
+		this.standardSql = standardSql;
 		this.kind = Preconditions.checkNotNull(kind, "Kind must not be null.");
 		this.typeInference = Preconditions.checkNotNull(typeInference, "Type inference must not be null.");
 	}
@@ -64,6 +69,10 @@ public final class BuiltInFunctionDefinition implements FunctionDefinition {
 	 */
 	public TypeInference getTypeInference() {
 		return typeInference;
+	}
+
+	public Optional<String> getStandardSql() {
+		return Optional.ofNullable(standardSql);
 	}
 
 	@Override
@@ -85,6 +94,8 @@ public final class BuiltInFunctionDefinition implements FunctionDefinition {
 
 		private String name;
 
+		private String standardSql;
+
 		private FunctionKind kind;
 
 		private TypeInference.Builder typeInferenceBuilder = new TypeInference.Builder();
@@ -95,6 +106,11 @@ public final class BuiltInFunctionDefinition implements FunctionDefinition {
 
 		public Builder name(String name) {
 			this.name = name;
+			return this;
+		}
+
+		public Builder standardSql(String standardSql) {
+			this.standardSql = standardSql;
 			return this;
 		}
 
@@ -129,7 +145,7 @@ public final class BuiltInFunctionDefinition implements FunctionDefinition {
 		}
 
 		public BuiltInFunctionDefinition build() {
-			return new BuiltInFunctionDefinition(name, kind, typeInferenceBuilder.build());
+			return new BuiltInFunctionDefinition(name, standardSql, kind, typeInferenceBuilder.build());
 		}
 	}
 }
