@@ -74,7 +74,6 @@ public class YARNITCase extends YarnTestBase {
 		runTest(() -> {
 			Configuration configuration = new Configuration();
 			configuration.setString(AkkaOptions.ASK_TIMEOUT, "30 s");
-			configuration.setString(YarnConfigOptions.FILE_REPLICATION, "5");
 			final YarnClient yarnClient = getYarnClient();
 
 			try (final YarnClusterDescriptor yarnClusterDescriptor = new YarnClusterDescriptor(
@@ -88,12 +87,7 @@ public class YARNITCase extends YarnTestBase {
 				yarnClusterDescriptor.addShipFiles(Arrays.asList(flinkLibFolder.listFiles()));
 				yarnClusterDescriptor.addShipFiles(Arrays.asList(flinkShadedHadoopDir.listFiles()));
 
-				final ClusterSpecification clusterSpecification = new ClusterSpecification.ClusterSpecificationBuilder()
-					.setMasterMemoryMB(768)
-					.setTaskManagerMemoryMB(1024)
-					.setSlotsPerTaskManager(1)
-					.setNumberTaskManagers(1)
-					.createClusterSpecification();
+				final ClusterSpecification clusterSpecification = createClusterSpecification();
 
 				StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 				env.setParallelism(2);
@@ -127,6 +121,59 @@ public class YARNITCase extends YarnTestBase {
 
 					assertThat(jobResult, is(notNullValue()));
 					assertThat(jobResult.getSerializedThrowable().isPresent(), is(false));
+					waitApplicationFinishedElseKillIt(applicationId, yarnAppTerminateTimeout, yarnClusterDescriptor);
+				} finally {
+					if (clusterClient != null) {
+						clusterClient.shutdown();
+					}
+				}
+			}
+		});
+	}
+
+	@Test
+	public void testFileReplication() throws Exception  {
+		runTest(() -> {
+			Configuration configuration = new Configuration();
+			configuration.setString(AkkaOptions.ASK_TIMEOUT, "30 s");
+			configuration.setString(YarnConfigOptions.FILE_REPLICATION, "5");
+			final YarnClient yarnClient = getYarnClient();
+
+			try (final YarnClusterDescriptor yarnClusterDescriptor = new YarnClusterDescriptor(
+				configuration,
+				getYarnConfiguration(),
+				System.getenv(ConfigConstants.ENV_FLINK_CONF_DIR),
+				yarnClient,
+				true)) {
+
+				yarnClusterDescriptor.setLocalJarPath(new Path(flinkUberjar.getAbsolutePath()));
+				yarnClusterDescriptor.addShipFiles(Arrays.asList(flinkLibFolder.listFiles()));
+				yarnClusterDescriptor.addShipFiles(Arrays.asList(flinkShadedHadoopDir.listFiles()));
+
+				final ClusterSpecification clusterSpecification = createClusterSpecification();
+
+				StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+				env.setParallelism(2);
+
+				env.addSource(new NoDataSource())
+					.shuffle()
+					.addSink(new DiscardingSink<>());
+
+				final JobGraph jobGraph = env.getStreamGraph().getJobGraph();
+
+				File testingJar = YarnTestBase.findFile("..", new YarnTestUtils.TestJarFinder("flink-yarn-tests"));
+
+				jobGraph.addJar(new org.apache.flink.core.fs.Path(testingJar.toURI()));
+
+				ApplicationId applicationId = null;
+				ClusterClient<ApplicationId> clusterClient = null;
+
+				try {
+					clusterClient = yarnClusterDescriptor.deployJobCluster(
+						clusterSpecification,
+						jobGraph,
+						false);
+					applicationId = clusterClient.getClusterId();
 
 					final FileSystem fs = FileSystem.get(getYarnConfiguration());
 					String suffix = ".flink/" + applicationId.toString() + "/" + flinkUberjar.getName();
@@ -159,6 +206,15 @@ public class YARNITCase extends YarnTestBase {
 				}
 			}
 		});
+	}
+
+	private ClusterSpecification createClusterSpecification() {
+		return 	new ClusterSpecification.ClusterSpecificationBuilder()
+			.setMasterMemoryMB(768)
+			.setTaskManagerMemoryMB(1024)
+			.setSlotsPerTaskManager(1)
+			.setNumberTaskManagers(1)
+			.createClusterSpecification();
 	}
 
 	private void waitApplicationFinishedElseKillIt(
