@@ -202,7 +202,7 @@ public class StreamingFileSink<IN>
 		private final PartFileConfig partFileConfig;
 
 		RowFormatBuilder(Path basePath, Encoder<IN> encoder, BucketAssigner<IN, BucketID> bucketAssigner) {
-			this(basePath, encoder, bucketAssigner, DefaultRollingPolicy.create().build(), 60L * 1000L, new DefaultBucketFactoryImpl<>(), new PartFileConfig());
+			this(basePath, encoder, bucketAssigner, DefaultRollingPolicy.create().build(), 60L * 1000L, new DefaultBucketFactoryImpl<>(), PartFileConfig.builder().build());
 		}
 
 		private RowFormatBuilder(
@@ -286,7 +286,7 @@ public class StreamingFileSink<IN>
 		private final PartFileConfig partFileConfig;
 
 		BulkFormatBuilder(Path basePath, BulkWriter.Factory<IN> writerFactory, BucketAssigner<IN, BucketID> assigner) {
-			this(basePath, writerFactory, assigner, 60L * 1000L, new DefaultBucketFactoryImpl<>(), new PartFileConfig());
+			this(basePath, writerFactory, assigner, 60L * 1000L, new DefaultBucketFactoryImpl<>(), PartFileConfig.builder().build());
 		}
 
 		private BulkFormatBuilder(
