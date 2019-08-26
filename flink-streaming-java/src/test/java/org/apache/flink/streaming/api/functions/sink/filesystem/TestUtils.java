@@ -144,8 +144,7 @@ public class TestUtils {
 			.withBucketAssigner(bucketer)
 			.withBucketCheckInterval(bucketCheckInterval)
 			.withBucketFactory(bucketFactory)
-			.withPartFilePrefix(partFilePrefix)
-			.withPartFileSuffix(partFileSuffix)
+			.withPartFileConfig(new PartFileConfig(partFilePrefix, partFileSuffix))
 			.build();
 
 		return new OneInputStreamOperatorTestHarness<>(new StreamSink<>(sink), MAX_PARALLELISM, totalParallelism, taskIdx);
