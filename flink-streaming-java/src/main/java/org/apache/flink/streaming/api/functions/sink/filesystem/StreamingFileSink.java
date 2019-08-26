@@ -217,12 +217,10 @@ public class StreamingFileSink<IN>
 
 		private BucketFactory<IN, BucketID> bucketFactory;
 
-		private String partFilePrefix;
-
-		private String partFileSuffix;
+		private PartFileConfig partFileConfig;
 
 		protected RowFormatBuilder(Path basePath, Encoder<IN> encoder, BucketAssigner<IN, BucketID> bucketAssigner) {
-			this(basePath, encoder, bucketAssigner, DefaultRollingPolicy.builder().build(), DEFAULT_BUCKET_CHECK_INTERVAL, new DefaultBucketFactoryImpl<>(), PartFileConfig.DEFAULT_PART_PREFIX, PartFileConfig.DEFAULT_PART_SUFFIX);
+			this(basePath, encoder, bucketAssigner, DefaultRollingPolicy.builder().build(), DEFAULT_BUCKET_CHECK_INTERVAL, new DefaultBucketFactoryImpl<>(), new PartFileConfig());
 		}
 
 		protected RowFormatBuilder(
@@ -232,16 +230,14 @@ public class StreamingFileSink<IN>
 				RollingPolicy<IN, BucketID> policy,
 				long bucketCheckInterval,
 				BucketFactory<IN, BucketID> bucketFactory,
-				String partFilePrefix,
-				String partFileSuffix) {
+				PartFileConfig partFileConfig) {
 			this.basePath = Preconditions.checkNotNull(basePath);
 			this.encoder = Preconditions.checkNotNull(encoder);
 			this.bucketAssigner = Preconditions.checkNotNull(assigner);
 			this.rollingPolicy = Preconditions.checkNotNull(policy);
 			this.bucketCheckInterval = bucketCheckInterval;
 			this.bucketFactory = Preconditions.checkNotNull(bucketFactory);
-			this.partFilePrefix = Preconditions.checkNotNull(partFilePrefix);
-			this.partFileSuffix = Preconditions.checkNotNull(partFileSuffix);
+			this.partFileConfig = Preconditions.checkNotNull(partFileConfig);
 		}
 
 		public long getBucketCheckInterval() {
@@ -263,19 +259,14 @@ public class StreamingFileSink<IN>
 			return self();
 		}
 
-		public T withPartFilePrefix(final String partPrefix) {
-			this.partFilePrefix = partPrefix;
-			return self();
-		}
-
-		public T withPartFileSuffix(final String partSuffix) {
-			this.partFileSuffix = partSuffix;
+		public T withPartFileConfig(final PartFileConfig partFileConfig) {
+			this.partFileConfig = partFileConfig;
 			return self();
 		}
 
 		public <ID> StreamingFileSink.RowFormatBuilder<IN, ID, ? extends RowFormatBuilder<IN, ID, ?>> withNewBucketAssignerAndPolicy(final BucketAssigner<IN, ID> assigner, final RollingPolicy<IN, ID> policy) {
 			Preconditions.checkState(bucketFactory.getClass() == DefaultBucketFactoryImpl.class, "newBuilderWithBucketAssignerAndPolicy() cannot be called after specifying a customized bucket factory");
-			return new RowFormatBuilder<>(basePath, encoder, Preconditions.checkNotNull(assigner), Preconditions.checkNotNull(policy), bucketCheckInterval, new DefaultBucketFactoryImpl<>(), partFilePrefix, partFileSuffix);
+			return new RowFormatBuilder<>(basePath, encoder, Preconditions.checkNotNull(assigner), Preconditions.checkNotNull(policy), bucketCheckInterval, new DefaultBucketFactoryImpl<>(), partFileConfig);
 		}
 
 		/** Creates the actual sink. */
@@ -298,7 +289,7 @@ public class StreamingFileSink<IN>
 					new RowWisePartWriter.Factory<>(encoder),
 					rollingPolicy,
 					subtaskIndex,
-					new PartFileConfig(partFilePrefix, partFileSuffix));
+					partFileConfig);
 		}
 	}
 
@@ -320,12 +311,10 @@ public class StreamingFileSink<IN>
 
 		private BucketFactory<IN, BucketID> bucketFactory;
 
-		private String partFilePrefix;
-
-		private String partFileSuffix;
+		private PartFileConfig partFileConfig;
 
 		protected BulkFormatBuilder(Path basePath, BulkWriter.Factory<IN> writerFactory, BucketAssigner<IN, BucketID> assigner) {
-			this(basePath, writerFactory, assigner, DEFAULT_BUCKET_CHECK_INTERVAL, new DefaultBucketFactoryImpl<>(), PartFileConfig.DEFAULT_PART_PREFIX, PartFileConfig.DEFAULT_PART_SUFFIX);
+			this(basePath, writerFactory, assigner, DEFAULT_BUCKET_CHECK_INTERVAL, new DefaultBucketFactoryImpl<>(), new PartFileConfig());
 		}
 
 		protected BulkFormatBuilder(
@@ -334,15 +323,13 @@ public class StreamingFileSink<IN>
 				BucketAssigner<IN, BucketID> assigner,
 				long bucketCheckInterval,
 				BucketFactory<IN, BucketID> bucketFactory,
-				String partFilePrefix,
-				String partFileSuffix) {
+				PartFileConfig partFileConfig) {
 			this.basePath = Preconditions.checkNotNull(basePath);
 			this.writerFactory = writerFactory;
 			this.bucketAssigner = Preconditions.checkNotNull(assigner);
 			this.bucketCheckInterval = bucketCheckInterval;
 			this.bucketFactory = Preconditions.checkNotNull(bucketFactory);
-			this.partFilePrefix = Preconditions.checkNotNull(partFilePrefix);
-			this.partFileSuffix = Preconditions.checkNotNull(partFileSuffix);
+			this.partFileConfig = Preconditions.checkNotNull(partFileConfig);
 		}
 
 		public long getBucketCheckInterval() {
@@ -363,21 +350,16 @@ public class StreamingFileSink<IN>
 		T withBucketFactory(final BucketFactory<IN, BucketID> factory) {
 			this.bucketFactory = Preconditions.checkNotNull(factory);
 			return self();
-	}
-
-		public T withPartFilePrefix(final String partPrefix) {
-			this.partFilePrefix = partPrefix;
-			return self();
 		}
 
-		public T withPartFileSuffix(final String partSuffix) {
-			this.partFileSuffix = partSuffix;
+		public T withPartFileConfig(final PartFileConfig partFileConfig) {
+			this.partFileConfig = partFileConfig;
 			return self();
 		}
 
 		public <ID> StreamingFileSink.BulkFormatBuilder<IN, ID, ? extends BulkFormatBuilder<IN, ID, ?>> withNewBucketAssigner(final BucketAssigner<IN, ID> assigner) {
 			Preconditions.checkState(bucketFactory.getClass() == DefaultBucketFactoryImpl.class, "newBuilderWithBucketAssigner() cannot be called after specifying a customized bucket factory");
-			return new BulkFormatBuilder<>(basePath, writerFactory, Preconditions.checkNotNull(assigner), bucketCheckInterval, new DefaultBucketFactoryImpl<>(), partFilePrefix, partFileSuffix);
+			return new BulkFormatBuilder<>(basePath, writerFactory, Preconditions.checkNotNull(assigner), bucketCheckInterval, new DefaultBucketFactoryImpl<>(), partFileConfig);
 		}
 
 		/** Creates the actual sink. */
@@ -394,7 +376,7 @@ public class StreamingFileSink<IN>
 					new BulkPartWriter.Factory<>(writerFactory),
 					OnCheckpointRollingPolicy.build(),
 					subtaskIndex,
-					new PartFileConfig(partFilePrefix, partFileSuffix));
+					partFileConfig);
 		}
 	}
 
