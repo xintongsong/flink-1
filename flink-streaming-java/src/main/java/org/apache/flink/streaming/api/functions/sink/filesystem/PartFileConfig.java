@@ -34,19 +34,34 @@ class PartFileConfig {
 
 	private final String partSuffix;
 
+	/**
+	 * Initiates the {@code PartFileConfig} with default values [{@value DEFAULT_PART_PREFIX}, {@value DEFAULT_PART_SUFFIX}].
+	 */
 	PartFileConfig() {
 		this(DEFAULT_PART_PREFIX, DEFAULT_PART_SUFFIX);
 	}
 
+	/**
+	 *	Initiates the {@code PartFileConfig} with values passed as parameters.
+	 *
+	 * @param partPrefix - the beginning of part file name
+	 * @param partSuffix - the ending of part file name
+	 */
 	PartFileConfig(final String partPrefix, final String partSuffix) {
 		this.partPrefix = Preconditions.checkNotNull(partPrefix);
 		this.partSuffix = Preconditions.checkNotNull(partSuffix);
 	}
 
+	/**
+	 * The prefix for the part name.
+	 */
 	String getPartPrefix() {
 		return partPrefix;
 	}
 
+	/**
+	 * The suffix for the part name.
+	 */
 	String getPartSuffix() {
 		return partSuffix;
 	}

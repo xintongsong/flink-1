@@ -67,9 +67,11 @@ import java.io.Serializable;
  * {@link StreamingFileSink#forBulkFormat(Path, BulkWriter.Factory)}.
  *
  *
- * <p>The filenames of the part files contain the part prefix, "part-", the parallel subtask index of the sink
- * and a rolling counter. For example the file {@code "part-1-17"} contains the data from
- * {@code subtask 1} of the sink and is the {@code 17th} bucket created by that subtask.
+ * <p>The filenames of the part files could be defined using {@link PartFileConfig}, this configuration contain
+ * a part prefix and part suffix, that will be used with the parallel subtask index of the sink
+ * and a rolling counter. For example for a prefix "prefix" and a suffix ".ext" the file create will have a name
+ * {@code "prefix-1-17.ext"} containing the data from {@code subtask 1} of the sink and is the {@code 17th} bucket
+ * created by that subtask.
  * Part files roll based on the user-specified {@link RollingPolicy}. By default, a {@link DefaultRollingPolicy}
  * is used.
  *
