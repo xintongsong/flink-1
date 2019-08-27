@@ -21,11 +21,13 @@ package org.apache.flink.streaming.api.functions.sink.filesystem;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.util.Preconditions;
 
+import java.io.Serializable;
+
 /**
  * Part file name configuration.
  * This allow to define a prefix and a suffix to the part file name.
  */
-public class PartFileConfig {
+public class PartFileConfig implements Serializable {
 
 	private final String partPrefix;
 
