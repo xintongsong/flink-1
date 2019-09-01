@@ -483,12 +483,14 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		}
 
 		final int yarnMinAllocationMB = yarnConfiguration.getInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB, 0);
+		final int yarnSchedulerMaxVcores = yarnConfiguration.getInt(YarnConfiguration.RM_SCHEDULER_MAXIMUM_ALLOCATION_VCORES, 0);
 
 		final ClusterSpecification validClusterSpecification;
 		try {
 			validClusterSpecification = validateClusterResources(
 				clusterSpecification,
 				yarnMinAllocationMB,
+				yarnSchedulerMaxVcores,
 				maxRes,
 				freeClusterMem);
 		} catch (YarnDeploymentException yde) {
@@ -536,12 +538,20 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 	protected ClusterSpecification validateClusterResources(
 		ClusterSpecification clusterSpecification,
 		int yarnMinAllocationMB,
+		int yarnSchedulerMaxVcores,
 		Resource maximumResourceCapability,
 		ClusterResourceDescription freeClusterResources) throws YarnDeploymentException {
 
 		int taskManagerCount = clusterSpecification.getNumberTaskManagers();
 		int jobManagerMemoryMb = clusterSpecification.getMasterMemoryMB();
 		int taskManagerMemoryMb = clusterSpecification.getTaskManagerMemoryMB();
+		int slotsPerTaskManager = clusterSpecification.getSlotsPerTaskManager();
+
+		if (slotsPerTaskManager > yarnSchedulerMaxVcores) {
+			throw new YarnDeploymentException("The number slots of requested TaskManager is higher than YARN" +
+				" Scheduler maximum-allocation-vcore value " + yarnSchedulerMaxVcores + ". Please decrease the number" +
+				" slots per TaskManager (using -ys); otherwise your job cannot be deployed in YARN cluster");
+		}
 
 		if (jobManagerMemoryMb < yarnMinAllocationMB || taskManagerMemoryMb < yarnMinAllocationMB) {
 			LOG.warn("The JobManager or TaskManager memory is below the smallest possible YARN Container size. "
