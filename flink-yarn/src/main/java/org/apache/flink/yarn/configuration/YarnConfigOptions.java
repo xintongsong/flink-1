@@ -82,7 +82,6 @@ public class YarnConfigOptions {
 					" the %s.",
 				code("org.apache.hadoop.yarn.server.resourcemanager.scheduler.fair.FairScheduler"))
 				.build());
-
 	/**
 	 * The maximum number of failed YARN containers before entirely stopping
 	 * the YARN session / job on YARN.
