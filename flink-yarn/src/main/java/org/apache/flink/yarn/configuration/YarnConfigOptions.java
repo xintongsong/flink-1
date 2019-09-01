@@ -84,6 +84,17 @@ public class YarnConfigOptions {
 				.build());
 
 	/**
+	 * The scheduler maximum-allocation-vcores exposed by YARN. This is a global property of the Yarn scheduler."
+	 */
+	public static final ConfigOption<Integer> SCHEDULER_MAX_VCORE =
+		key("yarn.scheduler.maximum-allocation-vcores")
+			.defaultValue(4)
+			.withDescription(
+					"This is the maximum allocation for every container request at the Resource Manager, in terms of" +
+					" virtual CPU cores. Requests higher than this won't take effect and will get capped to this" +
+					" value You can do this by setting the %s.");
+
+	/**
 	 * The maximum number of failed YARN containers before entirely stopping
 	 * the YARN session / job on YARN.
 	 * By default, we take the number of initially requested containers.
