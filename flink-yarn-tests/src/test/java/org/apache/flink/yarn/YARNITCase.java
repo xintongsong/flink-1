@@ -60,6 +60,7 @@ import static org.junit.Assert.assertThat;
 public class YARNITCase extends YarnTestBase {
 
 	private final Duration yarnAppTerminateTimeout = Duration.ofSeconds(10);
+	private final Duration fileReplicatedYarnAppTerminateTimeout = Duration.ofSeconds(30);
 
 	private final int sleepIntervalInMS = 100;
 
@@ -198,7 +199,7 @@ public class YARNITCase extends YarnTestBase {
 						Assert.assertEquals(replication, fileStatus.getReplication());
 					}
 
-					waitApplicationFinishedElseKillIt(applicationId, yarnAppTerminateTimeout, yarnClusterDescriptor);
+					waitApplicationFinishedElseKillIt(applicationId, fileReplicatedYarnAppTerminateTimeout, yarnClusterDescriptor);
 				} finally {
 					if (clusterClient != null) {
 						clusterClient.shutdown();
