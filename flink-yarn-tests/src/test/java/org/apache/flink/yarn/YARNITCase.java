@@ -58,7 +58,6 @@ import static org.junit.Assert.assertThat;
  * Test cases for the deployment of Yarn Flink clusters.
  */
 public class YARNITCase extends YarnTestBase {
-
 	private final Duration yarnAppTerminateTimeout = Duration.ofSeconds(10);
 
 	private final int sleepIntervalInMS = 100;
@@ -136,7 +135,7 @@ public class YARNITCase extends YarnTestBase {
 		runTest(() -> {
 			Configuration configuration = new Configuration();
 			configuration.setString(AkkaOptions.ASK_TIMEOUT, "30 s");
-			configuration.setString(YarnConfigOptions.FILE_REPLICATION, "5");
+			configuration.setString(YarnConfigOptions.FILE_REPLICATION, "4");
 			final YarnClient yarnClient = getYarnClient();
 
 			try (final YarnClusterDescriptor yarnClusterDescriptor = new YarnClusterDescriptor(
@@ -180,7 +179,7 @@ public class YARNITCase extends YarnTestBase {
 
 					Path uberJarHDFSPath = new Path(fs.getHomeDirectory(), suffix);
 					FileStatus fsStatus = fs.getFileStatus(uberJarHDFSPath);
-					Assert.assertEquals(5, fsStatus.getReplication());
+					Assert.assertEquals(4, fsStatus.getReplication());
 
 					Path appPath = uberJarHDFSPath.getParent();
 					FileStatus[] fileStatuses = fs.listStatus(appPath, new PathFilter() {
@@ -198,7 +197,8 @@ public class YARNITCase extends YarnTestBase {
 						Assert.assertEquals(replication, fileStatus.getReplication());
 					}
 
-					waitApplicationFinishedElseKillIt(applicationId, yarnAppTerminateTimeout, yarnClusterDescriptor);
+					// We don't need to wait for job to finish for verifying file replications
+					yarnClusterDescriptor.killCluster(applicationId);
 				} finally {
 					if (clusterClient != null) {
 						clusterClient.close();
@@ -223,7 +223,6 @@ public class YARNITCase extends YarnTestBase {
 			YarnClusterDescriptor yarnClusterDescriptor) throws Exception {
 		Deadline deadline = Deadline.now().plus(timeout);
 		YarnApplicationState state = getYarnClient().getApplicationReport(applicationId).getYarnApplicationState();
-
 		while (state != YarnApplicationState.FINISHED) {
 			if (state == YarnApplicationState.FAILED || state == YarnApplicationState.KILLED) {
 				Assert.fail("Application became FAILED or KILLED while expecting FINISHED");
