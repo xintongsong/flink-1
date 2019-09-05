@@ -106,7 +106,7 @@ public class YARNSessionFIFOSecuredITCase extends YARNSessionFIFOITCase {
 		SecureTestEnvironment.cleanup();
 	}
 
-	@Test(timeout = 60000) // timeout after a minute.
+	@Test(timeout = 60000) // timeout after two minute.
 	@Override
 	@Category(FailsOnJava11.class)
 	public void testDetachedMode() throws Exception {
