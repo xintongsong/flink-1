@@ -230,8 +230,8 @@ public abstract class YarnTestBase extends TestLogger {
 			conf.set(DFSConfigKeys.DFS_DATANODE_USER_NAME_KEY, principal);
 			conf.set(DFSConfigKeys.DFS_DATANODE_KEYTAB_FILE_KEY, keytab);
 
-			conf.set(DFSConfigKeys.DFS_DATANODE_ADDRESS_KEY, "127.0.0.1:0");
-			conf.set(DFSConfigKeys.DFS_DATANODE_HTTP_ADDRESS_KEY, "127.0.0.1:0");
+			conf.set(DFSConfigKeys.DFS_DATANODE_ADDRESS_KEY, "0.0.0.0:0");
+			conf.set(DFSConfigKeys.DFS_DATANODE_HTTPS_ADDRESS_KEY, "0.0.0.0:0");
 			conf.set(DFSConfigKeys.DFS_DATANODE_DATA_DIR_KEY, "700");
 
 			conf.set("dfs.data.transfer.protection", "authentication");
@@ -737,14 +737,10 @@ public abstract class YarnTestBase extends TestLogger {
 
 	private static void setMiniDFSCluster(String principal, String keytab, File targetTestClassesFolder) throws Exception {
 		if (miniDFSCluster == null) {
-
 			Configuration hdfsConfiguration = new Configuration();
 			hdfsConfiguration.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpHDFS.getRoot().getAbsolutePath());
-			// As we need three data nodes, free random ports are needed here
-			hdfsConfiguration.set("dfs.datanode.https.address",	"0.0.0.0:0");
-			if (principal != null && keytab != null) {
-				populateHDFSSecureConfigurations(hdfsConfiguration, principal, keytab);
-			}
+			populateHDFSSecureConfigurations(hdfsConfiguration, principal, keytab);
+
 			miniDFSCluster = new MiniDFSCluster
 				.Builder(hdfsConfiguration)
 				.numDataNodes(2)
@@ -789,7 +785,7 @@ public abstract class YarnTestBase extends TestLogger {
 		System.setErr(new PrintStream(errContent));
 		System.setIn(in);
 
-		final int startTimeoutSeconds = 60;
+		final int startTimeoutSeconds = 120;
 
 		Runner runner = new Runner(
 			args,
@@ -1036,7 +1032,9 @@ public abstract class YarnTestBase extends TestLogger {
 		}
 
 		LOG.info("Stopping MiniDFS Cluster");
-		miniDFSCluster.shutdown();
+		if (miniDFSCluster != null) {
+			miniDFSCluster.shutdown();
+		}
 
 		// Unset FLINK_CONF_DIR, as it might change the behavior of other tests
 		Map<String, String> map = new HashMap<>(System.getenv());
