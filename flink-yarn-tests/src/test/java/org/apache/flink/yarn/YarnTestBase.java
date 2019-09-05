@@ -789,7 +789,7 @@ public abstract class YarnTestBase extends TestLogger {
 		System.setErr(new PrintStream(errContent));
 		System.setIn(in);
 
-		final int startTimeoutSeconds = 60;
+		final int startTimeoutSeconds = 120;
 
 		Runner runner = new Runner(
 			args,
