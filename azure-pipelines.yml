@@ -28,6 +28,10 @@ resources:
   # Container with Maven 3.2.5 to have the same environment everywhere.
   - container: flink-build-container
     image: rmetzger/flink-ci:3
+  repositories:
+    - repository: templates
+      type: github
+      name: flink-ci/flink-azure-builds
 
 jobs:
   # use 'Default' pool
@@ -41,8 +45,7 @@ jobs:
   # if the repo != "flink-ci/flink", we stop
   - script: exit 1
     condition: not(eq(variables['Build.Repository.Name'], 'flink-ci/flink'))
-  - script: git clone https://github.com/flink-ci/flink-azure-builds.git .azuretmp
-  - template: .azuretmp/flink-build-steps.yml
+  - template: flink-build-steps.yml@templates
 
 - job: runOnAzure
   pool:
@@ -54,6 +57,5 @@ jobs:
   # if the repo == "flink-ci/flink", we stop
   - script: exit 1
     condition: eq(variables['Build.Repository.Name'], 'flink-ci/flink')
-  - script: git clone https://github.com/flink-ci/flink-azure-builds.git .azuretmp
-  - template: .azuretmp/flink-build-steps.yml
+  - template: flink-build-steps.yml@templates
 
