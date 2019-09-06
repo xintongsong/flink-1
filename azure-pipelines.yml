@@ -32,6 +32,7 @@ resources:
     - repository: templates
       type: github
       name: flink-ci/flink-azure-builds
+      endpoint: rmetzger
 
 jobs:
   # use 'Default' pool
