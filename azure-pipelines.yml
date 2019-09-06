@@ -41,19 +41,9 @@ jobs:
   # if the repo != "flink-ci/flink", we stop
   - script: exit 1
     condition: not(eq(variables['Build.Repository.Name'], 'flink-ci/flink'))
-  - script: chown -R user:user /home/user
-  - script: chown -R user:user .
-  - task: Maven@3
-    inputs:
-      mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.8'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      goals: 'clean install'
-      timeoutInMinutes: 0
+  - script: git clone https://github.com/flink-ci/flink-azure-builds.git .azuretmp
+  - template: .azuretmp/flink-build-steps.yml
+
 - job: runOnAzure
   pool:
     vmImage: 'ubuntu-latest'
@@ -64,16 +54,6 @@ jobs:
   # if the repo == "flink-ci/flink", we stop
   - script: exit 1
     condition: eq(variables['Build.Repository.Name'], 'flink-ci/flink')
-  - script: sudo chown -R user:user /home/user
-  - script: sudo chown -R user:user .
-  - task: Maven@3
-    inputs:
-      mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.8'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      goals: 'clean install'
-      timeoutInMinutes: 0
+  - script: git clone https://github.com/flink-ci/flink-azure-builds.git .azuretmp
+  - template: .azuretmp/flink-build-steps.yml
+

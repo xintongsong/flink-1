@@ -1373,6 +1373,7 @@ under the License.
 						<!-- Administrative files in the main trunk. -->
 						<exclude>**/README.md</exclude>
 						<exclude>.github/**</exclude>
+						<exclude>.azuretmp/**</exclude>
 						<!-- Build files -->
 						<exclude>**/*.iml</exclude>
 						<exclude>flink-quickstart/**/testArtifact/goal.txt</exclude>
