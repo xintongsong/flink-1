@@ -25,9 +25,9 @@ trigger:
 
 resources:
   containers:
-  # Container with Maven 3.6.1 to have the same environment everywhere.
+  # Container with Maven 3.2.5 to have the same environment everywhere.
   - container: flink-build-container
-    image: rmetzger/flink-ci:2
+    image: rmetzger/flink-ci:3
 
 jobs:
   # use 'Default' pool
