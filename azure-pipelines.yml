@@ -35,28 +35,5 @@ resources:
       endpoint: flink-ci
 
 jobs:
-  # use 'Default' pool
-- job: runOnDefaultAgentPool
-  pool:
-    name: Default
-  container: flink-build-container
-  timeoutInMinutes: 0
-  steps:
-  # Azure pipelines can only evaluate conditions with the build repo name in the steps.
-  # if the repo != "flink-ci/flink", we stop
-  - script: exit 1
-    condition: not(eq(variables['Build.Repository.Name'], 'flink-ci/flink'))
-  - template: flink-build-steps.yml@templates
-
-- job: runOnAzure
-  pool:
-    vmImage: 'ubuntu-latest'
-  container: flink-build-container
-  timeoutInMinutes: 0
-  steps:
-  # Azure pipelines can only evaluate conditions with the build repo name in the steps.
-  # if the repo == "flink-ci/flink", we stop
-  - script: exit 1
-    condition: eq(variables['Build.Repository.Name'], 'flink-ci/flink')
-  - template: flink-build-steps.yml@templates
+- template: flink-build-jobs.yml@templates
 
