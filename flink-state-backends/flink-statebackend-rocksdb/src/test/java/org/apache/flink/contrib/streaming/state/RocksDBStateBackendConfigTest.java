@@ -32,6 +32,7 @@ import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
 import org.apache.flink.runtime.execution.Environment;
 import org.apache.flink.runtime.io.disk.iomanager.IOManager;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
+import org.apache.flink.runtime.operators.testutils.MockEnvironmentBuilder;
 import org.apache.flink.runtime.query.KvStateRegistry;
 import org.apache.flink.runtime.state.AbstractKeyedStateBackend;
 import org.apache.flink.runtime.state.KeyGroupRange;
@@ -145,7 +146,7 @@ public class RocksDBStateBackendConfigTest {
 		Assert.assertEquals("state.backend.rocksdb.timer-service.factory", RocksDBOptions.TIMER_SERVICE_FACTORY.key());
 
 		// Fix the option value string and ensure all are covered
-		Assert.assertEquals(3, RocksDBStateBackend.PriorityQueueStateType.values().length);
+		Assert.assertEquals(2, RocksDBStateBackend.PriorityQueueStateType.values().length);
 		Assert.assertEquals("ROCKSDB", RocksDBStateBackend.PriorityQueueStateType.ROCKSDB.toString());
 		Assert.assertEquals("HEAP", RocksDBStateBackend.PriorityQueueStateType.HEAP.toString());
 
@@ -179,7 +180,7 @@ public class RocksDBStateBackendConfigTest {
 	 */
 	@Test
 	public void testConfigureTimerServiceLoadingFromApplication() throws Exception {
-		final Environment env = getMockEnvironment(tempFolder.newFolder());
+		final Environment env = new MockEnvironmentBuilder().build();
 
 		RocksDBStateBackend backend = new RocksDBStateBackend(tempFolder.newFolder().toURI().toString());
 		Configuration config = new Configuration();
@@ -187,10 +188,6 @@ public class RocksDBStateBackendConfigTest {
 			RocksDBOptions.TIMER_SERVICE_FACTORY,
 			RocksDBStateBackend.PriorityQueueStateType.ROCKSDB.toString());
 		backend = backend.configure(config, Thread.currentThread().getContextClassLoader());
-
-		RocksDBKeyedStateBackend<Integer> keyedBackend = createKeyedStateBackend(backend, env);
-
-		Assert.assertEquals(RocksDBPriorityQueueSetFactory.class, keyedBackend.getPriorityQueueFactory().getClass());
 
 		Configuration configFromConfFile = new Configuration();
 		configFromConfFile.setString(
@@ -203,8 +200,9 @@ public class RocksDBStateBackendConfigTest {
 		assertTrue(loadedBackend instanceof RocksDBStateBackend);
 		final RocksDBStateBackend rocksDBStateBackend = (RocksDBStateBackend) loadedBackend;
 
-		RocksDBKeyedStateBackend<Integer> keyedBackend2 = createKeyedStateBackend(rocksDBStateBackend, env);
-		Assert.assertEquals(RocksDBPriorityQueueSetFactory.class, keyedBackend2.getPriorityQueueFactory().getClass());
+		RocksDBKeyedStateBackend<Integer> keyedBackend = createKeyedStateBackend(rocksDBStateBackend, env);
+		Assert.assertEquals(RocksDBPriorityQueueSetFactory.class, keyedBackend.getPriorityQueueFactory().getClass());
+		keyedBackend.dispose();
 	}
 
 	@Test
