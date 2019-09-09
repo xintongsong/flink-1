@@ -546,10 +546,13 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 		int jobManagerMemoryMb = clusterSpecification.getMasterMemoryMB();
 		int taskManagerMemoryMb = clusterSpecification.getTaskManagerMemoryMB();
 		int slotsPerTaskManager = clusterSpecification.getSlotsPerTaskManager();
+		int yarnMaxCores = maximumResourceCapability.getVirtualCores();
 
-		if (slotsPerTaskManager > yarnSchedulerMaxVcores) {
+		if (slotsPerTaskManager > Math.min(yarnMaxCores, yarnSchedulerMaxVcores)) {
 			throw new YarnDeploymentException("The number slots of requested TaskManager is higher than YARN" +
-				" Scheduler maximum-allocation-vcore value " + yarnSchedulerMaxVcores + ". Please decrease the number" +
+				" Scheduler maximum-allocation-vcore = " + yarnSchedulerMaxVcores +
+				" or maximumResourceCapability.getVirtualCores() = " + yarnMaxCores +
+				". Please decrease the number" +
 				" slots per TaskManager (using -ys); otherwise your job cannot be deployed in YARN cluster");
 		}
 
