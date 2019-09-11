@@ -179,6 +179,26 @@ public class MemoryManagerTest {
 		}
 	}
 
+	@Test
+	public void doubleReleaseReturnsMemoryOnlyOnce() throws MemoryAllocationException {
+		final AbstractInvokable mockInvoke = new DummyInvokable();
+
+		List<MemorySegment> segs = this.memoryManager.allocatePages(mockInvoke, NUM_PAGES);
+
+		this.memoryManager.release(segs.get(0));
+		this.memoryManager.release(segs.get(0));
+
+		try {
+			this.memoryManager.allocatePages(mockInvoke, 2);
+			Assert.fail("Expected MemoryAllocationException. " +
+				"We should not be able to allocate one more page despite the double release.");
+		} catch (MemoryAllocationException maex) {
+			// expected
+		}
+
+		this.memoryManager.releaseAll(mockInvoke);
+	}
+
 	private boolean allMemorySegmentsValid(List<MemorySegment> memSegs) {
 		for (MemorySegment seg : memSegs) {
 			if (seg.isFreed()) {

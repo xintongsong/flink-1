@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.runtime.memory;
+package org.apache.flink.runtime.util;
 
 import org.apache.flink.types.Either;
 import org.apache.flink.util.Preconditions;
