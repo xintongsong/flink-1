@@ -54,7 +54,9 @@ import org.apache.flink.table.operations.ModifyOperation;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.QueryOperation;
 import org.apache.flink.table.operations.TableSourceQueryOperation;
+import org.apache.flink.table.operations.ddl.CreateFunctionOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
+import org.apache.flink.table.operations.ddl.DropFunctionOperation;
 import org.apache.flink.table.operations.ddl.DropTableOperation;
 import org.apache.flink.table.operations.utils.OperationTreeBuilder;
 import org.apache.flink.table.sinks.TableSink;
@@ -351,6 +353,21 @@ public class TableEnvironmentImpl implements TableEnvironment {
 			DropTableOperation dropTableOperation = (DropTableOperation) operation;
 			ObjectIdentifier objectIdentifier = catalogManager.qualifyIdentifier(dropTableOperation.getTableName());
 			catalogManager.dropTable(objectIdentifier, dropTableOperation.isIfExists());
+		} else if (operation instanceof CreateFunctionOperation) {
+			CreateFunctionOperation createFunctionOperation = (CreateFunctionOperation) operation;
+			ObjectIdentifier objectIdentifier =
+				catalogManager.qualifyIdentifier(createFunctionOperation.getFunctionPath());
+			catalogManager.createFunction(
+				createFunctionOperation.getCatalogFunction(),
+				objectIdentifier,
+				createFunctionOperation.isIgnoreIfExists());
+		} else if (operation instanceof DropTableOperation) {
+			DropFunctionOperation dropFunctionOperation = (DropFunctionOperation) operation;
+			ObjectIdentifier objectIdentifier =
+				catalogManager.qualifyIdentifier(dropFunctionOperation.getFunctionPath());
+			catalogManager.dropFunction(
+				objectIdentifier,
+				dropFunctionOperation.isIfExists());
 		} else {
 			throw new TableException(
 				"Unsupported SQL query! sqlUpdate() only accepts a single SQL statements of " +
