@@ -20,7 +20,7 @@ package org.apache.flink.table.api.internal
 
 import org.apache.flink.annotation.VisibleForTesting
 import org.apache.flink.api.common.typeinfo.TypeInformation
-import org.apache.flink.sql.parser.ddl.{SqlCreateTable, SqlDropTable}
+import org.apache.flink.sql.parser.ddl.{SqlCreateTable, SqlDropTable, SqlCreateFunction, SqlDropFunction}
 import org.apache.flink.sql.parser.dml.RichSqlInsert
 import org.apache.flink.table.api._
 import org.apache.flink.table.calcite.{FlinkPlannerImpl, FlinkRelBuilder}
@@ -29,7 +29,7 @@ import org.apache.flink.table.expressions._
 import org.apache.flink.table.expressions.resolver.lookups.TableReferenceLookup
 import org.apache.flink.table.factories.{TableFactoryService, TableFactoryUtil, TableSinkFactory}
 import org.apache.flink.table.functions.{AggregateFunction, ScalarFunction, TableFunction, UserDefinedAggregateFunction, _}
-import org.apache.flink.table.operations.ddl.CreateTableOperation
+import org.apache.flink.table.operations.ddl.{CreateFunctionOperation, CreateTableOperation}
 import org.apache.flink.table.operations.utils.OperationTreeBuilder
 import org.apache.flink.table.operations.{CatalogQueryOperation, PlannerQueryOperation, TableSourceQueryOperation, _}
 import org.apache.flink.table.planner.PlanningConfigurationBuilder
@@ -412,6 +412,18 @@ abstract class TableEnvImpl(
       case dropTable: SqlDropTable =>
         val objectIdentifier = catalogManager.qualifyIdentifier(dropTable.fullTableName(): _*)
         catalogManager.dropTable(objectIdentifier, dropTable.getIfExists)
+      case createFunction: SqlCreateFunction =>
+        val operation = SqlToOperationConverter
+          .convert(planner, createFunction)
+          .asInstanceOf[CreateFunctionOperation]
+        val identifier = catalogManager.qualifyIdentifier(createFunction.fullFunctionName(): _*)
+        catalogManager.createFunction(
+          operation.getCatalogFunction,
+          identifier,
+          operation.isIgnoreIfExists)
+      case dropFunction: SqlDropFunction =>
+        val identifier = catalogManager.qualifyIdentifier(dropFunction.fullFunctionName(): _*)
+        catalogManager.dropFunction(identifier, dropFunction.getIfExists)
       case _ =>
         throw new TableException(
           "Unsupported SQL query! sqlUpdate() only accepts SQL statements of " +

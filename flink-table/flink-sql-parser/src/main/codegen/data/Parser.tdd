@@ -22,7 +22,9 @@
   # List of additional classes and packages to import.
   # Example. "org.apache.calcite.sql.*", "java.util.List".
   imports: [
+    "org.apache.flink.sql.parser.ddl.SqlCreateFunction",
     "org.apache.flink.sql.parser.ddl.SqlCreateTable",
+    "org.apache.flink.sql.parser.ddl.SqlDropFunction",
     "org.apache.flink.sql.parser.ddl.SqlDropTable"
     "org.apache.flink.sql.parser.ddl.SqlCreateTable.TableCreationContext",
     "org.apache.flink.sql.parser.ddl.SqlCreateView",
@@ -428,6 +430,7 @@
   # List of methods for parsing extensions to "CREATE [OR REPLACE]" calls.
   # Each must accept arguments "(SqlParserPos pos, boolean replace)".
   createStatementParserMethods: [
+    "SqlCreateFunction",
     "SqlCreateTable",
     "SqlCreateView"
   ]
@@ -435,6 +438,7 @@
   # List of methods for parsing extensions to "DROP" calls.
   # Each must accept arguments "(Span s)".
   dropStatementParserMethods: [
+    "SqlDropFunction",
     "SqlDropTable",
     "SqlDropView"
   ]
