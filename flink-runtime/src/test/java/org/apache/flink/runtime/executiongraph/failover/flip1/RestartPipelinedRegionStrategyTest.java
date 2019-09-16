@@ -76,7 +76,7 @@ public class RestartPipelinedRegionStrategyTest extends TestLogger {
 
 		FailoverTopology topology = topologyBuilder.build();
 
-		RestartPipelinedRegionStrategy strategy = new RestartPipelinedRegionStrategy(topology);
+		FailoverStrategy strategy = createFailoverStrategy(topology);
 
 		// when v1 fails, {v1,v4,v5} should be restarted
 		HashSet<ExecutionVertexID> expectedResult = new HashSet<>();
@@ -156,7 +156,7 @@ public class RestartPipelinedRegionStrategyTest extends TestLogger {
 
 		FailoverTopology topology = topologyBuilder.build();
 
-		RestartPipelinedRegionStrategy strategy = new RestartPipelinedRegionStrategy(topology);
+		FailoverStrategy strategy = createFailoverStrategy(topology);
 
 		// when v4 fails to consume data from v1, {v1,v4,v5} should be restarted
 		HashSet<ExecutionVertexID> expectedResult = new HashSet<>();
@@ -372,7 +372,7 @@ public class RestartPipelinedRegionStrategyTest extends TestLogger {
 
 		FailoverTopology topology = topologyBuilder.build();
 
-		RestartPipelinedRegionStrategy strategy = new RestartPipelinedRegionStrategy(topology);
+		FailoverStrategy strategy = createFailoverStrategy(topology);
 
 		// when v3 fails due to internal error, {v3,v4,v5,v6} should be restarted
 		HashSet<ExecutionVertexID> expectedResult = new HashSet<>();
@@ -403,6 +403,10 @@ public class RestartPipelinedRegionStrategyTest extends TestLogger {
 	// ------------------------------------------------------------------------
 	//  utilities
 	// ------------------------------------------------------------------------
+
+	protected FailoverStrategy createFailoverStrategy(FailoverTopology topology) {
+		return new RestartPipelinedRegionStrategy(topology);
+	}
 
 	private static class TestResultPartitionAvailabilityChecker implements ResultPartitionAvailabilityChecker {
 

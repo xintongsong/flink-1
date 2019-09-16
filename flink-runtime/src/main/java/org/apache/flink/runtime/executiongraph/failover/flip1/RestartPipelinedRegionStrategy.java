@@ -51,13 +51,13 @@ public class RestartPipelinedRegionStrategy implements FailoverStrategy {
 	private final FailoverTopology topology;
 
 	/** All failover regions. */
-	private final Set<FailoverRegion> regions;
+	protected final Set<FailoverRegion> regions;
 
 	/** Maps execution vertex id to failover region. */
-	private final Map<ExecutionVertexID, FailoverRegion> vertexToRegionMap;
+	protected final Map<ExecutionVertexID, FailoverRegion> vertexToRegionMap;
 
 	/** The checker helps to query result partition availability. */
-	private final RegionFailoverResultPartitionAvailabilityChecker resultPartitionAvailabilityChecker;
+	protected final RegionFailoverResultPartitionAvailabilityChecker resultPartitionAvailabilityChecker;
 
 	/**
 	 * Creates a new failover strategy to restart pipelined regions that works on the given topology.
@@ -90,6 +90,7 @@ public class RestartPipelinedRegionStrategy implements FailoverStrategy {
 		LOG.info("Start building failover regions.");
 		buildFailoverRegions();
 	}
+
 	// ------------------------------------------------------------------------
 	//  region building
 	// ------------------------------------------------------------------------
@@ -171,46 +172,62 @@ public class RestartPipelinedRegionStrategy implements FailoverStrategy {
 	 *    the region containing the partition producer task is involved
 	 * 3. If a region is involved, all of its consumer regions are involved
 	 */
-	private Set<FailoverRegion> getRegionsToRestart(FailoverRegion failedRegion) {
-		Set<FailoverRegion> regionsToRestart = Collections.newSetFromMap(new IdentityHashMap<>());
-		Set<FailoverRegion> visitedRegions = Collections.newSetFromMap(new IdentityHashMap<>());
+	private Set<FailoverRegion> getRegionsToRestart(final FailoverRegion failedRegion) {
+		final Set<FailoverRegion> regionsToRestart = Collections.newSetFromMap(new IdentityHashMap<>());
+		final Set<FailoverRegion> visitedRegions = Collections.newSetFromMap(new IdentityHashMap<>());
 
 		// start from the failed region to visit all involved regions
-		Queue<FailoverRegion> regionsToVisit = new ArrayDeque<>();
+		final Queue<FailoverRegion> regionsToVisit = new ArrayDeque<>();
 		visitedRegions.add(failedRegion);
 		regionsToVisit.add(failedRegion);
 		while (!regionsToVisit.isEmpty()) {
-			FailoverRegion regionToRestart = regionsToVisit.poll();
+			final FailoverRegion regionToRestart = regionsToVisit.poll();
 
 			// an involved region should be restarted
 			regionsToRestart.add(regionToRestart);
 
 			// if a needed input result partition is not available, its producer region is involved
-			for (FailoverVertex vertex : regionToRestart.getAllExecutionVertices()) {
-				for (FailoverEdge inEdge : vertex.getInputEdges()) {
-					if (!resultPartitionAvailabilityChecker.isAvailable(inEdge.getResultPartitionID())) {
-						FailoverRegion producerRegion = vertexToRegionMap.get(inEdge.getSourceVertex().getExecutionVertexID());
-						if (!visitedRegions.contains(producerRegion)) {
-							visitedRegions.add(producerRegion);
-							regionsToVisit.add(producerRegion);
-						}
-					}
-				}
-			}
+			calculateProducerRegionsToVisit(regionToRestart, regionsToVisit, visitedRegions);
 
 			// all consumer regions of an involved region should be involved
-			for (FailoverVertex vertex : regionToRestart.getAllExecutionVertices()) {
-				for (FailoverEdge outEdge : vertex.getOutputEdges()) {
-					FailoverRegion consumerRegion = vertexToRegionMap.get(outEdge.getTargetVertex().getExecutionVertexID());
-					if (!visitedRegions.contains(consumerRegion)) {
-						visitedRegions.add(consumerRegion);
-						regionsToVisit.add(consumerRegion);
+			calculateConsumerRegionsToVisit(regionToRestart, regionsToVisit, visitedRegions);
+		}
+
+		return regionsToRestart;
+	}
+
+	protected void calculateProducerRegionsToVisit(
+			final FailoverRegion currentRegion,
+			final Queue<FailoverRegion> regionsToVisit,
+			final Set<FailoverRegion> visitedRegions) {
+
+		for (FailoverVertex vertex : currentRegion.getAllExecutionVertices()) {
+			for (FailoverEdge inEdge : vertex.getInputEdges()) {
+				if (!resultPartitionAvailabilityChecker.isAvailable(inEdge.getResultPartitionID())) {
+					final FailoverRegion producerRegion = vertexToRegionMap.get(inEdge.getSourceVertex().getExecutionVertexID());
+					if (!visitedRegions.contains(producerRegion)) {
+						visitedRegions.add(producerRegion);
+						regionsToVisit.add(producerRegion);
 					}
 				}
 			}
 		}
+	}
 
-		return regionsToRestart;
+	protected void calculateConsumerRegionsToVisit(
+			final FailoverRegion currentRegion,
+			final Queue<FailoverRegion> regionsToVisit,
+			final Set<FailoverRegion> visitedRegions) {
+
+		for (FailoverVertex vertex : currentRegion.getAllExecutionVertices()) {
+			for (FailoverEdge outEdge : vertex.getOutputEdges()) {
+				final FailoverRegion consumerRegion = vertexToRegionMap.get(outEdge.getTargetVertex().getExecutionVertexID());
+				if (!visitedRegions.contains(consumerRegion)) {
+					visitedRegions.add(consumerRegion);
+					regionsToVisit.add(consumerRegion);
+				}
+			}
+		}
 	}
 
 	// ------------------------------------------------------------------------
@@ -230,7 +247,7 @@ public class RestartPipelinedRegionStrategy implements FailoverStrategy {
 	/**
 	 * A stateful {@link ResultPartitionAvailabilityChecker} which maintains the failed partitions which are not available.
 	 */
-	private static class RegionFailoverResultPartitionAvailabilityChecker implements ResultPartitionAvailabilityChecker {
+	protected static class RegionFailoverResultPartitionAvailabilityChecker implements ResultPartitionAvailabilityChecker {
 
 		/** Result partition state checker from the shuffle master. */
 		private final ResultPartitionAvailabilityChecker resultPartitionAvailabilityChecker;
