@@ -20,6 +20,7 @@ package org.apache.flink.client.program;
 
 import org.apache.flink.api.common.ProgramDescription;
 import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.optimizer.dag.DataSinkNode;
 import org.apache.flink.optimizer.plandump.PlanJSONDumpGenerator;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
@@ -110,7 +111,7 @@ public class PackagedProgram {
 	 *         may be a missing / wrong class or manifest files.
 	 */
 	public PackagedProgram(File jarFile, String... args) throws ProgramInvocationException {
-		this(jarFile, Collections.<URL>emptyList(), null, args);
+		this(jarFile, Collections.<URL>emptyList(), null, new Configuration(), args);
 	}
 
 	/**
@@ -130,7 +131,7 @@ public class PackagedProgram {
 	 *         may be a missing / wrong class or manifest files.
 	 */
 	public PackagedProgram(File jarFile, List<URL> classpaths, String... args) throws ProgramInvocationException {
-		this(jarFile, classpaths, null, args);
+		this(jarFile, classpaths, null, new Configuration(), args);
 	}
 
 	/**
@@ -151,7 +152,30 @@ public class PackagedProgram {
 	 *         may be a missing / wrong class or manifest files.
 	 */
 	public PackagedProgram(File jarFile, @Nullable String entryPointClassName, String... args) throws ProgramInvocationException {
-		this(jarFile, Collections.<URL>emptyList(), entryPointClassName, args);
+		this(jarFile, Collections.<URL>emptyList(), entryPointClassName, new Configuration(), args);
+	}
+
+	/**
+	 * Creates an instance that wraps the plan defined in the jar file using the given
+	 * arguments. For generating the plan the class defined in the className parameter
+	 * is used.
+	 *
+	 * @param jarFile
+	 *        The jar file which contains the plan.
+	 * @param entryPointClassName
+	 *        Name of the class which generates the plan. Overrides the class defined
+	 *        in the jar file manifest
+	 * @param conf
+	 *        flink configuration which are used to decide classloader resolver order and etc.
+	 * @param args
+	 *        Optional. The arguments used to create the pact plan, depend on
+	 *        implementation of the pact plan. See getDescription().
+	 * @throws ProgramInvocationException
+	 *         This invocation is thrown if the Program can't be properly loaded. Causes
+	 *         may be a missing / wrong class or manifest files.
+	 */
+	public PackagedProgram(File jarFile, @Nullable String entryPointClassName, Configuration conf, String... args) throws ProgramInvocationException {
+		this(jarFile, Collections.<URL>emptyList(), entryPointClassName, conf, args);
 	}
 
 	/**
@@ -166,6 +190,8 @@ public class PackagedProgram {
 	 * @param entryPointClassName
 	 *        Name of the class which generates the plan. Overrides the class defined
 	 *        in the jar file manifest
+	 * @param conf
+	 *        flink configuration which are used to decide classloader resolver order and etc.
 	 * @param args
 	 *        Optional. The arguments used to create the pact plan, depend on
 	 *        implementation of the pact plan. See getDescription().
@@ -173,7 +199,7 @@ public class PackagedProgram {
 	 *         This invocation is thrown if the Program can't be properly loaded. Causes
 	 *         may be a missing / wrong class or manifest files.
 	 */
-	public PackagedProgram(File jarFile, List<URL> classpaths, @Nullable String entryPointClassName, String... args) throws ProgramInvocationException {
+	public PackagedProgram(File jarFile, List<URL> classpaths, @Nullable String entryPointClassName, Configuration conf, String... args) throws ProgramInvocationException {
 		// Whether the job is a Python job.
 		isPython = entryPointClassName != null && (entryPointClassName.equals("org.apache.flink.client.python.PythonDriver")
 			|| entryPointClassName.equals("org.apache.flink.client.python.PythonGatewayServer"));
@@ -202,7 +228,9 @@ public class PackagedProgram {
 		// now that we have an entry point, we can extract the nested jar files (if any)
 		this.extractedTempLibraries = jarFileUrl == null ? Collections.emptyList() : extractContainedLibraries(jarFileUrl);
 		this.classpaths = classpaths;
-		this.userCodeClassLoader = JobWithJars.buildUserCodeClassLoader(getAllLibraries(), classpaths, getClass().getClassLoader());
+
+		this.userCodeClassLoader = JobWithJars.buildUserCodeClassLoader(
+			getAllLibraries(), classpaths, getClass().getClassLoader(), conf);
 
 		// load the entry point class
 		this.mainClass = loadMainClass(entryPointClassName, userCodeClassLoader);
