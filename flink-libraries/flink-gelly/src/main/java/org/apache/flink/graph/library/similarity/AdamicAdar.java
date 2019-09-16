@@ -240,7 +240,7 @@ extends GraphAlgorithmWrappingDataSet<K, VV, EV, Result<K>> {
 
 			long degree = value.f1.getValue();
 			// when the degree is one the logarithm is zero so avoid dividing by this value
-			float inverseLogDegree = (degree == 1) ? 0.0f : 1.0f / (float) Math.log(value.f1.getValue());
+			float inverseLogDegree = (degree == 1) ? 0.0f : 1.0f / (float) StrictMath.log(value.f1.getValue());
 			output.f2.setValue(inverseLogDegree);
 
 			return output;

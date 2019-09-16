@@ -268,9 +268,9 @@ public class DenseVector extends Vector {
 			norm = normL2();
 		} else {
 			for (int i = 0; i < data.length; i++) {
-				norm += Math.pow(Math.abs(data[i]), p);
+				norm += StrictMath.pow(Math.abs(data[i]), p);
 			}
-			norm = Math.pow(norm, 1 / p);
+			norm = StrictMath.pow(norm, 1 / p);
 		}
 		for (int i = 0; i < data.length; i++) {
 			data[i] /= norm;

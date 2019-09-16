@@ -41,12 +41,12 @@ import static org.junit.Assert.assertEquals;
 public class AdamicAdarTest extends AsmTestBase {
 
 	private float[] ilog = {
-		1.0f / (float) Math.log(2),
-		1.0f / (float) Math.log(3),
-		1.0f / (float) Math.log(3),
-		1.0f / (float) Math.log(4),
-		1.0f / (float) Math.log(1),
-		1.0f / (float) Math.log(1)
+		1.0f / (float) StrictMath.log(2),
+		1.0f / (float) StrictMath.log(3),
+		1.0f / (float) StrictMath.log(3),
+		1.0f / (float) StrictMath.log(4),
+		1.0f / (float) StrictMath.log(1),
+		1.0f / (float) StrictMath.log(1)
 	};
 
 	@Test
@@ -128,7 +128,7 @@ public class AdamicAdarTest extends AsmTestBase {
 		// all vertex pairs are linked
 		long expectedCount = CombinatoricsUtils.binomialCoefficient((int) completeGraphVertexCount, 2);
 
-		float expectedScore = (completeGraphVertexCount - 2) / (float) Math.log(completeGraphVertexCount - 1);
+		float expectedScore = (completeGraphVertexCount - 2) / (float) StrictMath.log(completeGraphVertexCount - 1);
 
 		validate(completeGraph, expectedCount, expectedScore);
 	}
@@ -150,7 +150,7 @@ public class AdamicAdarTest extends AsmTestBase {
 		long expectedCount = CombinatoricsUtils.binomialCoefficient((int) starGraphVertexCount - 1, 2);
 
 		// the intersection includes only the center vertex
-		float expectedScore = 1 / (float) Math.log(starGraphVertexCount - 1);
+		float expectedScore = 1 / (float) StrictMath.log(starGraphVertexCount - 1);
 
 		validate(starGraph, expectedCount, expectedScore);
 	}

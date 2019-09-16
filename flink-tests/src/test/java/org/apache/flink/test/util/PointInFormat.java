@@ -57,7 +57,7 @@ public class PointInFormat extends DelimitedInputFormat<Tuple2<Integer, CoordVec
 				if (id == -1) {
 					id = value;
 				} else {
-					double v = value + ((double) fractionValue) * Math.pow(10, (-1 * (fractionChars - 1)));
+					double v = value + ((double) fractionValue) * StrictMath.pow(10, (-1 * (fractionChars - 1)));
 					this.dimensionValues.add(negative ? -v : v);
 				}
 				// reset value

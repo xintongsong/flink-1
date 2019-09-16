@@ -40,7 +40,7 @@ public class ExponentialWaitStrategy implements WaitStrategy {
 	@Override
 	public long sleepTime(final long attempt) {
 		checkArgument(attempt >= 0, "attempt must not be negative (%s)", attempt);
-		final long exponentialSleepTime = initialWait * Math.round(Math.pow(2, attempt));
+		final long exponentialSleepTime = initialWait * Math.round(StrictMath.pow(2, attempt));
 		return exponentialSleepTime >= 0 && exponentialSleepTime < maxWait ? exponentialSleepTime : maxWait;
 	}
 }

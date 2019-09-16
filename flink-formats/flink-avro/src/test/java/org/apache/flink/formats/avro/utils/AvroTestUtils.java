@@ -97,7 +97,7 @@ public final class AvroTestUtils {
 			// unscaled integer value in big-endian byte order
 			.setTypeDecimalBytes(ByteBuffer.wrap(BigDecimal.valueOf(2000, 2).unscaledValue().toByteArray()))
 			// array of length n can store at most
-			// Math.floor(Math.log10(Math.pow(2, 8 * n - 1) - 1))
+			// Math.floor(Math.log10(StrictMath.pow(2, 8 * n - 1) - 1))
 			// base-10 digits of precision
 			.setTypeDecimalFixed(new Fixed2(BigDecimal.valueOf(2000, 2).unscaledValue().toByteArray()))
 			.build();

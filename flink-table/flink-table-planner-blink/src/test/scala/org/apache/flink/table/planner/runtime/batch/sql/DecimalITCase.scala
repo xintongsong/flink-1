@@ -490,7 +490,8 @@ class DecimalITCase extends BatchTestBase {
       s1r(d"3.14"),
       "select log10(f0), ln(f0), log(f0), log2(f0) from Table1",
       Seq(DOUBLE, DOUBLE, DOUBLE, DOUBLE),
-      s1r(log10(3.14), Math.log(3.14), Math.log(3.14), Math.log(3.14)/Math.log(2.0)))
+      s1r(log10(3.14), StrictMath.log(3.14), StrictMath.log(3.14),
+        StrictMath.log(3.14)/StrictMath.log(2.0)))
 
     checkQuery1(
       Seq(DECIMAL(10, 2), DOUBLE),
