@@ -83,6 +83,6 @@ class HashTableBloomFilter {
 	}
 
 	private static int optimalNumOfBits(long maxNumEntries, double fpp) {
-		return (int) (-maxNumEntries * Math.log(fpp) / (Math.log(2) * Math.log(2)));
+		return (int) (-maxNumEntries * StrictMath.log(fpp) / (StrictMath.log(2) * StrictMath.log(2)));
 	}
 }

@@ -180,8 +180,8 @@ class FlinkCostTest {
 
     val cost1 = FlinkCost.FACTORY.makeCost(100.0, 1000.0, 200.0, 500.0, 600.0)
     val cost2 = FlinkCost.FACTORY.makeCost(50.0, 100.0, 40.0, 25.0, 200.0)
-    assertEquals(Math.pow(6000.0, 1 / 5.0), cost1.divideBy(cost2), 1e-5)
-    assertEquals(Math.pow(1 / 6000.0, 1 / 5.0), cost2.divideBy(cost1), 1e-5)
+    assertEquals(StrictMath.pow(6000.0, 1 / 5.0), cost1.divideBy(cost2), 1e-5)
+    assertEquals(StrictMath.pow(1 / 6000.0, 1 / 5.0), cost2.divideBy(cost1), 1e-5)
   }
 
 }

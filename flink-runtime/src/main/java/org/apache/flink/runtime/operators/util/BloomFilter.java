@@ -67,7 +67,7 @@ public class BloomFilter {
 	 * @return optimal bits number
 	 */
 	public static int optimalNumOfBits(long inputEntries, double fpp) {
-		int numBits = (int) (-inputEntries * Math.log(fpp) / (Math.log(2) * Math.log(2)));
+		int numBits = (int) (-inputEntries * StrictMath.log(fpp) / (StrictMath.log(2) * StrictMath.log(2)));
 		return numBits;
 	}
 	
@@ -81,8 +81,8 @@ public class BloomFilter {
 	 */
 	public static double estimateFalsePositiveProbability(long inputEntries, int bitSize) {
 		int numFunction = optimalNumOfHashFunctions(inputEntries, bitSize);
-		double p = Math.pow(Math.E, -(double) numFunction * inputEntries / bitSize);
-		double estimatedFPP = Math.pow(1 - p, numFunction);
+		double p = StrictMath.pow(Math.E, -(double) numFunction * inputEntries / bitSize);
+		double estimatedFPP = StrictMath.pow(1 - p, numFunction);
 		return estimatedFPP;
 	}
 	
@@ -95,7 +95,7 @@ public class BloomFilter {
 	 * @return hash function number
 	 */
 	static int optimalNumOfHashFunctions(long expectEntries, long bitSize) {
-		return Math.max(1, (int) Math.round((double) bitSize / expectEntries * Math.log(2)));
+		return Math.max(1, (int) Math.round((double) bitSize / expectEntries * StrictMath.log(2)));
 	}
 	
 	public void addHash(int hash32) {

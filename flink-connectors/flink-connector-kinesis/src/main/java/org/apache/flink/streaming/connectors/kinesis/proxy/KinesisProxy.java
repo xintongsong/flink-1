@@ -550,7 +550,7 @@ public class KinesisProxy implements KinesisProxyInterface {
 	}
 
 	protected static long fullJitterBackoff(long base, long max, double power, int attempt) {
-		long exponentialBackoff = (long) Math.min(max, base * Math.pow(power, attempt));
+		long exponentialBackoff = (long) Math.min(max, base * StrictMath.pow(power, attempt));
 		return (long) (seed.nextDouble() * exponentialBackoff); // random jitter between 0 and the exponential backoff
 	}
 }

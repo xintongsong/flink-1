@@ -39,7 +39,7 @@ public class MultipleSolutionSetJoinsITCase extends JavaProgramTestBase {
 	protected void testProgram() throws Exception {
 
 		final int numIters = 4;
-		final double expectedFactor = (int) Math.pow(7, numIters);
+		final double expectedFactor = (int) StrictMath.pow(7, numIters);
 
 		// this is an artificial program, it does not compute anything sensical
 		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();

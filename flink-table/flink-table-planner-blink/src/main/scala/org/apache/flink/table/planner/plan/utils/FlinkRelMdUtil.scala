@@ -130,7 +130,7 @@ object FlinkRelMdUtil {
       distinctRowCount: JDouble,
       selectivity: JDouble): JDouble = {
     val ndv = Math.min(distinctRowCount, rowCount)
-    Math.max((1 - Math.pow(1 - selectivity, rowCount / ndv)) * ndv, 1.0)
+    Math.max((1 - StrictMath.pow(1 - selectivity, rowCount / ndv)) * ndv, 1.0)
   }
 
   /**

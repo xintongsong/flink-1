@@ -84,7 +84,7 @@ class BatchExecSort(
     }
     val numOfSortKeys = sortCollation.getFieldCollations.size()
     val cpuCost = FlinkCost.COMPARE_CPU_COST * numOfSortKeys *
-      rowCount * Math.max(Math.log(rowCount), 1.0)
+      rowCount * Math.max(StrictMath.log(rowCount), 1.0)
     val memCost = FlinkRelMdUtil.computeSortMemory(mq, getInput)
     val costFactory = planner.getCostFactory.asInstanceOf[FlinkCostFactory]
     costFactory.makeCost(rowCount, cpuCost, 0, 0, memCost)

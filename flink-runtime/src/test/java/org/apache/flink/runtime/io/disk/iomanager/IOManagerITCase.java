@@ -211,7 +211,7 @@ public class IOManagerITCase extends TestLogger {
 	
 	private static int skewedSample(Random rnd, int max) {
 		double uniform = rnd.nextDouble();
-		double var = Math.pow(uniform, 8.0);
+		double var = StrictMath.pow(uniform, 8.0);
 		double pareto = 0.2 / var;
 		
 		int val = (int) pareto;

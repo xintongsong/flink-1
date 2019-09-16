@@ -113,7 +113,7 @@ public class BernoulliSampler<T> extends RandomSampler<T> {
 				if (fraction <= THRESHOLD) {
 					double rand = random.nextDouble();
 					double u = Math.max(rand, EPSILON);
-					int gap = (int) (Math.log(u) / Math.log(1 - fraction));
+					int gap = (int) (StrictMath.log(u) / StrictMath.log(1 - fraction));
 					int elementCount = 0;
 					if (input.hasNext()) {
 						T element = input.next();

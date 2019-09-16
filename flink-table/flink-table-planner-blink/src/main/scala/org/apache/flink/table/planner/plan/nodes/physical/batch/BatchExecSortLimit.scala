@@ -102,7 +102,7 @@ class BatchExecSortLimit(
     val inputRowCnt = mq.getRowCount(getInput())
     val heapLen = Math.min(inputRowCnt, limitEnd)
     val numOfSort = sortCollation.getFieldCollations.size()
-    val cpuCost = FlinkCost.COMPARE_CPU_COST * numOfSort * inputRowCnt * Math.log(heapLen)
+    val cpuCost = FlinkCost.COMPARE_CPU_COST * numOfSort * inputRowCnt * StrictMath.log(heapLen)
     // assume memory is big enough to simplify the estimation.
     val memCost = heapLen * mq.getAverageRowSize(this)
     val rowCount = mq.getRowCount(this)

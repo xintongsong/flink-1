@@ -108,14 +108,14 @@ class BatchExecSortMergeJoin(
       leftRowCnt
     } else {
       // sort cost
-      FlinkCost.COMPARE_CPU_COST * numOfSort * leftRowCnt * Math.max(Math.log(leftRowCnt), 1.0)
+      FlinkCost.COMPARE_CPU_COST * numOfSort * leftRowCnt * Math.max(StrictMath.log(leftRowCnt), 1.0)
     }
     val rightSortCpuCost: Double = if (rightSorted) {
       // cost of writing rhs data to buffer
       rightRowCnt
     } else {
       // sort cost
-      FlinkCost.COMPARE_CPU_COST * numOfSort * rightRowCnt * Math.max(Math.log(rightRowCnt), 1.0)
+      FlinkCost.COMPARE_CPU_COST * numOfSort * rightRowCnt * Math.max(StrictMath.log(rightRowCnt), 1.0)
     }
     // cost of evaluating each join condition
     val joinConditionCpuCost = FlinkCost.COMPARE_CPU_COST * (leftRowCnt + rightRowCnt)

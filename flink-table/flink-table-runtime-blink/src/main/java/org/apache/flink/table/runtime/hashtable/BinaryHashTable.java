@@ -334,7 +334,7 @@ public class BinaryHashTable extends BaseHybridHashTable {
 	 */
 	@VisibleForTesting
 	static int getNumWriteBehindBuffers(int numBuffers) {
-		int numIOBufs = (int) (Math.log(numBuffers) / Math.log(4) - 1.5);
+		int numIOBufs = (int) (StrictMath.log(numBuffers) / StrictMath.log(4) - 1.5);
 		return numIOBufs > 6 ? 6 : numIOBufs;
 	}
 

@@ -85,15 +85,15 @@ public class SqlFunctionUtils {
 	}
 
 	public static double power(double base, Decimal exponent) {
-		return Math.pow(base, exponent.doubleValue());
+		return StrictMath.pow(base, exponent.doubleValue());
 	}
 
 	public static double power(Decimal base, Decimal exponent) {
-		return Math.pow(base.doubleValue(), exponent.doubleValue());
+		return StrictMath.pow(base.doubleValue(), exponent.doubleValue());
 	}
 
 	public static double power(Decimal base, double exponent) {
-		return Math.pow(base.doubleValue(), exponent);
+		return StrictMath.pow(base.doubleValue(), exponent);
 	}
 
 	public static double cosh(Decimal x) {
@@ -169,18 +169,18 @@ public class SqlFunctionUtils {
 	 * Returns the natural logarithm of "x".
 	 */
 	public static double log(double x) {
-		return Math.log(x);
+		return StrictMath.log(x);
 	}
 
 	public static double log(Decimal x) {
-		return Math.log(x.doubleValue());
+		return StrictMath.log(x.doubleValue());
 	}
 
 	/**
 	 * Returns the logarithm of "x" with base "base".
 	 */
 	public static double log(double base, double x) {
-		return Math.log(x) / Math.log(base);
+		return StrictMath.log(x) / StrictMath.log(base);
 	}
 
 	public static double log(double base, Decimal x) {
@@ -199,7 +199,7 @@ public class SqlFunctionUtils {
 	 * Returns the logarithm of "a" with base 2.
 	 */
 	public static double log2(double x) {
-		return Math.log(x) / Math.log(2);
+		return StrictMath.log(x) / StrictMath.log(2);
 	}
 
 	public static double log2(Decimal x) {

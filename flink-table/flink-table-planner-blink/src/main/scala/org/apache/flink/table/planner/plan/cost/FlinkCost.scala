@@ -252,7 +252,7 @@ class FlinkCost(
     if (n == 0) {
       return 1.0
     }
-    Math.pow(d, 1 / n)
+    StrictMath.pow(d, 1 / n)
   }
 
   override def hashCode(): Int = {

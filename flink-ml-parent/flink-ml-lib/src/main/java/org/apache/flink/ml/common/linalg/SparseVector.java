@@ -526,9 +526,9 @@ public class SparseVector extends Vector {
 			norm = normL2();
 		} else {
 			for (int i = 0; i < indices.length; i++) {
-				norm += Math.pow(values[i], p);
+				norm += StrictMath.pow(values[i], p);
 			}
-			norm = Math.pow(norm, 1 / p);
+			norm = StrictMath.pow(norm, 1 / p);
 		}
 
 		for (int i = 0; i < indices.length; i++) {

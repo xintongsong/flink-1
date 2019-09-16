@@ -115,9 +115,9 @@ public class TpchResultComparator {
 		if (x < 0) {
 			throw new IllegalArgumentException("x must be non-negative");
 		}
-		double y = x + 5 * Math.pow(10, -m - 1);
-		double z = y * Math.pow(10, m);
+		double y = x + 5 * StrictMath.pow(10, -m - 1);
+		double z = y * StrictMath.pow(10, m);
 		double q = Math.floor(z);
-		return q / Math.pow(10, m);
+		return q / StrictMath.pow(10, m);
 	}
 }

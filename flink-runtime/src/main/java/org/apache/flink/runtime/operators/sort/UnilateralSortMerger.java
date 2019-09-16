@@ -1575,10 +1575,10 @@ public class UnilateralSortMerger<E> implements Sorter<E> {
 			// A channel list with length maxFanIn<sup>i</sup> can be merged to maxFanIn files in i-1 rounds where every merge
 			// is a full merge with maxFanIn input channels. A partial round includes merges with fewer than maxFanIn
 			// inputs. It is most efficient to perform the partial round first.
-			final double scale = Math.ceil(Math.log(channelIDs.size()) / Math.log(this.maxFanIn)) - 1;
+			final double scale = Math.ceil(StrictMath.log(channelIDs.size()) / StrictMath.log(this.maxFanIn)) - 1;
 
 			final int numStart = channelIDs.size();
-			final int numEnd = (int) Math.pow(this.maxFanIn, scale);
+			final int numEnd = (int) StrictMath.pow(this.maxFanIn, scale);
 
 			final int numMerges = (int) Math.ceil((numStart - numEnd) / (double) (this.maxFanIn - 1));
 
