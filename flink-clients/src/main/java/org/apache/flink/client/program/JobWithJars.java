@@ -134,7 +134,10 @@ public class JobWithJars {
 	}
 
 	public static ClassLoader buildUserCodeClassLoader(
-		List<URL> jars, List<URL> classpaths, ClassLoader parent, Configuration conf) {
+		List<URL> jars,
+		List<URL> classpaths,
+		ClassLoader parent,
+		Configuration conf) {
 		URL[] urls = new URL[jars.size() + classpaths.size()];
 		for (int i = 0; i < jars.size(); i++) {
 			urls[i] = jars.get(i);

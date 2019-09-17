@@ -230,7 +230,10 @@ public class PackagedProgram {
 		this.classpaths = classpaths;
 
 		this.userCodeClassLoader = JobWithJars.buildUserCodeClassLoader(
-			getAllLibraries(), classpaths, getClass().getClassLoader(), conf);
+			getAllLibraries(),
+			classpaths,
+			getClass().getClassLoader(),
+			conf);
 
 		// load the entry point class
 		this.mainClass = loadMainClass(entryPointClassName, userCodeClassLoader);
