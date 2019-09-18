@@ -18,12 +18,15 @@
 
 package org.apache.flink.table.sqlexec;
 
+import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.SqlDropFunction;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.SqlDialect;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.catalog.Catalog;
+import org.apache.flink.table.catalog.CatalogFunction;
 import org.apache.flink.table.catalog.CatalogManager;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.CatalogTableImpl;
@@ -35,7 +38,9 @@ import org.apache.flink.table.catalog.exceptions.TableAlreadyExistException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.operations.CatalogSinkModifyOperation;
 import org.apache.flink.table.operations.Operation;
+import org.apache.flink.table.operations.ddl.CreateFunctionOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
+import org.apache.flink.table.operations.ddl.DropFunctionOperation;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.catalog.CatalogManagerCalciteSchema;
 import org.apache.flink.table.planner.delegation.PlannerContext;
@@ -327,6 +332,29 @@ public class SqlToOperationConverterTest {
 		TableSchema schema = ((CreateTableOperation) operation).getCatalogTable().getSchema();
 		Object[] expectedDataTypes = testItems.stream().map(item -> item.expectedType).toArray();
 		assertArrayEquals(expectedDataTypes, schema.getFieldDataTypes());
+	}
+
+	@Test
+	public void testCreateFunction() {
+		final String sql = "CREATE FUNCTION func1 AS 'org.apache.flink.function.function1'";
+		final FlinkPlannerImpl planner = getPlannerBySqlDialect(SqlDialect.DEFAULT);
+		SqlNode node = planner.parse(sql);
+		assert node instanceof SqlCreateFunction;
+		Operation operation = SqlToOperationConverter.convert(planner, node);
+		assert operation instanceof CreateFunctionOperation;
+		CreateFunctionOperation op = (CreateFunctionOperation) operation;
+		CatalogFunction catalogFunction = op.getCatalogFunction();
+		assertEquals("org.apache.flink.function.function1", catalogFunction.getClassName());
+	}
+
+	@Test
+	public void testDropFunction() {
+		final String sql = "DROP FUNCTION func1";
+		final FlinkPlannerImpl planner = getPlannerBySqlDialect(SqlDialect.DEFAULT);
+		SqlNode node = planner.parse(sql);
+		assert node instanceof SqlDropFunction;
+		Operation operation = SqlToOperationConverter.convert(planner, node);
+		assert operation instanceof DropFunctionOperation;
 	}
 
 	//~ Tool Methods ----------------------------------------------------------

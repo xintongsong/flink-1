@@ -159,7 +159,7 @@ public class SqlToOperationConverter {
 	private Operation convertCreateFunction(SqlCreateFunction sqlCreateFunction) {
 		CatalogFunction catalogFunction =
 			new CatalogFunctionImpl(
-				sqlCreateFunction.getFunctionClassName().toString(),
+				sqlCreateFunction.getFunctionClassName().toValue(),
 				new HashMap<String, String>());
 		return new CreateFunctionOperation(
 			sqlCreateFunction.fullFunctionName(),
