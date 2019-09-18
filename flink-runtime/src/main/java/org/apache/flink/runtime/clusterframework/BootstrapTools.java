@@ -415,6 +415,7 @@ public class BootstrapTools {
 			ContaineredTaskManagerParameters tmParams,
 			String configDirectory,
 			String logDirectory,
+			String heapdumpDir,
 			boolean hasLogback,
 			boolean hasLog4j,
 			boolean hasKrb5,
@@ -434,7 +435,40 @@ public class BootstrapTools {
 
 		startCommandValues.put("jvmmem", StringUtils.join(params, ' '));
 
-		String javaOpts = flinkConfig.getString(CoreOptions.FLINK_JVM_OPTIONS);
+		String javaOpts = "";
+		// Add jvm gc options
+		String dumpFilePath = "./flink-tm-heapdump.hprof";
+		String dumpFileDestPath = new File(heapdumpDir, new File(dumpFilePath).getName()).getAbsolutePath();
+		String oomScript = String.format("mkdir -p %s; mv %s %s; " +
+			"echo -e 'OutOfMemoryError! Killing current process %%p...\n" +
+			"Check gc logs and heapdump file(%s) for details.' > " +
+			logDirectory + "/taskmanager.err; " +
+			"kill -9 %%p",
+			heapdumpDir,
+			dumpFilePath,
+			dumpFileDestPath,
+			dumpFileDestPath);
+		String defaultGCOptions =
+			"-Xloggc:" + logDirectory + "/gc.log " +
+			"-XX:+PrintGCApplicationStoppedTime " +
+			"-XX:+PrintGCDetails " +
+			"-XX:+PrintGCDateStamps " +
+			"-XX:+UseGCLogFileRotation " +
+			"-XX:NumberOfGCLogFiles=10 " +
+			"-XX:GCLogFileSize=10M " +
+			"-XX:+PrintPromotionFailure " +
+			"-XX:+PrintGCCause";
+		javaOpts += defaultGCOptions;
+		if (heapdumpDir != null) {
+			javaOpts += String.format(
+				" -XX:+HeapDumpOnOutOfMemoryError " +
+				"-XX:HeapDumpPath=%s " +
+				"-XX:OnOutOfMemoryError=\"%s\"",
+				dumpFilePath,
+				oomScript
+			);
+		}
+		javaOpts += " " + flinkConfig.getString(CoreOptions.FLINK_JVM_OPTIONS);
 		if (flinkConfig.getString(CoreOptions.FLINK_TM_JVM_OPTIONS).length() > 0) {
 			javaOpts += " " + flinkConfig.getString(CoreOptions.FLINK_TM_JVM_OPTIONS);
 		}
