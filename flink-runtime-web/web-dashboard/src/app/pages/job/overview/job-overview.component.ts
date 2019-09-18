@@ -28,9 +28,9 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
-import { NodesItemCorrectInterface, NodesItemLinkInterface } from 'interfaces';
-import { JobService } from 'services';
-import { DagreComponent } from 'share/common/dagre/dagre.component';
+import { NodesItemCorrectInterface, NodesItemLinkInterface } from '@flink-runtime-web/interfaces';
+import { JobService } from '@flink-runtime-web/services';
+import { DagreComponent } from '@flink-runtime-web/share/common/dagre/dagre.component';
 
 @Component({
   selector: 'flink-job-overview',
