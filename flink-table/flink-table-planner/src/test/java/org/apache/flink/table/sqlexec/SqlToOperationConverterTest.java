@@ -55,7 +55,6 @@ import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.calcite.sql.SqlNode;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -409,7 +408,7 @@ public class SqlToOperationConverterTest {
 		}
 	}
 
-	@Ignore("Blocked by CALCITE-3349")
+	@Test
 	public void testCreateFunction() {
 		final String sql = "CREATE FUNCTION func1 AS 'org.apache.flink.function.function1'";
 		final FlinkPlannerImpl planner = getPlannerBySqlDialect(SqlDialect.DEFAULT);
@@ -422,7 +421,7 @@ public class SqlToOperationConverterTest {
 		assertEquals("org.apache.flink.function.function1", catalogFunction.getClassName());
 	}
 
-	@Ignore("Blocked by CALCITE-3349")
+	@Test
 	public void testDropFunction() {
 		final String sql = "DROP FUNCTION func1";
 		final FlinkPlannerImpl planner = getPlannerBySqlDialect(SqlDialect.DEFAULT);
