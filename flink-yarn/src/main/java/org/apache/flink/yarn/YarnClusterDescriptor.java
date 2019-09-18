@@ -942,12 +942,14 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 					"");
 		}
 
+		String heapdumpDir = new File(System.getProperty("java.io.tmpdir"), appId + "-flink-heapdump").getPath();
 		final ContainerLaunchContext amContainer = setupApplicationMasterContainer(
-				yarnClusterEntrypoint,
-				hasLogback,
-				hasLog4j,
-				hasKrb5,
-				clusterSpecification.getMasterMemoryMB());
+			yarnClusterEntrypoint,
+			hasLogback,
+			hasLog4j,
+			hasKrb5,
+			clusterSpecification.getMasterMemoryMB(),
+			heapdumpDir);
 
 		if (UserGroupInformation.isSecurityEnabled()) {
 			// set HDFS delegation tokens when security is enabled
@@ -1593,11 +1595,46 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 			boolean hasLogback,
 			boolean hasLog4j,
 			boolean hasKrb5,
-			int jobManagerMemoryMb) {
+			int jobManagerMemoryMb,
+			String heapdumpDir) {
 		// ------------------ Prepare Application Master Container  ------------------------------
 
+		String javaOpts = "";
+		// Add jvm gc options
+		String dumpFilePath = "./flink-am-heapdump.hprof";
+		String dumpFileDestPath = new File(heapdumpDir, new File(dumpFilePath).getName()).getAbsolutePath();
+		String oomScript = String.format("mkdir -p %s; mv %s %s; " +
+			"echo -e 'OutOfMemoryError! Killing current process %%p...\n" +
+			"Check gc logs and heapdump file(%s) for details.' > " +
+			ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/jobmanager.err; " +
+			"kill -9 %%p",
+			heapdumpDir,
+			dumpFilePath,
+			dumpFileDestPath,
+			dumpFileDestPath);
+		String defaultGCOptions =
+			"-Xloggc:" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/gc.log " +
+			"-XX:+PrintGCApplicationStoppedTime " +
+			"-XX:+PrintGCDetails " +
+			"-XX:+PrintGCDateStamps " +
+			"-XX:+UseGCLogFileRotation " +
+			"-XX:NumberOfGCLogFiles=10 " +
+			"-XX:GCLogFileSize=10M " +
+			"-XX:+PrintPromotionFailure " +
+			"-XX:+PrintGCCause";
+		javaOpts += defaultGCOptions;
+		if (heapdumpDir != null) {
+			javaOpts += String.format(
+				" -XX:+HeapDumpOnOutOfMemoryError " +
+				"-XX:HeapDumpPath=%s " +
+				"-XX:OnOutOfMemoryError=\"%s\"",
+				dumpFilePath,
+				oomScript
+			);
+		}
 		// respect custom JVM options in the YAML file
-		String javaOpts = flinkConfiguration.getString(CoreOptions.FLINK_JVM_OPTIONS);
+		javaOpts += " " + flinkConfiguration.getString(CoreOptions.FLINK_JVM_OPTIONS);
+
 		if (flinkConfiguration.getString(CoreOptions.FLINK_JM_JVM_OPTIONS).length() > 0) {
 			javaOpts += " " + flinkConfiguration.getString(CoreOptions.FLINK_JM_JVM_OPTIONS);
 		}

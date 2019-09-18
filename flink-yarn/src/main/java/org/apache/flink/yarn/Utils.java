@@ -553,9 +553,17 @@ public final class Utils {
 		boolean hasLogback = new File(workingDirectory, "logback.xml").exists();
 		boolean hasLog4j = new File(workingDirectory, "log4j.properties").exists();
 
+		String heapdumpDir = new File(System.getProperty("java.io.tmpdir"), appId + "-flink-heapdump").getPath();
 		String launchCommand = BootstrapTools.getTaskManagerShellCommand(
-				flinkConfig, tmParams, ".", ApplicationConstants.LOG_DIR_EXPANSION_VAR,
-				hasLogback, hasLog4j, hasKrb5, taskManagerMainClass);
+				flinkConfig,
+				tmParams,
+				".",
+				ApplicationConstants.LOG_DIR_EXPANSION_VAR,
+				heapdumpDir,
+				hasLogback,
+				hasLog4j,
+				hasKrb5,
+				taskManagerMainClass);
 
 		if (log.isDebugEnabled()) {
 			log.debug("Starting TaskManagers with command: " + launchCommand);
