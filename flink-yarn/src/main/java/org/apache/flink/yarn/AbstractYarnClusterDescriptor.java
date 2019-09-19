@@ -35,6 +35,7 @@ import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.configuration.SecurityOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.core.plugin.PluginUtils;
+import org.apache.flink.runtime.blob.PermanentBlobKey;
 import org.apache.flink.runtime.clusterframework.BootstrapTools;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
 import org.apache.flink.runtime.entrypoint.ClusterEntrypoint;
@@ -737,6 +738,25 @@ public abstract class AbstractYarnClusterDescriptor implements ClusterDescriptor
 			? Collections.emptySet()
 			// add user code jars from the provided JobGraph
 			: jobGraph.getUserJars().stream().map(f -> f.toUri()).map(File::new).collect(Collectors.toSet());
+
+		// only for per job mode
+		if (jobGraph != null) {
+			final Collection<Tuple2<String, org.apache.flink.core.fs.Path>> userArtifacts = jobGraph.getUserArtifacts().entrySet().stream()
+				.map(entry -> Tuple2.of(entry.getKey(), new org.apache.flink.core.fs.Path(entry.getValue().filePath)))
+				.collect(Collectors.toList());
+
+			for (Tuple2<String, org.apache.flink.core.fs.Path> userArtifact : userArtifacts) {
+				// only upload local files
+				if (!userArtifact.f1.getFileSystem().isDistributedFS()) {
+					Path localPath = new Path(userArtifact.f1.getPath());
+					Tuple2<Path, Long> remoteFileInfo =
+						Utils.uploadLocalFileToRemote(fs, appId.toString(), localPath, homeDir, userArtifact.f0);
+					jobGraph.setUserArtifactRemotePath(userArtifact.f0, remoteFileInfo.f0.toString());
+				}
+			}
+
+			jobGraph.writeUserArtifactEntriesToConfiguration();
+		}
 
 		// local resource map for Yarn
 		final Map<String, LocalResource> localResources = new HashMap<>(2 + systemShipFiles.size() + userJarFiles.size());
