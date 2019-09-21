@@ -36,10 +36,10 @@ public class TaskSlotTableBuilder {
 	private static final ResourceProfile DEFAULT_RESOURCE_PROFILE =
 		TaskManagerServices.computeSlotResourceProfile(1, 10 * MemoryManager.MIN_PAGE_SIZE);
 
-	private List<ResourceProfile> taskSlots;
+	private List<TaskSlot> taskSlots;
 	private TimerService<AllocationID> timerService;
 
-	private TaskSlotTableBuilder setTaskSlots(List<ResourceProfile> taskSlots) {
+	private TaskSlotTableBuilder setTaskSlots(List<TaskSlot> taskSlots) {
 		this.taskSlots = new ArrayList<>(taskSlots);
 		return this;
 	}
@@ -68,10 +68,11 @@ public class TaskSlotTableBuilder {
 	}
 
 	public static TaskSlotTableBuilder newBuilderWithDefaultSlots(int numberOfDefaultSlots) {
-		return new TaskSlotTableBuilder().setTaskSlots(createDefaultSlotProfiles(numberOfDefaultSlots));
+		return new TaskSlotTableBuilder().setTaskSlots(createDefaultSlots(numberOfDefaultSlots));
 	}
 
-	public static List<ResourceProfile> createDefaultSlotProfiles(int numberOfDefaultSlots) {
-		return Collections.nCopies(numberOfDefaultSlots, DEFAULT_RESOURCE_PROFILE);
+	public static List<TaskSlot> createDefaultSlots(int numberOfDefaultSlots) {
+		return TaskManagerServices.createTaskSlotsFromResources(
+			Collections.nCopies(numberOfDefaultSlots, DEFAULT_RESOURCE_PROFILE));
 	}
 }
