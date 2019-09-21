@@ -27,6 +27,8 @@ import org.apache.flink.runtime.testingUtils.TestingUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /** Factory for {@link TaskSlotTable} and {@link TaskSlot}s. */
 public enum TaskSlotAndTableFactory {
@@ -46,8 +48,8 @@ public enum TaskSlotAndTableFactory {
 
 	public static TaskSlotTable createTaskSlotTableWithDefaultSlots(int numberOfSlots) {
 		return createTaskSlotTableWithDefaultSlots(
-				numberOfSlots,
-				createDefaultTimerService(DEFAULT_SLOT_TIMEOUT));
+			numberOfSlots,
+			createDefaultTimerService(DEFAULT_SLOT_TIMEOUT));
 	}
 
 	public static TaskSlotTable createTaskSlotTableWithDefaultSlots(int numberOfSlots, Time timeout) {
@@ -59,14 +61,17 @@ public enum TaskSlotAndTableFactory {
 	public static TaskSlotTable createTaskSlotTableWithDefaultSlots(
 			int numberOfSlots,
 			TimerService<AllocationID> timerService) {
-		return new TaskSlotTable(createDefaultSlotProfiles(numberOfSlots), timerService);
+		return new TaskSlotTable(createDefaultSlots(numberOfSlots), timerService);
 	}
 
 	private static TimerService<AllocationID> createDefaultTimerService(long shutdownTimeout) {
 		return new TimerService<>(TestingUtils.defaultExecutor(), shutdownTimeout);
 	}
 
-	public static List<ResourceProfile> createDefaultSlotProfiles(int numberOfSlots) {
-		return Collections.nCopies(numberOfSlots, DEFAULT_RESOURCE_PROFILE);
+	public static List<TaskSlot> createDefaultSlots(int numberOfSlots) {
+		return IntStream
+			.range(0, numberOfSlots)
+			.mapToObj(index -> new TaskSlot(index, DEFAULT_RESOURCE_PROFILE))
+			.collect(Collectors.toList());
 	}
 }
