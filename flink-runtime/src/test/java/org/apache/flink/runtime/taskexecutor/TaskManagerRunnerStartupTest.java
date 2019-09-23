@@ -120,7 +120,7 @@ public class TaskManagerRunnerStartupTest extends TestLogger {
 		Configuration cfg = new Configuration();
 
 		// something invalid
-		cfg.setString(TaskManagerOptions.MANAGED_MEMORY_SIZE, "-42m");
+		cfg.setString(TaskManagerOptions.LEGACY_MANAGED_MEMORY_SIZE, "-42m");
 		try {
 
 			startTaskManager(
