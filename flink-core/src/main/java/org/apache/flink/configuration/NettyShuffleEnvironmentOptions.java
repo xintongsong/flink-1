@@ -91,6 +91,7 @@ public class NettyShuffleEnvironmentOptions {
 	/**
 	 * Fraction of JVM memory to use for network buffers.
 	 */
+	@Deprecated
 	public static final ConfigOption<Float> NETWORK_BUFFERS_MEMORY_FRACTION =
 		key("taskmanager.network.memory.fraction")
 			.defaultValue(0.1f)
@@ -103,6 +104,7 @@ public class NettyShuffleEnvironmentOptions {
 	/**
 	 * Minimum memory size for network buffers.
 	 */
+	@Deprecated
 	public static final ConfigOption<String> NETWORK_BUFFERS_MEMORY_MIN =
 		key("taskmanager.network.memory.min")
 			.defaultValue("64mb")
@@ -111,6 +113,7 @@ public class NettyShuffleEnvironmentOptions {
 	/**
 	 * Maximum memory size for network buffers.
 	 */
+	@Deprecated
 	public static final ConfigOption<String> NETWORK_BUFFERS_MEMORY_MAX =
 		key("taskmanager.network.memory.max")
 			.defaultValue("1gb")
