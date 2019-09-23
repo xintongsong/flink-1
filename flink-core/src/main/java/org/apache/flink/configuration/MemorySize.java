@@ -116,6 +116,27 @@ public class MemorySize implements java.io.Serializable {
 	}
 
 	// ------------------------------------------------------------------------
+	//  Calculations
+	// ------------------------------------------------------------------------
+
+	public MemorySize add(MemorySize that) {
+		return new MemorySize(Math.addExact(this.bytes, that.bytes));
+	}
+
+	public MemorySize subtract(MemorySize that) {
+		return new MemorySize(Math.subtractExact(this.bytes, that.bytes));
+	}
+
+	public MemorySize multiply(double multiplier) {
+		checkArgument(multiplier >= 0, "multiplier must be >= 0");
+		double product = this.bytes * multiplier;
+		if (product > Long.MAX_VALUE) {
+			throw new ArithmeticException("long overflow");
+		}
+		return new MemorySize((long) product);
+	}
+
+	// ------------------------------------------------------------------------
 	//  Parsing
 	// ------------------------------------------------------------------------
 
