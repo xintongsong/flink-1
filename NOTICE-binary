@@ -3383,9 +3383,9 @@ flink-shaded-curator
 Copyright 2014-2019 The Apache Software Foundation
 
 - com.google.guava:guava:16.0.1
-- org.apache.curator:curator-client:2.12.0
-- org.apache.curator:curator-framework:2.12.0
-- org.apache.curator:curator-recipes:2.12.0
+- org.apache.curator:curator-client:4.2.0
+- org.apache.curator:curator-framework:4.2.0
+- org.apache.curator:curator-recipes:4.2.0
 
 Curator Recipes
 Copyright 2011-2017 The Apache Software Foundation
@@ -4735,9 +4735,9 @@ This project bundles the following dependencies under the Apache Software Licens
 - org.apache.commons:commons-configuration2:2.1.1
 - org.apache.commons:commons-lang3:3.3.2
 - org.apache.commons:commons-math3:3.5
-- org.apache.curator:curator-client:2.12.0
-- org.apache.curator:curator-framework:2.12.0
-- org.apache.curator:curator-recipes:2.12.0
+- org.apache.curator:curator-client:4.2.0
+- org.apache.curator:curator-framework:4.2.0
+- org.apache.curator:curator-recipes:4.2.0
 - org.apache.hadoop:hadoop-aliyun:3.1.0
 - org.apache.hadoop:hadoop-annotations:3.1.0
 - org.apache.hadoop:hadoop-auth:3.1.0
