@@ -349,6 +349,18 @@ public class TaskManagerOptions {
 				+ " for Managed Memory.");
 
 	/**
+	 * Off-Heap Managed Memory size.
+	 * This config option should only be used for passing derived off-heap managed memory size into TaskExecutors. It
+	 * should not be exposed to users.
+	 */
+	@Documentation.ExcludeFromDocumentation
+	public static final ConfigOption<String> MANAGED_MEMORY_OFFHEAP_SIZE =
+		key("taskmanager.memory.managed.off-heap.size")
+			.noDefaultValue()
+			.withDescription("DO NOT USE THIS CONFIG OPTION! This is the config option for Off-Heap Managed Memory size."
+				+ " It should only be used for passing derived off-heap managed memory size into TaskExecutors.");
+
+	/**
 	 * Min Shuffle Memory size for TaskExecutors.
 	 */
 	public static final ConfigOption<String> SHUFFLE_MEMORY_MIN =
