@@ -32,6 +32,57 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 
 /**
  * Utility class for TaskExecutor memory configurations.
+ *
+ * <p>A TaskExecutor's memory consists of the following components.
+ * <ul>
+ *     <li>Framework Heap Memory</li>
+ *     <li>Task Heap Memory</li>
+ *     <li>Task Off-Heap Memory</li>
+ *     <li>Shuffle Memory</li>
+ *     <li>Managed Memory</li>
+ *     <ul>
+ *         <li>On-Heap Managed Memory</li>
+ *         <li>Off-Heap Managed Memory</li>
+ *     </ul>
+ *     <li>JVM Metaspace</li>
+ *     <li>JVM Overhead</li>
+ * </ul>
+ * Among all the components, Framework Heap Memory, Task Heap Memory and On-Heap Managed Memory use on heap memory,
+ * while the rest use off heap memory. We use Total Process Memory to refer to all the memory components, while Total
+ * Flink Memory refering to all the components except JVM Metaspace and JVM Overhead.
+ *
+ * <p>The relationships of TaskExecutor memory components are shown below.
+ * <pre>
+ *               ┌ ─ ─ Total Process Memory  ─ ─ ┐
+ *                ┌ ─ ─ Total Flink Memory  ─ ─ ┐
+ *               │ ┌───────────────────────────┐ │
+ *                ││   Framework Heap Memory   ││  ─┐
+ *               │ └───────────────────────────┘ │  │
+ *                │┌───────────────────────────┐│   │
+ *               │ │     Task Heap Memory      │ │ ─┤
+ *                │└───────────────────────────┘│   │
+ *               │ ┌───────────────────────────┐ │  │
+ *            ┌─  ││   Task Off-Heap Memory    ││   │
+ *            │  │ └───────────────────────────┘ │  ├─ On-Heap
+ *            │   │┌───────────────────────────┐│   │
+ *            ├─ │ │      Shuffle Memory       │ │  │
+ *            │   │└───────────────────────────┘│   │
+ *            │  │ ┌───── Managed Memory ──────┐ │  │
+ *            │   ││┌─────────────────────────┐││   │
+ *            │  │ ││ On-Heap Managed Memory  ││ │ ─┘
+ *            │   ││├─────────────────────────┤││
+ *  Off-Heap ─┼─ │ ││ Off-Heap Managed Memory ││ │
+ *            │   ││└─────────────────────────┘││
+ *            │  │ └───────────────────────────┘ │
+ *            │   └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ *            │  │┌─────────────────────────────┐│
+ *            ├─  │        JVM Metaspace        │
+ *            │  │└─────────────────────────────┘│
+ *            │   ┌─────────────────────────────┐
+ *            └─ ││        JVM Overhead         ││
+ *                └─────────────────────────────┘
+ *               └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+ * </pre>
  */
 public class TaskExecutorResourceUtils {
 
