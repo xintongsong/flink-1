@@ -49,7 +49,7 @@ public class TaskExecutorResourceUtils {
 			.add(taskExecutorResourceSpec.getShuffleMemSize());
 		final MemorySize jvmMetaspaceSize = taskExecutorResourceSpec.getJvmMetaspaceSize();
 
-		return "-Xmx" + jvmHeapSize.getMebiBytes() +"m "
+		return "-Xmx" + jvmHeapSize.getMebiBytes() + "m "
 			+ "-Xms" + jvmHeapSize.getMebiBytes() + "m "
 			+ "-XX:MaxDirectMemorySize=" + jvmDirectSize.getMebiBytes() + "m "
 			+ "-XX:MetaspaceSize=" + jvmMetaspaceSize.getMebiBytes() + "m ";

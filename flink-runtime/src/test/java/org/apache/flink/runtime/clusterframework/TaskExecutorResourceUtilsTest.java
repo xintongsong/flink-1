@@ -1,5 +1,3 @@
-package org.apache.flink.runtime.clusterframework;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -17,6 +15,8 @@ package org.apache.flink.runtime.clusterframework;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package org.apache.flink.runtime.clusterframework;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.MemorySize;
