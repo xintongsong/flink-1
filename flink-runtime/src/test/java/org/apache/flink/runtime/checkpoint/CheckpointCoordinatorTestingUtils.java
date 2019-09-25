@@ -18,17 +18,24 @@
 
 package org.apache.flink.runtime.checkpoint;
 
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple6;
 import org.apache.flink.core.fs.FSDataInputStream;
+import org.apache.flink.mock.Whitebox;
 import org.apache.flink.runtime.concurrent.ScheduledExecutor;
 import org.apache.flink.runtime.execution.ExecutionState;
 import org.apache.flink.runtime.executiongraph.Execution;
 import org.apache.flink.runtime.executiongraph.ExecutionAttemptID;
 import org.apache.flink.runtime.executiongraph.ExecutionJobVertex;
 import org.apache.flink.runtime.executiongraph.ExecutionVertex;
+import org.apache.flink.runtime.executiongraph.utils.SimpleAckingTaskManagerGateway;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobgraph.OperatorID;
+import org.apache.flink.runtime.jobmanager.slots.TaskManagerGateway;
+import org.apache.flink.runtime.jobmaster.LogicalSlot;
+import org.apache.flink.runtime.jobmaster.TestingLogicalSlotBuilder;
 import org.apache.flink.runtime.state.ChainedStateHandle;
 import org.apache.flink.runtime.state.KeyGroupRange;
 import org.apache.flink.runtime.state.KeyGroupRangeOffsets;
@@ -42,9 +49,13 @@ import org.apache.flink.util.InstantiationUtil;
 import org.apache.flink.util.Preconditions;
 
 import org.junit.Assert;
+import org.mockito.invocation.InvocationOnMock;
+
+import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,16 +68,22 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -306,7 +323,7 @@ public class CheckpointCoordinatorTestingUtils {
 	static ExecutionJobVertex mockExecutionJobVertex(
 		JobVertexID jobVertexID,
 		int parallelism,
-		int maxParallelism) {
+		int maxParallelism) throws Exception {
 
 		return mockExecutionJobVertex(
 			jobVertexID,
@@ -320,7 +337,7 @@ public class CheckpointCoordinatorTestingUtils {
 		JobVertexID jobVertexID,
 		List<OperatorID> jobVertexIDs,
 		int parallelism,
-		int maxParallelism) {
+		int maxParallelism) throws Exception {
 		final ExecutionJobVertex executionJobVertex = mock(ExecutionJobVertex.class);
 
 		ExecutionVertex[] executionVertices = new ExecutionVertex[parallelism];
@@ -348,12 +365,39 @@ public class CheckpointCoordinatorTestingUtils {
 		return executionJobVertex;
 	}
 
-	static ExecutionVertex mockExecutionVertex(ExecutionAttemptID attemptID) {
+	static ExecutionVertex mockExecutionVertex(ExecutionAttemptID attemptID) throws Exception {
+		return mockExecutionVertex(attemptID, (LogicalSlot) null);
+	}
+
+	static ExecutionVertex mockExecutionVertex(
+		ExecutionAttemptID attemptID,
+		Consumer<Tuple6<ExecutionAttemptID, JobID, Long, Long, CheckpointOptions, Boolean>> checkpointConsumer) throws Exception {
+
+		final SimpleAckingTaskManagerGateway taskManagerGateway = new SimpleAckingTaskManagerGateway();
+		taskManagerGateway.setCheckpointConsumer(checkpointConsumer);
+		return mockExecutionVertex(attemptID, taskManagerGateway);
+	}
+
+	static ExecutionVertex mockExecutionVertex(
+		ExecutionAttemptID attemptID,
+		TaskManagerGateway taskManagerGateway) throws Exception {
+
+		TestingLogicalSlotBuilder slotBuilder = new TestingLogicalSlotBuilder();
+		slotBuilder.setTaskManagerGateway(taskManagerGateway);
+		LogicalSlot	slot = slotBuilder.createTestingLogicalSlot();
+		return mockExecutionVertex(attemptID, slot);
+	}
+
+	static ExecutionVertex mockExecutionVertex(
+		ExecutionAttemptID attemptID,
+		@Nullable LogicalSlot slot) throws Exception {
+
 		JobVertexID jobVertexID = new JobVertexID();
 		return mockExecutionVertex(
 			attemptID,
 			jobVertexID,
 			Collections.singletonList(OperatorID.fromJobVertexID(jobVertexID)),
+			slot,
 			1,
 			1,
 			ExecutionState.RUNNING);
@@ -366,7 +410,28 @@ public class CheckpointCoordinatorTestingUtils {
 		int parallelism,
 		int maxParallelism,
 		ExecutionState state,
-		ExecutionState ... successiveStates) {
+		ExecutionState ... successiveStates) throws Exception {
+
+		return mockExecutionVertex(
+			attemptID,
+			jobVertexID,
+			jobVertexIDs,
+			null,
+			parallelism,
+			maxParallelism,
+			state,
+			successiveStates);
+	}
+
+	static ExecutionVertex mockExecutionVertex(
+		ExecutionAttemptID attemptID,
+		JobVertexID jobVertexID,
+		List<OperatorID> jobVertexIDs,
+		@Nullable LogicalSlot slot,
+		int parallelism,
+		int maxParallelism,
+		ExecutionState state,
+		ExecutionState ... successiveStates) throws Exception {
 
 		ExecutionVertex vertex = mock(ExecutionVertex.class);
 
@@ -378,6 +443,15 @@ public class CheckpointCoordinatorTestingUtils {
 			1L,
 			Time.milliseconds(500L)
 		));
+		if (slot != null) {
+			// is there a better way to do this?
+			//noinspection unchecked
+			AtomicReferenceFieldUpdater<Execution, LogicalSlot> slotUpdater =
+				(AtomicReferenceFieldUpdater<Execution, LogicalSlot>)
+					Whitebox.getInternalState(exec, "ASSIGNED_SLOT_UPDATER");
+			slotUpdater.compareAndSet(exec, null, slot);
+		}
+
 		when(exec.getAttemptId()).thenReturn(attemptID);
 		when(exec.getState()).thenReturn(state, successiveStates);
 
@@ -452,6 +526,23 @@ public class CheckpointCoordinatorTestingUtils {
 		Execution mock = mock(Execution.class);
 		when(mock.getAttemptId()).thenReturn(new ExecutionAttemptID());
 		when(mock.getState()).thenReturn(ExecutionState.RUNNING);
+		return mock;
+	}
+
+	static Execution mockExecution(Consumer<Tuple6<ExecutionAttemptID, JobID, Long, Long, CheckpointOptions, Boolean>> checkpointConsumer) {
+		ExecutionVertex executionVertex = mock(ExecutionVertex.class);
+		final JobID jobId = new JobID();
+		when(executionVertex.getJobId()).thenReturn(jobId);
+		Execution mock = mock(Execution.class);
+		ExecutionAttemptID executionAttemptID = new ExecutionAttemptID();
+		when(mock.getAttemptId()).thenReturn(executionAttemptID);
+		when(mock.getState()).thenReturn(ExecutionState.RUNNING);
+		when(mock.getVertex()).thenReturn(executionVertex);
+		doAnswer((InvocationOnMock invocation) -> {
+			final Object[] args = invocation.getArguments();
+			checkpointConsumer.accept(Tuple6.of(executionAttemptID, jobId, (Long) args[0], (Long) args[1], (CheckpointOptions) args[2], false));
+			return null;
+		}).when(mock).triggerCheckpoint(anyLong(), anyLong(), any(CheckpointOptions.class));
 		return mock;
 	}
 
@@ -587,6 +678,27 @@ public class CheckpointCoordinatorTestingUtils {
 			@Override
 			public V get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
 				return scheduledFuture.get(timeout, unit);
+			}
+		}
+	}
+
+	static class CoundDownLatchCheckpointConsumers implements Consumer<Tuple6<ExecutionAttemptID, JobID, Long, Long, CheckpointOptions, Boolean>> {
+		private ArrayDeque<CountDownLatch> consumers;
+
+		public CoundDownLatchCheckpointConsumers(ArrayDeque<CountDownLatch> consumers) {
+			this.consumers = checkNotNull(consumers);
+		}
+
+		@Override
+		public void accept(Tuple6<ExecutionAttemptID, JobID, Long, Long, CheckpointOptions, Boolean> executionAttemptIDJobIDLongLongCheckpointOptionsBooleanTuple6) {
+			while (!consumers.isEmpty()) {
+				final CountDownLatch consumer = consumers.peek();
+				if (consumer.getCount() > 0) {
+					consumer.countDown();
+					break;
+				} else {
+					consumers.poll();
+				}
 			}
 		}
 	}

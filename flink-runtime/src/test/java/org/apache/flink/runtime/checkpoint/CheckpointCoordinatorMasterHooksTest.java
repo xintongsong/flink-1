@@ -201,7 +201,7 @@ public class CheckpointCoordinatorMasterHooksTest {
 		cc.addMasterHook(statefulHook2);
 
 		// trigger a checkpoint
-		assertTrue(cc.triggerCheckpoint(System.currentTimeMillis(), false));
+		assertFalse(cc.triggerCheckpoint(System.currentTimeMillis(), false).isCompletedExceptionally());
 		assertEquals(1, cc.getNumberOfPendingCheckpoints());
 
 		verify(statefulHook1, times(1)).triggerCheckpoint(anyLong(), anyLong(), any(Executor.class));
@@ -391,7 +391,7 @@ public class CheckpointCoordinatorMasterHooksTest {
 		cc.addMasterHook(hook);
 
 		// trigger a checkpoint
-		assertTrue(cc.triggerCheckpoint(System.currentTimeMillis(), false));
+		assertFalse(cc.triggerCheckpoint(System.currentTimeMillis(), false).isCompletedExceptionally());
 	}
 
 

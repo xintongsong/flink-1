@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 
 import static org.apache.flink.runtime.checkpoint.CheckpointCoordinatorTestingUtils.compareKeyedState;
 import static org.apache.flink.runtime.checkpoint.CheckpointCoordinatorTestingUtils.comparePartitionableState;
@@ -76,6 +77,8 @@ import static org.apache.flink.runtime.checkpoint.CheckpointCoordinatorTestingUt
 import static org.apache.flink.runtime.checkpoint.CheckpointCoordinatorTestingUtils.mockSubtaskState;
 import static org.apache.flink.runtime.checkpoint.CheckpointCoordinatorTestingUtils.verifyStateRestore;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -260,8 +263,14 @@ public class CheckpointCoordinatorRestoringTest extends TestLogger {
 			final JobVertexID statefulId = new JobVertexID();
 			final JobVertexID statelessId = new JobVertexID();
 
-			Execution statefulExec1 = mockExecution();
-			Execution statelessExec1 = mockExecution();
+			final CountDownLatch checkpointTriggeredLatch = new CountDownLatch(4);
+
+			Execution statefulExec1 = mockExecution(ignore -> {
+				checkpointTriggeredLatch.countDown();
+			});
+			Execution statelessExec1 = mockExecution(ignore -> {
+				checkpointTriggeredLatch.countDown();
+			});
 
 			ExecutionVertex stateful1 = mockExecutionVertex(statefulExec1, statefulId, 0, 1);
 			ExecutionVertex stateless1 = mockExecutionVertex(statelessExec1, statelessId, 0, 1);
@@ -301,7 +310,7 @@ public class CheckpointCoordinatorRestoringTest extends TestLogger {
 				failureManager);
 
 			//trigger a checkpoint and wait to become a completed checkpoint
-			assertTrue(coord.triggerCheckpoint(timestamp, false));
+			assertFalse(coord.triggerCheckpoint(timestamp, false).isCompletedExceptionally());
 
 			long checkpointId = checkpointIDCounter.getLast();
 
@@ -344,11 +353,12 @@ public class CheckpointCoordinatorRestoringTest extends TestLogger {
 					StateObjectCollection.singleton(serializedKeyGroupStatesForSavepoint),
 					StateObjectCollection.empty()));
 
+			checkpointTriggeredLatch.await();
 			checkpointId = checkpointIDCounter.getLast();
 			coord.receiveAcknowledgeMessage(new AcknowledgeCheckpoint(jid, statefulExec1.getAttemptId(), checkpointId, new CheckpointMetrics(), subtaskStatesForSavepoint), TASK_MANAGER_LOCATION_INFO);
 			coord.receiveAcknowledgeMessage(new AcknowledgeCheckpoint(jid, statelessExec1.getAttemptId(), checkpointId), TASK_MANAGER_LOCATION_INFO);
 
-			assertTrue(savepointFuture.isDone());
+			assertNotNull(savepointFuture.get());
 
 			//restore and jump the latest savepoint
 			coord.restoreLatestCheckpointedState(map, true, false);
