@@ -19,6 +19,7 @@
 package org.apache.flink.yarn;
 
 import org.apache.flink.annotation.VisibleForTesting;
+import org.apache.flink.api.common.cache.DistributedCache;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.client.deployment.ClusterDeploymentException;
 import org.apache.flink.client.deployment.ClusterDescriptor;
@@ -780,17 +781,14 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 
 		// only for per job mode
 		if (jobGraph != null) {
-			final Collection<Tuple2<String, org.apache.flink.core.fs.Path>> userArtifacts = jobGraph.getUserArtifacts().entrySet().stream()
-				.map(entry -> Tuple2.of(entry.getKey(), new org.apache.flink.core.fs.Path(entry.getValue().filePath)))
-				.collect(Collectors.toList());
-
-			for (Tuple2<String, org.apache.flink.core.fs.Path> userArtifact : userArtifacts) {
+			for (Map.Entry<String, DistributedCache.DistributedCacheEntry> entry : jobGraph.getUserArtifacts().entrySet()) {
+				org.apache.flink.core.fs.Path path = new org.apache.flink.core.fs.Path(entry.getValue().filePath);
 				// only upload local files
-				if (!userArtifact.f1.getFileSystem().isDistributedFS()) {
-					Path localPath = new Path(userArtifact.f1.getPath());
+				if (!path.getFileSystem().isDistributedFS()) {
+					Path localPath = new Path(path.getPath());
 					Tuple2<Path, Long> remoteFileInfo =
-						Utils.uploadLocalFileToRemote(fs, appId.toString(), localPath, homeDir, userArtifact.f0);
-					jobGraph.setUserArtifactRemotePath(userArtifact.f0, remoteFileInfo.f0.toString());
+						Utils.uploadLocalFileToRemote(fs, appId.toString(), localPath, homeDir, entry.getKey());
+					jobGraph.setUserArtifactRemotePath(entry.getKey(), remoteFileInfo.f0.toString());
 				}
 			}
 
