@@ -507,7 +507,7 @@ public class RocksDBStateBackend extends AbstractStateBackend implements Configu
 			keyGroupRange,
 			executionConfig,
 			localRecoveryConfig,
-			getPriorityQueueStateType(priorityQueueStateType),
+			getPriorityQueueStateType(),
 			ttlTimeProvider,
 			metricGroup,
 			stateHandles,
@@ -717,13 +717,12 @@ public class RocksDBStateBackend extends AbstractStateBackend implements Configu
 	}
 
 	/**
-	 * Gets the PriorityQueueStateType. It will fallback to the default value, if it is not explicitly set.
-	 * @param origin
-	 * @return
+	 * Gets the type of the priority queue state. It will fallback to the default value, if it is not explicitly set.
+	 * @return The type of the priority queue state.
 	 */
-	private PriorityQueueStateType getPriorityQueueStateType(PriorityQueueStateType origin) {
-		return origin == null ?
-			PriorityQueueStateType.valueOf(TIMER_SERVICE_FACTORY.defaultValue()) : origin;
+	private PriorityQueueStateType getPriorityQueueStateType() {
+		return priorityQueueStateType == null ?
+			PriorityQueueStateType.valueOf(TIMER_SERVICE_FACTORY.defaultValue()) : priorityQueueStateType;
 	}
 
 	// ------------------------------------------------------------------------
