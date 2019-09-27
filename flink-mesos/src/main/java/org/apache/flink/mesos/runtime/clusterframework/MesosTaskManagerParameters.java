@@ -24,6 +24,9 @@ import org.apache.flink.configuration.IllegalConfigurationException;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.configuration.description.Description;
 import org.apache.flink.runtime.clusterframework.ContaineredTaskManagerParameters;
+import org.apache.flink.runtime.clusterframework.TaskExecutorResourceSpec;
+import org.apache.flink.runtime.clusterframework.TaskExecutorResourceUtils;
+import org.apache.flink.util.ConfigurationException;
 import org.apache.flink.util.Preconditions;
 
 import com.netflix.fenzo.ConstraintEvaluator;
@@ -333,10 +336,20 @@ public class MesosTaskManagerParameters {
 	public static MesosTaskManagerParameters create(Configuration flinkConfig) {
 
 		List<ConstraintEvaluator> constraints = parseConstraints(flinkConfig.getString(MESOS_CONSTRAINTS_HARD_HOSTATTR));
+		TaskExecutorResourceSpec taskExecutorResourceSpec;
+		if (flinkConfig.getBoolean(TaskManagerOptions.ENABLE_FLIP_49_CONFIG)) {
+			try {
+				taskExecutorResourceSpec = TaskExecutorResourceUtils.resourceSpecFromConfig(flinkConfig);
+			} catch (ConfigurationException e) {
+				throw new RuntimeException(e);
+			}
+		} else {
+			taskExecutorResourceSpec = null;
+		}
 		// parse the common parameters
 		ContaineredTaskManagerParameters containeredParameters = ContaineredTaskManagerParameters.create(
 			flinkConfig,
-			null,
+			taskExecutorResourceSpec,
 			flinkConfig.getInteger(MESOS_RM_TASKS_MEMORY_MB),
 			flinkConfig.getInteger(MESOS_RM_TASKS_SLOTS));
 
