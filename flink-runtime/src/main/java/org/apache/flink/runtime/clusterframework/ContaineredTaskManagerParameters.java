@@ -48,13 +48,17 @@ public class ContaineredTaskManagerParameters implements java.io.Serializable {
 	/** Environment variables to add to the Java process. */
 	private final HashMap<String, String> taskManagerEnv;
 
+	private final TaskExecutorResourceSpec taskExecutorResourceSpec;
+
 	public ContaineredTaskManagerParameters(
+			TaskExecutorResourceSpec taskExecutorResourceSpec,
 			long totalContainerMemoryMB,
 			long taskManagerHeapSizeMB,
 			long taskManagerDirectMemoryLimitMB,
 			int numSlots,
 			HashMap<String, String> taskManagerEnv) {
 
+		this.taskExecutorResourceSpec = taskExecutorResourceSpec;
 		this.totalContainerMemoryMB = totalContainerMemoryMB;
 		this.taskManagerHeapSizeMB = taskManagerHeapSizeMB;
 		this.taskManagerDirectMemoryLimitMB = taskManagerDirectMemoryLimitMB;
@@ -63,6 +67,10 @@ public class ContaineredTaskManagerParameters implements java.io.Serializable {
 	}
 
 	// ------------------------------------------------------------------------
+
+	public TaskExecutorResourceSpec getTaskExecutorResourceSpec() {
+		return taskExecutorResourceSpec;
+	}
 
 	public long taskManagerTotalMemoryMB() {
 		return totalContainerMemoryMB;
@@ -90,7 +98,8 @@ public class ContaineredTaskManagerParameters implements java.io.Serializable {
 	@Override
 	public String toString() {
 		return "TaskManagerParameters {" +
-			"totalContainerMemory=" + totalContainerMemoryMB +
+			"taskExecutorResourceSpec=" + (taskExecutorResourceSpec == null ? "null" : taskExecutorResourceSpec) +
+			", totalContainerMemory=" + totalContainerMemoryMB +
 			", taskManagerHeapSize=" + taskManagerHeapSizeMB +
 			", taskManagerDirectMemoryLimit=" + taskManagerDirectMemoryLimitMB +
 			", numSlots=" + numSlots +
@@ -151,6 +160,7 @@ public class ContaineredTaskManagerParameters implements java.io.Serializable {
 	 */
 	public static ContaineredTaskManagerParameters create(
 			Configuration config,
+			TaskExecutorResourceSpec taskExecutorResourceSpec,
 			long containerMemoryMB,
 			int numSlots) {
 		// (1) try to compute how much memory used by container
@@ -175,6 +185,6 @@ public class ContaineredTaskManagerParameters implements java.io.Serializable {
 
 		// done
 		return new ContaineredTaskManagerParameters(
-			containerMemoryMB, heapSizeMB, offHeapSizeMB, numSlots, envVars);
+			taskExecutorResourceSpec, containerMemoryMB, heapSizeMB, offHeapSizeMB, numSlots, envVars);
 	}
 }
