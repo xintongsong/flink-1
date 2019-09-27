@@ -24,7 +24,6 @@ import org.apache.flink.configuration.TaskManagerOptions;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -48,11 +47,16 @@ public class BashJavaUtilsTest extends JavaBashTestBase {
 
 	private void verifyDynamicConfigs(String dynamicConfigsStr) {
 		Configuration conf = new Configuration();
-		for (String configStr : dynamicConfigsStr.split(" ")) {
-			assertThat(configStr, startsWith("-D"));
-			String[] configKV = configStr.substring(2).split("=");
-			assertThat(configKV.length, is(2));
-			conf.setString(configKV[0], configKV[1]);
+		String[] dynamicConfigs = dynamicConfigsStr.split(" ");
+		assertThat(dynamicConfigs.length, is(7 * 2));
+		for (int i = 0; i < dynamicConfigs.length; ++i) {
+			if (i % 2 == 0) {
+				assertThat(dynamicConfigs[i], is("-D"));
+			} else {
+				String[] configKV = dynamicConfigs[i].split("=");
+				assertThat(configKV.length, is(2));
+				conf.setString(configKV[0], configKV[1]);
+			}
 		}
 
 		assertTrue(conf.contains(TaskManagerOptions.FRAMEWORK_HEAP_MEMORY));

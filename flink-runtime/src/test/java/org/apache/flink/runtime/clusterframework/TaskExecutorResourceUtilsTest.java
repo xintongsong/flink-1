@@ -34,7 +34,6 @@ import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -61,11 +60,16 @@ public class TaskExecutorResourceUtilsTest extends TestLogger {
 	public void testGenerateDynamicConfigurations() {
 		String dynamicConfigsStr = TaskExecutorResourceUtils.generateDynamicConfigsStr(TM_RESOURCE_SPEC);
 		Map<String, String> configs = new HashMap<>();
-		for (String configStr : dynamicConfigsStr.split(" ")) {
-			assertThat(configStr, startsWith("-D"));
-			String[] configKV = configStr.substring(2).split("=");
-			assertThat(configKV.length, is(2));
-			configs.put(configKV[0], configKV[1]);
+		String[] dynamicConfigs = dynamicConfigsStr.split(" ");
+		assertThat(dynamicConfigs.length, is(7 * 2));
+		for (int i = 0; i < dynamicConfigs.length; ++i) {
+			if (i % 2 == 0) {
+				assertThat(dynamicConfigs[i], is("-D"));
+			} else {
+				String[] configKV = dynamicConfigs[i].split("=");
+				assertThat(configKV.length, is(2));
+				configs.put(configKV[0], configKV[1]);
+			}
 		}
 
 		assertThat(MemorySize.parse(configs.get(TaskManagerOptions.FRAMEWORK_HEAP_MEMORY.key())), is(TM_RESOURCE_SPEC.getFrameworkHeapSize()));

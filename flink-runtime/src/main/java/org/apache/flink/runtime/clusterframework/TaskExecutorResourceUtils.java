@@ -125,7 +125,7 @@ public class TaskExecutorResourceUtils {
 	private static String assembleDynamicConfigsStr(final Map<String, String> configs) {
 		final StringBuffer sb = new StringBuffer();
 		for (Map.Entry<String, String> entry : configs.entrySet()) {
-			sb.append("-D").append(entry.getKey()).append("=").append(entry.getValue()).append(" ");
+			sb.append("-D ").append(entry.getKey()).append("=").append(entry.getValue()).append(" ");
 		}
 		return sb.toString();
 	}
