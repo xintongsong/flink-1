@@ -40,13 +40,22 @@ function cleanup {
 }
 
 function check_kubernetes_status {
-    minikube status
+    if [[ `uname -i` == 'aarch64' ]]; then
+      curl --insecure https://localhost:6443/healthz
+    else
+      minikube status
+    fi
+
     return $?
 }
 
 function start_kubernetes_if_not_running {
     if ! check_kubernetes_status; then
-        minikube start
+        if [[ `uname -i` == 'aarch64' ]]; then
+            return $?
+        else
+            minikube start
+        if
     fi
 
     check_kubernetes_status

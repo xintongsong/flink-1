@@ -184,4 +184,10 @@ else
 
 fi
 
-docker build --build-arg flink_dist="${FLINK_DIST}" --build-arg job_artifacts="${JOB_ARTIFACTS_TARGET}" --build-arg hadoop_jar="${SHADED_HADOOP}" --build-arg python_version="${PYTHON_VERSION}" -t "${IMAGE_NAME}" .
+if [[ `uname -i` == 'aarch64' ]]; then
+    DOCKERFILE="Dockerfile-ARM"
+else
+    DOCKERFILE="Dockerfile"
+fi
+
+docker build --build-arg flink_dist="${FLINK_DIST}" --build-arg job_artifacts="${JOB_ARTIFACTS_TARGET}" --build-arg hadoop_jar="${SHADED_HADOOP}" --build-arg python_version="${PYTHON_VERSION}" -t "${IMAGE_NAME}" -f $DOCKERFILE .
