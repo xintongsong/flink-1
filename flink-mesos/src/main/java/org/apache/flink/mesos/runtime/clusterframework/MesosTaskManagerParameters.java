@@ -336,6 +336,7 @@ public class MesosTaskManagerParameters {
 		// parse the common parameters
 		ContaineredTaskManagerParameters containeredParameters = ContaineredTaskManagerParameters.create(
 			flinkConfig,
+			null,
 			flinkConfig.getInteger(MESOS_RM_TASKS_MEMORY_MB),
 			flinkConfig.getInteger(MESOS_RM_TASKS_SLOTS));
 
