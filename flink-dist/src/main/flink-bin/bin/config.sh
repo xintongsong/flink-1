@@ -118,6 +118,8 @@ KEY_TASKM_NET_BUF_MIN="taskmanager.network.memory.min"
 KEY_TASKM_NET_BUF_MAX="taskmanager.network.memory.max"
 KEY_TASKM_NET_BUF_NR="taskmanager.network.numberOfBuffers" # fallback
 
+KEY_TASKM_ENABLE_FLIP49="taskmanager.enable-flip-49" # temporal feature option for flip-49
+
 KEY_TASKM_COMPUTE_NUMA="taskmanager.compute.numa"
 
 KEY_ENV_PID_DIR="env.pid.dir"
@@ -436,6 +438,11 @@ if [ -z "${FLINK_TM_NET_BUF_MAX}" -o "${FLINK_TM_NET_BUF_MAX}" = "-1" ]; then
     FLINK_TM_NET_BUF_MAX=$(parseBytes ${FLINK_TM_NET_BUF_MAX})
 fi
 
+# Define FLINK_TM_ENABLE_FLIP49 if it is not already set
+# temporal feature option for flip-49
+if [ -z "${FLINK_TM_ENABLE_FLIP49}" ]; then
+    FLINK_TM_ENABLE_FLIP49=$(readFromConfig ${KEY_TASKM_ENABLE_FLIP49} "false" "${YAML_CONF}")
+fi
 
 # Verify that NUMA tooling is available
 command -v numactl >/dev/null 2>&1
@@ -783,3 +790,55 @@ calculateTaskManagerHeapSizeMB() {
 
     echo ${tm_heap_size_mb}
 }
+
+getTmResourceDynamicConfigsAndExportJvmParams() {
+    if [[ "`echo ${FLINK_TM_ENABLE_FLIP49} | tr '[:upper:]' '[:lower:]'`" == "true" ]]; then
+        echo "$(getTmResourceDynamicConfigsAndExportJvmParamsFlip49)"
+    else
+        echo "$(getTmResourceDynamicConfigsAndExportJvmParamsLegacy)"
+    fi
+}
+
+getTmResourceDynamicConfigsAndExportJvmParamsFlip49() {
+    local class_to_run=org.apache.flink.runtime.util.BashJavaUtils
+    local command=GET_TM_RESOURCE_CONFIGS_AND_JVM_PARAMS
+    local class_path=`constructFlinkClassPath`
+    class_path=`manglePathList ${class_path}`
+
+    local output="`${JAVA_RUN} -classpath ${class_path} ${class_to_run} ${command} --configDir ${FLINK_CONF_DIR} 2> /dev/null`"
+    if [[ $? -ne 0 ]]; then
+        echo "[ERROR] Cannot get TaskManager resource dynamic configs and JVM parameters from BashJavaUtils."
+        exit 1
+    fi
+
+    IFS=$'\n' lines=($output)
+    local dynamic_configs=${lines[0]} # dynamic configs
+    local jvm_params=${lines[1]} # jvm parameters
+
+    echo ${jvm_params} $'\n' ${dynamic_configs}
+}
+
+getTmResourceDynamicConfigsAndExportJvmParamsLegacy() {
+    if [ ! -z "${FLINK_TM_HEAP_MB}" ] && [ "${FLINK_TM_HEAP}" == 0 ]; then
+	    echo "used deprecated key \`${KEY_TASKM_MEM_MB}\`, please replace with key \`${KEY_TASKM_MEM_SIZE}\`"
+    else
+	    flink_tm_heap_bytes=$(parseBytes ${FLINK_TM_HEAP})
+	    FLINK_TM_HEAP_MB=$(getMebiBytes ${flink_tm_heap_bytes})
+    fi
+
+    if [[ ! ${FLINK_TM_HEAP_MB} =~ ${IS_NUMBER} ]] || [[ "${FLINK_TM_HEAP_MB}" -lt "0" ]]; then
+        echo "[ERROR] Configured TaskManager JVM heap size is not a number. Please set '${KEY_TASKM_MEM_SIZE}' in ${FLINK_CONF_FILE}."
+        exit 1
+    fi
+
+    if [ "${FLINK_TM_HEAP_MB}" -gt "0" ]; then
+
+        TM_HEAP_SIZE=$(calculateTaskManagerHeapSizeMB)
+        # Long.MAX_VALUE in TB: This is an upper bound, much less direct memory will be used
+        TM_MAX_OFFHEAP_SIZE="8388607T"
+
+        local jvm_params="-Xms${TM_HEAP_SIZE}M -Xmx${TM_HEAP_SIZE}M -XX:MaxDirectMemorySize=${TM_MAX_OFFHEAP_SIZE}"
+        echo ${jvm_params} # no dynamic configs
+    fi
+}
+
