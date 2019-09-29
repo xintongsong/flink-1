@@ -357,21 +357,17 @@ public class TableEnvironmentImpl implements TableEnvironment {
 			CreateFunctionOperation createFunctionOperation = (CreateFunctionOperation) operation;
 			ObjectIdentifier objectIdentifier =
 				catalogManager.qualifyIdentifier(createFunctionOperation.getFunctionPath());
-			catalogManager.createFunction(
-				createFunctionOperation.getCatalogFunction(),
-				objectIdentifier,
-				createFunctionOperation.isIgnoreIfExists());
-		} else if (operation instanceof DropTableOperation) {
+			catalogManager.createFunction(createFunctionOperation.getCatalogFunction(),
+				objectIdentifier, createFunctionOperation.isIgnoreIfExists());
+		} else if (operation instanceof DropFunctionOperation) {
 			DropFunctionOperation dropFunctionOperation = (DropFunctionOperation) operation;
 			ObjectIdentifier objectIdentifier =
 				catalogManager.qualifyIdentifier(dropFunctionOperation.getFunctionPath());
-			catalogManager.dropFunction(
-				objectIdentifier,
-				dropFunctionOperation.isIfExists());
+			catalogManager.dropFunction(objectIdentifier, dropFunctionOperation.isIfExists());
 		} else {
 			throw new TableException(
 				"Unsupported SQL query! sqlUpdate() only accepts a single SQL statements of " +
-					"type INSERT, CREATE TABLE, DROP TABLE");
+					"type INSERT, CREATE TABLE, DROP TABLE, CREATE FUNCTION, DROP FUNCTION");
 		}
 	}
 
