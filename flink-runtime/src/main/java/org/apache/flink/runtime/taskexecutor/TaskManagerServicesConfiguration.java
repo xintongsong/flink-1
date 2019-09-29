@@ -22,9 +22,12 @@ import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ConfigurationUtils;
+import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.core.memory.MemoryType;
 import org.apache.flink.runtime.akka.AkkaUtils;
+import org.apache.flink.runtime.clusterframework.TaskExecutorResourceSpec;
+import org.apache.flink.runtime.clusterframework.TaskExecutorResourceUtils;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.registration.RetryingRegistrationConfiguration;
 import org.apache.flink.runtime.util.ConfigurationParserUtils;
@@ -85,6 +88,8 @@ public class TaskManagerServicesConfiguration {
 
 	private Optional<Time> systemResourceMetricsProbingInterval;
 
+	private final TaskExecutorResourceSpec taskExecutorResourceSpec;
+
 	public TaskManagerServicesConfiguration(
 			Configuration configuration,
 			ResourceID resourceID,
@@ -101,6 +106,7 @@ public class TaskManagerServicesConfiguration {
 			MemoryType memoryType,
 			float memoryFraction,
 			int pageSize,
+			TaskExecutorResourceSpec taskExecutorResourceSpec,
 			long timerServiceShutdownTimeout,
 			RetryingRegistrationConfiguration retryingRegistrationConfiguration,
 			Optional<Time> systemResourceMetricsProbingInterval) {
@@ -121,6 +127,8 @@ public class TaskManagerServicesConfiguration {
 		this.memoryType = checkNotNull(memoryType);
 		this.memoryFraction = memoryFraction;
 		this.pageSize = pageSize;
+
+		this.taskExecutorResourceSpec = taskExecutorResourceSpec;
 
 		checkArgument(timerServiceShutdownTimeout >= 0L, "The timer " +
 			"service shutdown timeout must be greater or equal to 0.");
@@ -207,6 +215,10 @@ public class TaskManagerServicesConfiguration {
 		return pageSize;
 	}
 
+	public MemorySize getShuffleMemorySize() {
+		return taskExecutorResourceSpec == null ? null : taskExecutorResourceSpec.getShuffleMemSize();
+	}
+
 	long getTimerServiceShutdownTimeout() {
 		return timerServiceShutdownTimeout;
 	}
@@ -259,6 +271,30 @@ public class TaskManagerServicesConfiguration {
 
 		final RetryingRegistrationConfiguration retryingRegistrationConfiguration = RetryingRegistrationConfiguration.fromConfiguration(configuration);
 
+		if (configuration.getBoolean(TaskManagerOptions.ENABLE_FLIP_49_CONFIG)) {
+			final TaskExecutorResourceSpec taskExecutorResourceSpec = TaskExecutorResourceUtils.resourceSpecFromConfig(configuration);
+			return new TaskManagerServicesConfiguration(
+				configuration,
+				resourceID,
+				remoteAddress,
+				localCommunicationOnly,
+				tmpDirs,
+				localStateRootDir,
+				freeHeapMemoryWithDefrag,
+				maxJvmHeapMemory,
+				localRecoveryMode,
+				queryableStateConfig,
+				ConfigurationParserUtils.getSlot(configuration),
+				ConfigurationParserUtils.getManagedMemorySize(configuration),
+				ConfigurationParserUtils.getMemoryType(configuration),
+				ConfigurationParserUtils.getManagedMemoryFraction(configuration),
+				ConfigurationParserUtils.getPageSize(configuration),
+				taskExecutorResourceSpec,
+				timerServiceShutdownTimeout,
+				retryingRegistrationConfiguration,
+				ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
+		}
+
 		return new TaskManagerServicesConfiguration(
 			configuration,
 			resourceID,
@@ -275,6 +311,7 @@ public class TaskManagerServicesConfiguration {
 			ConfigurationParserUtils.getMemoryType(configuration),
 			ConfigurationParserUtils.getManagedMemoryFraction(configuration),
 			ConfigurationParserUtils.getPageSize(configuration),
+			null,
 			timerServiceShutdownTimeout,
 			retryingRegistrationConfiguration,
 			ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
