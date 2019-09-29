@@ -22,9 +22,12 @@ import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ConfigurationUtils;
+import org.apache.flink.configuration.MemorySize;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.core.memory.MemoryType;
 import org.apache.flink.runtime.akka.AkkaUtils;
+import org.apache.flink.runtime.clusterframework.TaskExecutorResourceSpec;
+import org.apache.flink.runtime.clusterframework.TaskExecutorResourceUtils;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.registration.RetryingRegistrationConfiguration;
 import org.apache.flink.runtime.util.ConfigurationParserUtils;
@@ -87,6 +90,12 @@ public class TaskManagerServicesConfiguration {
 
 	private Optional<Time> systemResourceMetricsProbingInterval;
 
+	private final MemorySize taskHeapMemorySize;
+	private final MemorySize taskOffHeapMemorySize;
+	private final MemorySize shuffleMemorySize;
+	private final MemorySize onHeapManagedMemorySize;
+	private final MemorySize offHeapManagedMemorySize;
+
 	public TaskManagerServicesConfiguration(
 			Configuration configuration,
 			ResourceID resourceID,
@@ -104,6 +113,11 @@ public class TaskManagerServicesConfiguration {
 			boolean preAllocateMemory,
 			float memoryFraction,
 			int pageSize,
+			MemorySize taskHeapMemorySize,
+			MemorySize taskOffHeapMemorySize,
+			MemorySize shffuleMemorySize,
+			MemorySize onHeapManagedMemorySize,
+			MemorySize offHeapManagedMemorySize,
 			long timerServiceShutdownTimeout,
 			RetryingRegistrationConfiguration retryingRegistrationConfiguration,
 			Optional<Time> systemResourceMetricsProbingInterval) {
@@ -125,6 +139,12 @@ public class TaskManagerServicesConfiguration {
 		this.preAllocateMemory = preAllocateMemory;
 		this.memoryFraction = memoryFraction;
 		this.pageSize = pageSize;
+
+		this.taskHeapMemorySize = taskHeapMemorySize;
+		this.taskOffHeapMemorySize = taskOffHeapMemorySize;
+		this.shuffleMemorySize = shffuleMemorySize;
+		this.onHeapManagedMemorySize = onHeapManagedMemorySize;
+		this.offHeapManagedMemorySize = offHeapManagedMemorySize;
 
 		checkArgument(timerServiceShutdownTimeout >= 0L, "The timer " +
 			"service shutdown timeout must be greater or equal to 0.");
@@ -215,6 +235,26 @@ public class TaskManagerServicesConfiguration {
 		return pageSize;
 	}
 
+	public MemorySize getTaskHeapMemorySize() {
+		return taskHeapMemorySize;
+	}
+
+	public MemorySize getTaskOffHeapMemorySize() {
+		return taskOffHeapMemorySize;
+	}
+
+	public MemorySize getShuffleMemorySize() {
+		return shuffleMemorySize;
+	}
+
+	public MemorySize getOnHeapManagedMemorySize() {
+		return onHeapManagedMemorySize;
+	}
+
+	public MemorySize getOffHeapManagedMemorySize() {
+		return offHeapManagedMemorySize;
+	}
+
 	long getTimerServiceShutdownTimeout() {
 		return timerServiceShutdownTimeout;
 	}
@@ -269,6 +309,39 @@ public class TaskManagerServicesConfiguration {
 
 		final RetryingRegistrationConfiguration retryingRegistrationConfiguration = RetryingRegistrationConfiguration.fromConfiguration(configuration);
 
+		if (configuration.getBoolean(TaskManagerOptions.ENABLE_FLIP_49_CONFIG)) {
+			try {
+				final TaskExecutorResourceSpec taskExecutorResourceSpec = TaskExecutorResourceUtils.resourceSpecFromConfig(configuration);
+				return new TaskManagerServicesConfiguration(
+					configuration,
+					resourceID,
+					remoteAddress,
+					localCommunicationOnly,
+					tmpDirs,
+					localStateRootDir,
+					freeHeapMemoryWithDefrag,
+					maxJvmHeapMemory,
+					localRecoveryMode,
+					queryableStateConfig,
+					ConfigurationParserUtils.getSlot(configuration),
+					ConfigurationParserUtils.getManagedMemorySize(configuration),
+					ConfigurationParserUtils.getMemoryType(configuration),
+					preAllocateMemory,
+					ConfigurationParserUtils.getManagedMemoryFraction(configuration),
+					ConfigurationParserUtils.getPageSize(configuration),
+					taskExecutorResourceSpec.getTaskHeapSize(),
+					taskExecutorResourceSpec.getOffHeapManagedMemorySize(),
+					taskExecutorResourceSpec.getShuffleMemSize(),
+					taskExecutorResourceSpec.getOnHeapManagedMemorySize(),
+					taskExecutorResourceSpec.getOffHeapManagedMemorySize(),
+					timerServiceShutdownTimeout,
+					retryingRegistrationConfiguration,
+					ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		return new TaskManagerServicesConfiguration(
 			configuration,
 			resourceID,
@@ -286,6 +359,11 @@ public class TaskManagerServicesConfiguration {
 			preAllocateMemory,
 			ConfigurationParserUtils.getManagedMemoryFraction(configuration),
 			ConfigurationParserUtils.getPageSize(configuration),
+			null,
+			null,
+			null,
+			null,
+			null,
 			timerServiceShutdownTimeout,
 			retryingRegistrationConfiguration,
 			ConfigurationUtils.getSystemResourceMetricsProbingInterval(configuration));
