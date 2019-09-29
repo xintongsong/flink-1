@@ -33,6 +33,8 @@ import org.apache.flink.streaming.runtime.tasks.ProcessingTimeService;
 
 import java.util.concurrent.ScheduledFuture;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 /**
  * {@link StreamOperator} for streaming sources.
  *
@@ -104,15 +106,11 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 			// a final watermark that indicates that we reached the end of event-time, and end inputs
 			// of the operator chain
 			if (!isCanceledOrStopped()) {
-				advanceToEndOfEventTime();
-
 				synchronized (lockingObject) {
 					operatorChain.endInput(1);
 				}
 			}
 		} finally {
-			// make sure that the context is closed in any case
-			ctx.close();
 			if (latencyEmitter != null) {
 				latencyEmitter.close();
 			}
@@ -123,6 +121,21 @@ public class StreamSource<OUT, SRC extends SourceFunction<OUT>> extends Abstract
 		if (!hasSentMaxWatermark) {
 			ctx.emitWatermark(Watermark.MAX_WATERMARK);
 			hasSentMaxWatermark = true;
+		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		try {
+			super.close();
+
+			checkNotNull(this.ctx);
+			advanceToEndOfEventTime();
+		} finally {
+			// make sure that the context is closed in any case
+			if (ctx != null) {
+				ctx.close();
+			}
 		}
 	}
 
