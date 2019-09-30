@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -153,13 +154,13 @@ public class StreamSourceOperatorWatermarksTest {
 			processingTimeService.setCurrentTime(i);
 		}
 
-		assertTrue(output.size() == 9);
+		assertEquals(9, output.size());
 
 		long nextWatermark = 0;
 		for (StreamElement el : output) {
 			nextWatermark += watermarkInterval;
 			Watermark wm = (Watermark) el;
-			assertTrue(wm.getTimestamp() == nextWatermark);
+			assertEquals(wm.getTimestamp(), nextWatermark);
 		}
 	}
 
