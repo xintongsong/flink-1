@@ -99,6 +99,9 @@ DEFAULT_ENV_JAVA_OPTS_HS=""                         # Optional JVM args (History
 DEFAULT_ENV_SSH_OPTS=""                             # Optional SSH parameters running in cluster mode
 DEFAULT_YARN_CONF_DIR=""                            # YARN Configuration Directory, if necessary
 DEFAULT_HADOOP_CONF_DIR=""                          # Hadoop Configuration Directory, if necessary
+DEFAULT_JVM_HEAPDUMP_ON_OOM="true"                  # Wheter enable heap dump on ooms
+DEFAULT_JVM_HEAPDUMP_DIRECTORY="/tmp"               # Heap dump directory
+DEFAULT_JVM_GC_LOGGING="false"                      # Wheter enable gc logging
 
 ########################################################################################################################
 # CONFIG KEYS: The default values can be overwritten by the following keys in conf/flink-conf.yaml
@@ -133,6 +136,9 @@ KEY_ENV_JAVA_OPTS_HS="env.java.opts.historyserver"
 KEY_ENV_SSH_OPTS="env.ssh.opts"
 KEY_HIGH_AVAILABILITY="high-availability"
 KEY_ZK_HEAP_MB="zookeeper.heap.mb"
+KEY_JVM_GC_LOGGING="jvm.gc-logging"
+KEY_JVM_HEAPDUMP_ON_OOM="jvm.heapdump-on-oom"
+KEY_JVM_HEAPDUMP_DIRECTORY="jvm.heapdump.directory"
 
 ########################################################################################################################
 # MEMORY SIZE UNIT
@@ -491,6 +497,24 @@ if [ -z "${FLINK_ENV_JAVA_OPTS_HS}" ]; then
     FLINK_ENV_JAVA_OPTS_HS=$(readFromConfig ${KEY_ENV_JAVA_OPTS_HS} "${DEFAULT_ENV_JAVA_OPTS_HS}" "${YAML_CONF}")
     # Remove leading and ending double quotes (if present) of value
     FLINK_ENV_JAVA_OPTS_HS="$( echo "${FLINK_ENV_JAVA_OPTS_HS}" | sed -e 's/^"//'  -e 's/"$//' )"
+fi
+
+if [ -z "${FLINK_JVM_GC_LOGGING}" ];then
+    FLINK_JVM_GC_LOGGING=$(readFromConfig ${KEY_JVM_GC_LOGGING} "${DEFAULT_JVM_GC_LOGGING}" "${YAML_CONF}")
+    # Remove leading and ending double quotes (if present) of value
+    FLINK_JVM_GC_LOGGING="$( echo "${FLINK_JVM_GC_LOGGING}" | sed -e 's/^"//'  -e 's/"$//' )"
+fi
+
+if [ -z "${FLINK_JVM_HEAPDUMP_ON_OOM}" ];then
+    FLINK_JVM_HEAPDUMP_ON_OOM=$(readFromConfig ${KEY_JVM_HEAPDUMP_ON_OOM} "${DEFAULT_JVM_HEAPDUMP_ON_OOM}" "${YAML_CONF}")
+    # Remove leading and ending double quotes (if present) of value
+    FLINK_JVM_HEAPDUMP_ON_OOM="$( echo "${FLINK_JVM_HEAPDUMP_ON_OOM}" | sed -e 's/^"//'  -e 's/"$//' )"
+fi
+
+if [ -z "${FLINK_JVM_HEAPDUMP_DIRECTORY}" ];then
+    FLINK_JVM_HEAPDUMP_DIRECTORY=$(readFromConfig ${KEY_JVM_HEAPDUMP_DIRECTORY} "${DEFAULT_JVM_HEAPDUMP_DIRECTORY}" "${YAML_CONF}")
+    # Remove leading and ending double quotes (if present) of value
+    FLINK_JVM_HEAPDUMP_DIRECTORY="$( echo "${FLINK_JVM_HEAPDUMP_DIRECTORY}" | sed -e 's/^"//'  -e 's/"$//' )"
 fi
 
 if [ -z "${FLINK_SSH_OPTS}" ]; then
