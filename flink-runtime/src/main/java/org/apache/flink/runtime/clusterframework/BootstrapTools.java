@@ -413,9 +413,9 @@ public class BootstrapTools {
 	public static String getTaskManagerShellCommand(
 			Configuration flinkConfig,
 			ContaineredTaskManagerParameters tmParams,
+			String appId,
 			String configDirectory,
 			String logDirectory,
-			String heapdumpDir,
 			boolean hasLogback,
 			boolean hasLog4j,
 			boolean hasKrb5,
@@ -436,37 +436,38 @@ public class BootstrapTools {
 		startCommandValues.put("jvmmem", StringUtils.join(params, ' '));
 
 		String javaOpts = "";
-		// Add jvm gc options
-		String dumpFilePath = "./flink-tm-heapdump.hprof";
-		String dumpFileDestPath = new File(heapdumpDir, new File(dumpFilePath).getName()).getAbsolutePath();
-		String oomScript = String.format("mkdir -p %s; mv %s %s; " +
-			"echo -e 'OutOfMemoryError! Killing current process %%p...\n" +
+		// Add default gc logging options if enabled
+		boolean enableGCLogging = flinkConfig.getBoolean(CoreOptions.FLINK_JVM_DEFAULT_GC_LOGGING);
+		if (enableGCLogging) {
+			String defaultGCOptions =
+				"-Xloggc:" + logDirectory + "/gc.log " +
+					"-XX:+PrintGCApplicationStoppedTime " +
+					"-XX:+PrintGCDetails " +
+					"-XX:+PrintGCDateStamps " +
+					"-XX:+UseGCLogFileRotation " +
+					"-XX:NumberOfGCLogFiles=10 " +
+					"-XX:GCLogFileSize=10M " +
+					"-XX:+PrintPromotionFailure " +
+					"-XX:+PrintGCCause";
+			javaOpts += defaultGCOptions;
+		}
+		// Add default heap dump options if enabled
+		boolean enableHeapDump = flinkConfig.getBoolean(CoreOptions.FLINK_JVM_HEAPDUMP_ON_OOM);
+		String heapdumpDir = flinkConfig.getString(CoreOptions.FLINK_JVM_HEAPDUMP_DIRECTORY);
+		if (enableHeapDump) {
+		String dumpFileName = "flink-tm-heapdump.hprof";
+		String dumpFileDestPath = new File(heapdumpDir, appId + "-" + dumpFileName).getAbsolutePath();
+		String oomScript = String.format("echo -e 'OutOfMemoryError! Killing current process %%p...\n" +
 			"Check gc logs and heapdump file(%s) for details.' > " +
 			logDirectory + "/taskmanager.err; " +
 			"kill -9 %%p",
-			heapdumpDir,
-			dumpFilePath,
-			dumpFileDestPath,
 			dumpFileDestPath);
-		String defaultGCOptions =
-			"-Xloggc:" + logDirectory + "/gc.log " +
-			"-XX:+PrintGCApplicationStoppedTime " +
-			"-XX:+PrintGCDetails " +
-			"-XX:+PrintGCDateStamps " +
-			"-XX:+UseGCLogFileRotation " +
-			"-XX:NumberOfGCLogFiles=10 " +
-			"-XX:GCLogFileSize=10M " +
-			"-XX:+PrintPromotionFailure " +
-			"-XX:+PrintGCCause";
-		javaOpts += defaultGCOptions;
-		if (heapdumpDir != null) {
 			javaOpts += String.format(
 				" -XX:+HeapDumpOnOutOfMemoryError " +
 				"-XX:HeapDumpPath=%s " +
 				"-XX:OnOutOfMemoryError=\"%s\"",
-				dumpFilePath,
-				oomScript
-			);
+				dumpFileDestPath,
+				oomScript);
 		}
 		javaOpts += " " + flinkConfig.getString(CoreOptions.FLINK_JVM_OPTIONS);
 		if (flinkConfig.getString(CoreOptions.FLINK_TM_JVM_OPTIONS).length() > 0) {
