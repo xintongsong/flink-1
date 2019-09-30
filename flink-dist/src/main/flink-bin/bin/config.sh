@@ -99,9 +99,9 @@ DEFAULT_ENV_JAVA_OPTS_HS=""                         # Optional JVM args (History
 DEFAULT_ENV_SSH_OPTS=""                             # Optional SSH parameters running in cluster mode
 DEFAULT_YARN_CONF_DIR=""                            # YARN Configuration Directory, if necessary
 DEFAULT_HADOOP_CONF_DIR=""                          # Hadoop Configuration Directory, if necessary
-DEFAULT_JVM_HEAPDUMP_ON_OOM="true"                  # Wheter enable heap dump on ooms
+DEFAULT_JVM_HEAPDUMP_ON_OOM="true"                  # Whether enable heap dump on ooms
 DEFAULT_JVM_HEAPDUMP_DIRECTORY="/tmp"               # Heap dump directory
-DEFAULT_JVM_GC_LOGGING="false"                      # Wheter enable gc logging
+DEFAULT_JVM_GC_LOGGING="false"                      # Whether enable gc logging
 
 ########################################################################################################################
 # CONFIG KEYS: The default values can be overwritten by the following keys in conf/flink-conf.yaml

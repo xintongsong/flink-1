@@ -18,8 +18,6 @@
 
 package org.apache.flink.configuration;
 
-import java.io.File;
-
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.annotation.docs.ConfigGroup;
 import org.apache.flink.annotation.docs.ConfigGroups;
