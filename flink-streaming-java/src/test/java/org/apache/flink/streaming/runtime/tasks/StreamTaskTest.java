@@ -1231,7 +1231,7 @@ public class StreamTaskTest extends TestLogger {
 	 * The created state backends can be retrieved from the static fields to check if the
 	 * CloseableRegistry closed them correctly.
 	 */
-	public static class StateBackendTestSource extends StreamTask<Long, StreamSource<Long, SourceFunction<Long>>> {
+	public static class StateBackendTestSource extends SourceStreamTask<Long, SourceFunction<Long>, StreamSource<Long, SourceFunction<Long>>> {
 
 		private static volatile boolean fail;
 
@@ -1240,7 +1240,7 @@ public class StreamTaskTest extends TestLogger {
 		}
 
 		@Override
-		protected void init() throws Exception {
+		protected void init() {
 
 		}
 
@@ -1249,11 +1249,11 @@ public class StreamTaskTest extends TestLogger {
 			if (fail) {
 				throw new RuntimeException();
 			}
-			context.allActionsCompleted();
+			super.processInput(context);
 		}
 
 		@Override
-		protected void cleanup() throws Exception {}
+		protected void cleanup() {}
 
 		@Override
 		public StreamTaskStateInitializer createStreamTaskStateInitializer() {
