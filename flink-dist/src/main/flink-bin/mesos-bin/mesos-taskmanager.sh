@@ -27,6 +27,29 @@ CC_CLASSPATH=`manglePathList $(constructFlinkClassPath):$INTERNAL_HADOOP_CLASSPA
 
 log=flink-taskmanager.log
 log_setting="-Dlog.file="$log" -Dlog4j.configuration=file:"$FLINK_CONF_DIR"/log4j.properties -Dlogback.configurationFile=file:"$FLINK_CONF_DIR"/logback.xml"
+gclog="flink-taskmanager.gc_log"
+
+if [ ${FLINK_JVM_GC_LOGGING} ];then
+    FLINK_JVM_GC_LOGGING_OPTS="-XLoggc:${gclog} " \
+      "-XX:+PrintGCApplicationStoppedTime " \
+			"-XX:+PrintGCDetails " \
+			"-XX:+PrintGCDateStamps " \
+			"-XX:+UseGCLogFileRotation " \
+			"-XX:NumberOfGCLogFiles=10 " \
+			"-XX:GCLogFileSize=10M " \
+			"-XX:+PrintPromotionFailure " \
+			"-XX:+PrintGCCause"
+		JVM_ARGS="${FLINK_JVM_GC_LOGGING_OPTS} ${JVM_ARGS}"
+fi
+
+FLINK_HEAPDUMP_NAME="flink-taskmanager.hprof"
+rm -rf ${FLINK_JVM_HEAPDUMP_DIRECTORY}/${FLINK_HEAPDUMP_NAME}
+if [ ${FLINK_JVM_HEAPDUMP_ON_OOM} ];then
+    FLINK_JVM_HEAPDUMP_OPTS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${FLINK_JVM_HEAPDUMP_DIRECTORY}/${FLINK_HEAPDUMP_NAME}
+      -XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\n
+      Check gc logs and heapdump file(${FLINK_JVM_HEAPDUMP_DIRECTORY}/${FLINK_HEAPDUMP_NAME}) for details.' > ${log}; kill -9 %p\""
+    JVM_ARGS="${FLINK_JVM_HEAPDUMP_OPTS} ${JVM_ARGS}"
+fi
 
 # Add precomputed memory JVM options
 if [ -z "${FLINK_ENV_JAVA_OPTS_MEM}" ]; then

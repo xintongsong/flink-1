@@ -174,11 +174,12 @@ public class YarnClusterDescriptorTest extends TestLogger {
 	@Test
 	public void testSetupApplicationMasterContainer() {
 		Configuration cfg = new Configuration();
+		cfg.setBoolean(CoreOptions.FLINK_JVM_DEFAULT_GC_LOGGING, true);
 		YarnClusterDescriptor clusterDescriptor = createYarnClusterDescriptor(cfg);
 
 		final String java = "$JAVA_HOME/bin/java";
 		final String jvmmem = "-Xms424m -Xmx424m";
-		final String defaultJvmOpts =
+		final String defaultGCLoggingOpts =
 			"-Xloggc:" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/gc.log " +
 			"-XX:+PrintGCApplicationStoppedTime " +
 			"-XX:+PrintGCDetails " +
@@ -188,6 +189,11 @@ public class YarnClusterDescriptorTest extends TestLogger {
 			"-XX:GCLogFileSize=10M " +
 			"-XX:+PrintPromotionFailure " +
 			"-XX:+PrintGCCause";
+		final String heapdumpOpts =
+			"-XX:+HeapDumpOnOutOfMemoryError " +
+				"-XX:HeapDumpPath=/tmp/test-flink-jm-heapdump.hprof " +
+				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\nCheck gc logs and heapdump file(/tmp/test-flink-jm-heapdump.hprof) for details.' > " +
+				"<LOG_DIR>/jobmanager.err; kill -9 %p\"";
 		final String jvmOpts = "-Djvm"; // if set
 		final String jmJvmOpts = "-DjmJvm"; // if set
 		final String krb5 = "-Djava.security.krb5.conf=krb5.conf";
@@ -209,129 +215,145 @@ public class YarnClusterDescriptorTest extends TestLogger {
 			// no logging, with/out krb5
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + // logging
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						false,
 						false,
 						false,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + krb5 +
 					" " + // logging
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						false,
 						false,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			// logback only, with/out krb5
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + logfile + " " + logback +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						false,
 						false,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + krb5 +
 					" " + logfile + " " + logback +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						false,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			// log4j, with/out krb5
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + logfile + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						false,
 						true,
 						false,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + krb5 +
 					" " + logfile + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						false,
 						true,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			// logback + log4j, with/out krb5
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						false,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts +
+					" " + defaultGCLoggingOpts +
+					" " + heapdumpOpts +
 					" " + // jvmOpts
 					" " + krb5 +
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			// logback + log4j, with/out krb5, different JVM opts
@@ -340,30 +362,32 @@ public class YarnClusterDescriptorTest extends TestLogger {
 			cfg.setString(CoreOptions.FLINK_JVM_OPTIONS, jvmOpts);
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts + " " + jvmOpts +
+					" " + defaultGCLoggingOpts + " " + heapdumpOpts + " " + jvmOpts +
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						false,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts + " " + jvmOpts + " " + krb5 + // jvmOpts
+					" " + defaultGCLoggingOpts + " " + heapdumpOpts + " " + jvmOpts + " " + krb5 + // jvmOpts
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			// logback + log4j, with/out krb5, different JVM opts
@@ -371,30 +395,32 @@ public class YarnClusterDescriptorTest extends TestLogger {
 			cfg.setString(CoreOptions.FLINK_JM_JVM_OPTIONS, jmJvmOpts);
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts + " " + jvmOpts + " " + jmJvmOpts +
+					" " + defaultGCLoggingOpts + " " + heapdumpOpts + " " + jvmOpts + " " + jmJvmOpts +
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						false,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			assertEquals(
 				java + " " + jvmmem +
-					" " + defaultJvmOpts + " " + jvmOpts + " " + jmJvmOpts + " " + krb5 + // jvmOpts
+					" " + defaultGCLoggingOpts + " " + heapdumpOpts + " " + jvmOpts + " " + jmJvmOpts + " " + krb5 + // jvmOpts
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			// now try some configurations with different yarn.container-start-command-template
@@ -403,16 +429,17 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				"%java% 1 %jvmmem% 2 %jvmopts% 3 %logging% 4 %class% 5 %args% 6 %redirects%");
 			assertEquals(
 				java + " 1 " + jvmmem +
-					" 2 " + defaultJvmOpts + " " + jvmOpts + " " + jmJvmOpts + " " + krb5 + // jvmOpts
+					" 2 " + defaultGCLoggingOpts + " " + heapdumpOpts + " " + jvmOpts + " " + jmJvmOpts + " " + krb5 + // jvmOpts
 					" 3 " + logfile + " " + logback + " " + log4j +
 					" 4 " + mainClass + " 5 " + args + " 6 " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 
 			cfg.setString(ConfigConstants.YARN_CONTAINER_START_COMMAND_TEMPLATE,
@@ -421,16 +448,17 @@ public class YarnClusterDescriptorTest extends TestLogger {
 			assertEquals(
 				java +
 					" " + logfile + " " + logback + " " + log4j +
-					" " + defaultJvmOpts + " " + jvmOpts + " " + jmJvmOpts + " " + krb5 + // jvmOpts
+					" " + defaultGCLoggingOpts + " " + heapdumpOpts + " " + jvmOpts + " " + jmJvmOpts + " " + krb5 + // jvmOpts
 					" " + jvmmem +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
 					.setupApplicationMasterContainer(
+						"test",
 						mainClass,
 						true,
 						true,
 						true,
-						jobManagerMemory, null)
+						jobManagerMemory)
 					.getCommands().get(0));
 		} finally {
 			clusterDescriptor.close();
