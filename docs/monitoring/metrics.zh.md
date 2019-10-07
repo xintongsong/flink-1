@@ -799,6 +799,21 @@ metrics.reporter.slf4j.interval: 60 SECONDS
 
 {% endhighlight %}
 
+### SignalFX (org.apache.flink.metrics.signalfx.ScheduledSignalFXReporter)
+
+In order to use this reporter you must copy `/opt/flink-metrics-signalfx-{{site.version}}.jar` into the `/lib` folder
+of your Flink distribution.
+
+Example configuration:
+
+{% highlight yaml %}
+
+metrics.reporter.signalfx.class: org.apache.flink.metrics.signalfx.ScheduledSignalFXReporter
+metrics.reporter.signalfx.interval: 60 SECONDS
+metrics.reporter.signalfx.token: xxx
+
+{% endhighlight %}
+
 ## System metrics
 
 By default Flink gathers several metrics that provide deep insights on the current state.
