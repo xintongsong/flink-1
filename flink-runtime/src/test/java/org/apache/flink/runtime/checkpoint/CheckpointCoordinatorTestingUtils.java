@@ -22,6 +22,7 @@ import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.core.fs.FSDataInputStream;
+import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.mock.Whitebox;
 import org.apache.flink.runtime.concurrent.ManuallyTriggeredScheduledExecutor;
 import org.apache.flink.runtime.execution.ExecutionState;
@@ -55,6 +56,8 @@ import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -565,5 +568,28 @@ public class CheckpointCoordinatorTestingUtils {
 			when(v.getJobVertex()).thenReturn(vertex);
 		}
 		return vertex;
+	}
+
+	static final class StringSerializer implements SimpleVersionedSerializer<String> {
+
+		static final int VERSION = 77;
+
+		@Override
+		public int getVersion() {
+			return VERSION;
+		}
+
+		@Override
+		public byte[] serialize(String checkpointData) throws IOException {
+			return checkpointData.getBytes(StandardCharsets.UTF_8);
+		}
+
+		@Override
+		public String deserialize(int version, byte[] serialized) throws IOException {
+			if (version != VERSION) {
+				throw new IOException("version mismatch");
+			}
+			return new String(serialized, StandardCharsets.UTF_8);
+		}
 	}
 }
