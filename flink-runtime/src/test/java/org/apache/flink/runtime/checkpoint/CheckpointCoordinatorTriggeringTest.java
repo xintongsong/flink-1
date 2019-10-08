@@ -38,11 +38,14 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.flink.runtime.checkpoint.CheckpointCoordinatorTestingUtils.mockExecutionVertex;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -289,29 +292,29 @@ public class CheckpointCoordinatorTriggeringTest extends TestLogger {
 			failureManager);
 
 		// Periodic
+		CompletableFuture<CompletedCheckpoint> periodicTriggerResult = coord.triggerCheckpoint(
+			System.currentTimeMillis(),
+			CheckpointProperties.forCheckpoint(CheckpointRetentionPolicy.NEVER_RETAIN_AFTER_TERMINATION),
+			null,
+			true,
+			false);
 		try {
-			coord.triggerCheckpoint(
-				System.currentTimeMillis(),
-				CheckpointProperties.forCheckpoint(CheckpointRetentionPolicy.NEVER_RETAIN_AFTER_TERMINATION),
-				null,
-				true,
-				false);
+			periodicTriggerResult.get();
 			fail("The triggerCheckpoint call expected an exception");
-		} catch (CheckpointException e) {
-			assertEquals(CheckpointFailureReason.PERIODIC_SCHEDULER_SHUTDOWN, e.getCheckpointFailureReason());
+		} catch (ExecutionException e) {
+			assertTrue(e.getCause() instanceof CheckpointException);
+			assertEquals(CheckpointFailureReason.PERIODIC_SCHEDULER_SHUTDOWN,
+				((CheckpointException) e.getCause()).getCheckpointFailureReason());
 		}
 
 		// Not periodic
-		try {
-			coord.triggerCheckpoint(
-				System.currentTimeMillis(),
-				CheckpointProperties.forCheckpoint(CheckpointRetentionPolicy.NEVER_RETAIN_AFTER_TERMINATION),
-				null,
-				false,
-				false);
-		} catch (CheckpointException e) {
-			fail("Unexpected exception : " + e.getCheckpointFailureReason().message());
-		}
+		CompletableFuture<CompletedCheckpoint> nonPeriodicTriggerResult = coord.triggerCheckpoint(
+			System.currentTimeMillis(),
+			CheckpointProperties.forCheckpoint(CheckpointRetentionPolicy.NEVER_RETAIN_AFTER_TERMINATION),
+			null,
+			false,
+			false);
+		assertFalse(nonPeriodicTriggerResult.isCompletedExceptionally());
 	}
 
 }

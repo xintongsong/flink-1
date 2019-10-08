@@ -441,24 +441,19 @@ public class CheckpointCoordinator {
 		// TODO, call triggerCheckpoint directly after removing timer thread
 		final CompletableFuture<CompletedCheckpoint> resultFuture = new CompletableFuture<>();
 		timer.execute(() -> {
-			try {
-				triggerCheckpoint(
-					timestamp,
-					checkpointProperties,
-					targetLocation,
-					false,
-					advanceToEndOfEventTime).
-				whenComplete((completedCheckpoint, throwable) -> {
-					if (throwable == null) {
-						resultFuture.complete(completedCheckpoint);
-					} else {
-						resultFuture.completeExceptionally(throwable);
-					}
-				});
-			} catch (CheckpointException e) {
-				Throwable cause = new CheckpointException("Failed to trigger savepoint.", e.getCheckpointFailureReason());
-				resultFuture.completeExceptionally(cause);
-			}
+			triggerCheckpoint(
+				timestamp,
+				checkpointProperties,
+				targetLocation,
+				false,
+				advanceToEndOfEventTime).
+			whenComplete((completedCheckpoint, throwable) -> {
+				if (throwable == null) {
+					resultFuture.complete(completedCheckpoint);
+				} else {
+					resultFuture.completeExceptionally(throwable);
+				}
+			});
 		});
 		return resultFuture;
 	}
@@ -474,15 +469,7 @@ public class CheckpointCoordinator {
 	 * @return <code>true</code> if triggering the checkpoint succeeded.
 	 */
 	public CompletableFuture<CompletedCheckpoint> triggerCheckpoint(long timestamp, boolean isPeriodic) {
-		try {
-			return triggerCheckpoint(timestamp, checkpointProperties, null, isPeriodic, false);
-		} catch (CheckpointException e) {
-			long latestGeneratedCheckpointId = getCheckpointIdCounter().get();
-			// here we can not get the failed pending checkpoint's id,
-			// so we pass the negative latest generated checkpoint id as a special flag
-			failureManager.handleJobLevelCheckpointException(e, -1 * latestGeneratedCheckpointId);
-			return FutureUtils.completedExceptionally(e);
-		}
+		return triggerCheckpoint(timestamp, checkpointProperties, null, isPeriodic, false);
 	}
 
 	@VisibleForTesting
@@ -491,7 +478,38 @@ public class CheckpointCoordinator {
 			CheckpointProperties props,
 			@Nullable String externalSavepointLocation,
 			boolean isPeriodic,
-			boolean advanceToEndOfTime) throws CheckpointException {
+			boolean advanceToEndOfTime) {
+		long nextCheckpointDelay = baseInterval;
+		try {
+			return triggerCheckpointImpl(
+				timestamp, props, externalSavepointLocation, isPeriodic, advanceToEndOfTime);
+		} catch (Throwable t) {
+			if (t instanceof CheckpointException) {
+				final CheckpointException checkpointException = (CheckpointException) t;
+				if (checkpointException.getCheckpointFailureReason() ==
+					CheckpointFailureReason.MINIMUM_TIME_BETWEEN_CHECKPOINTS) {
+					nextCheckpointDelay = earliestRelativeTimeNextCheckpointBeTriggered - clock.relativeTimeMillis();
+				}
+				long latestGeneratedCheckpointId = getCheckpointIdCounter().get();
+				// here we can not get the failed pending checkpoint's id,
+				// so we pass the negative latest generated checkpoint id as a special flag
+				failureManager.handleJobLevelCheckpointException(
+					checkpointException, -1 * latestGeneratedCheckpointId);
+			}
+			return FutureUtils.completedExceptionally(t);
+		} finally {
+			if (isPeriodic) {
+				checkAndScheduleCheckpointTrigger(nextCheckpointDelay);
+			}
+		}
+	}
+
+	private CompletableFuture<CompletedCheckpoint> triggerCheckpointImpl(
+		long timestamp,
+		CheckpointProperties props,
+		@Nullable String externalSavepointLocation,
+		boolean isPeriodic,
+		boolean advanceToEndOfTime) throws CheckpointException {
 
 		if (advanceToEndOfTime && !(props.isSynchronous() && props.isSavepoint())) {
 			throw new IllegalArgumentException("Only synchronous savepoints are allowed to advance the watermark to MAX.");
@@ -1009,13 +1027,10 @@ public class CheckpointCoordinator {
 			// trigger the checkpoint from the trigger timer, to finish the work of this thread before
 			// starting with the next checkpoint
 			if (periodicScheduling) {
-				if (currentPeriodicTrigger != null) {
-					currentPeriodicTrigger.cancel(false);
-				}
 				currentPeriodicTrigger = scheduleTriggerWithDelay(0L);
 			}
 			else {
-				timer.execute(new ScheduledTrigger());
+				scheduleTriggerWithDelay(0L);
 			}
 		}
 	}
@@ -1288,16 +1303,7 @@ public class CheckpointCoordinator {
 	 * @throws CheckpointException If the minimum interval between checkpoints has not passed.
 	 */
 	private void checkMinPauseBetweenCheckpoints() throws CheckpointException {
-		final long durationTillNextMillis = earliestRelativeTimeNextCheckpointBeTriggered - clock.relativeTimeMillis();
-
-		if (durationTillNextMillis > 0) {
-			if (currentPeriodicTrigger != null) {
-				currentPeriodicTrigger.cancel(false);
-				currentPeriodicTrigger = null;
-			}
-			// Reassign the new trigger to the currentPeriodicTrigger
-			currentPeriodicTrigger = scheduleTriggerWithDelay(durationTillNextMillis);
-
+		if (earliestRelativeTimeNextCheckpointBeTriggered > clock.relativeTimeMillis()) {
 			throw new CheckpointException(CheckpointFailureReason.MINIMUM_TIME_BETWEEN_CHECKPOINTS);
 		}
 	}
@@ -1306,10 +1312,8 @@ public class CheckpointCoordinator {
 		return ThreadLocalRandom.current().nextLong(minPauseBetweenCheckpoints, baseInterval + 1L);
 	}
 
-	private ScheduledFuture<?> scheduleTriggerWithDelay(long initDelay) {
-		return timer.scheduleAtFixedRate(
-			new ScheduledTrigger(),
-			initDelay, baseInterval, TimeUnit.MILLISECONDS);
+	private ScheduledFuture<?> scheduleTriggerWithDelay(long delay) {
+		return timer.schedule(new ScheduledTrigger(), delay, TimeUnit.MILLISECONDS);
 	}
 
 	// ------------------------------------------------------------------------
@@ -1463,7 +1467,7 @@ public class CheckpointCoordinator {
 	}
 
 	private void checkAndResetCheckpointScheduler() {
-		if (!shutdown && periodicScheduling && currentPeriodicTrigger == null) {
+		if (!shutdown && periodicScheduling && triggerRequestQueued) {
 			synchronized (lock) {
 				if (pendingCheckpoints.isEmpty() || allPendingCheckpointsDiscarded()) {
 					triggerRequestQueued = false;
@@ -1475,5 +1479,16 @@ public class CheckpointCoordinator {
 
 	private boolean allPendingCheckpointsDiscarded() {
 		return pendingCheckpoints.values().stream().allMatch(PendingCheckpoint::isDiscarded);
+	}
+
+	private void checkAndScheduleCheckpointTrigger(long delay) {
+		if (!shutdown && periodicScheduling) {
+			// schedule next trigger
+			synchronized (lock) {
+				if (!triggerRequestQueued) {
+					currentPeriodicTrigger = scheduleTriggerWithDelay(delay);
+				}
+			}
+		}
 	}
 }
