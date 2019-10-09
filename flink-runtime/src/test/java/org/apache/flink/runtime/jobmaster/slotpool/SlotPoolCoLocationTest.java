@@ -138,7 +138,7 @@ public class SlotPoolCoLocationTest extends TestLogger {
 			Collections.singletonList(new SlotOffer(
 				allocationId1,
 				0,
-				ResourceProfile.UNKNOWN)));
+				ResourceProfile.INFINITE)));
 
 		Collection<SlotOffer> slotOfferFuture2 = slotPoolGateway.offerSlots(
 			taskManagerLocation,
@@ -146,7 +146,7 @@ public class SlotPoolCoLocationTest extends TestLogger {
 			Collections.singletonList(new SlotOffer(
 				allocationId2,
 				0,
-				ResourceProfile.UNKNOWN)));
+				ResourceProfile.INFINITE)));
 
 		assertFalse(slotOfferFuture1.isEmpty());
 		assertFalse(slotOfferFuture2.isEmpty());

@@ -78,7 +78,7 @@ public class SimpleSlotProvider implements SlotProvider, SlotOwner {
 				new TaskManagerLocation(ResourceID.generate(), InetAddress.getLoopbackAddress(), 10000 + i),
 				0,
 				taskManagerGateway,
-				ResourceProfile.UNKNOWN);
+				ResourceProfile.INFINITE);
 			slots.add(as);
 		}
 
@@ -141,7 +141,7 @@ public class SimpleSlotProvider implements SlotProvider, SlotOwner {
 				logicalSlot.getTaskManagerLocation(),
 				logicalSlot.getPhysicalSlotNumber(),
 				logicalSlot.getTaskManagerGateway(),
-				ResourceProfile.UNKNOWN);
+				ResourceProfile.INFINITE);
 
 			slots.add(as);
 			allocatedSlots.remove(logicalSlot.getSlotRequestId());

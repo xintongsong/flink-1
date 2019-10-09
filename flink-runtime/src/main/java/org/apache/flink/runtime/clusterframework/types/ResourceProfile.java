@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.clusterframework.types;
 
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.operators.ResourceSpec;
 import org.apache.flink.api.common.resources.Resource;
 import org.apache.flink.util.Preconditions;
@@ -51,11 +52,19 @@ public class ResourceProfile implements Serializable, Comparable<ResourceProfile
 
 	private static final long serialVersionUID = 1L;
 
-	/** A ResourceProfile that indicates an unknown set of resources. */
+	/**
+	 * A ResourceProfile that indicates an unknown resource requirement.
+	 * This is mainly used for describing resource requirements that the exact amount of resource needed is not specified.
+	 * It can also be used for describing remaining resource of a multi task slot that contains tasks with unknown resource requirements.
+	 * It should not used for describing total resource of a task executor / slot, which should always be specific.
+	 * */
 	public static final ResourceProfile UNKNOWN = new ResourceProfile();
 
-	/** ResourceProfile which matches any other ResourceProfile. */
-	public static final ResourceProfile ANY = new ResourceProfile(Double.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Collections.emptyMap());
+	/**
+	 * A ResourceProfile that indicates infinite resource that matches any resource requirement, for testability purpose only.
+	 * */
+	@VisibleForTesting
+	public static final ResourceProfile INFINITE = new ResourceProfile(Double.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Collections.emptyMap());
 
 	/** A ResourceProfile describing zero resources. */
 	public static final ResourceProfile ZERO = new ResourceProfile(0, 0);
@@ -247,6 +256,14 @@ public class ResourceProfile implements Serializable, Comparable<ResourceProfile
 	 */
 	public boolean isMatching(ResourceProfile required) {
 
+		if (this == required) {
+			return true;
+		}
+
+		if (this == UNKNOWN) {
+			return false;
+		}
+
 		if (required == UNKNOWN) {
 			return true;
 		}
@@ -342,8 +359,8 @@ public class ResourceProfile implements Serializable, Comparable<ResourceProfile
 	 */
 	@Nonnull
 	public ResourceProfile merge(@Nonnull ResourceProfile other) {
-		if (equals(ANY) || other.equals(ANY)) {
-			return ANY;
+		if (equals(INFINITE) || other.equals(INFINITE)) {
+			return INFINITE;
 		}
 
 		if (this.equals(UNKNOWN) || other.equals(UNKNOWN)) {
@@ -374,8 +391,8 @@ public class ResourceProfile implements Serializable, Comparable<ResourceProfile
 	 * @return The subtracted resource profile.
 	 */
 	public ResourceProfile subtract(ResourceProfile other) {
-		if (equals(ANY) || other.equals(ANY)) {
-			return ANY;
+		if (equals(INFINITE) || other.equals(INFINITE)) {
+			return INFINITE;
 		}
 
 		if (this.equals(UNKNOWN) || other.equals(UNKNOWN)) {

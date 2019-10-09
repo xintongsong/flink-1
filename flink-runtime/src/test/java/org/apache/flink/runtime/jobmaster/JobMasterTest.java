@@ -463,7 +463,7 @@ public class JobMasterTest extends TestLogger {
 			// wait for the completion of the registration
 			registrationResponse.get();
 
-			final SlotOffer slotOffer = new SlotOffer(new AllocationID(), 0, ResourceProfile.UNKNOWN);
+			final SlotOffer slotOffer = new SlotOffer(new AllocationID(), 0, ResourceProfile.INFINITE);
 
 			final CompletableFuture<Collection<SlotOffer>> slotOfferFuture = jobMasterGateway.offerSlots(taskManagerLocation.getResourceID(), Collections.singleton(slotOffer), testingTimeout);
 
@@ -889,7 +889,7 @@ public class JobMasterTest extends TestLogger {
 
 			assertThat(submittedTaskFuture.isDone(), is(false));
 
-			final SlotOffer slotOffer = new SlotOffer(slotRequest.getAllocationId(), 0, ResourceProfile.UNKNOWN);
+			final SlotOffer slotOffer = new SlotOffer(slotRequest.getAllocationId(), 0, ResourceProfile.INFINITE);
 
 			final CompletableFuture<Collection<SlotOffer>> acceptedSlotsFuture = jobMasterGateway.offerSlots(taskManagerLocation.getResourceID(), Collections.singleton(slotOffer), testingTimeout);
 
@@ -2084,7 +2084,7 @@ public class JobMasterTest extends TestLogger {
 			.mapToObj(
 				index -> {
 					final AllocationID allocationId = allocationIdsResourceManagerGateway.takeAllocationId();
-					return new SlotOffer(allocationId, index, ResourceProfile.UNKNOWN);
+					return new SlotOffer(allocationId, index, ResourceProfile.INFINITE);
 				})
 			.collect(Collectors.toList());
 

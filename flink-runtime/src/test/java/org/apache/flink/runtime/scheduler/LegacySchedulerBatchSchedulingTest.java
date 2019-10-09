@@ -124,7 +124,7 @@ public class LegacySchedulerBatchSchedulingTest extends TestLogger {
 			SlotPoolUtils.offerSlots(
 				slotPool,
 				mainThreadExecutor,
-				Collections.singletonList(ResourceProfile.ANY),
+				Collections.singletonList(ResourceProfile.INFINITE),
 				new RpcTaskManagerGateway(testingTaskExecutorGateway, JobMasterId.generate()));
 
 			final LegacyScheduler legacyScheduler = createLegacyScheduler(jobGraph, slotPool, mainThreadExecutor, batchSlotTimeout);

@@ -160,7 +160,7 @@ public class SchedulerTestBase extends TestLogger {
 				final SlotOffer slotOffer = new SlotOffer(
 					new AllocationID(),
 					i,
-					ResourceProfile.ANY);
+					ResourceProfile.INFINITE);
 
 				slotOffers.add(slotOffer);
 			}
