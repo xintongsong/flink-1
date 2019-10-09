@@ -443,7 +443,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 
 	private static TaskSlotTable createTaskSlotTable() {
 		return new TaskSlotTable(
-			Collections.singletonList(ResourceProfile.UNKNOWN),
+			Collections.singletonList(ResourceProfile.INFINITE),
 			new TimerService<>(TestingUtils.defaultExecutor(), timeout.toMilliseconds()));
 
 	}

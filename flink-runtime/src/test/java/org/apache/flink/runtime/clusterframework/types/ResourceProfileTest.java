@@ -191,10 +191,11 @@ public class ResourceProfileTest {
 
 		assertEquals(ResourceProfile.UNKNOWN, rp1.merge(ResourceProfile.UNKNOWN));
 		assertEquals(ResourceProfile.UNKNOWN, ResourceProfile.UNKNOWN.merge(rp1));
-		assertEquals(ResourceProfile.UNKNOWN, ResourceProfile.UNKNOWN.merge(ResourceProfile.UNKNOWN));
-		assertEquals(ResourceProfile.ANY, rp1.merge(ResourceProfile.ANY));
-		assertEquals(ResourceProfile.ANY, ResourceProfile.ANY.merge(rp1));
-		assertEquals(ResourceProfile.ANY, ResourceProfile.ANY.merge(ResourceProfile.ANY));
+		assertEquals(ResourceProfile.UNKNOWN, ResourceProfile.UNKNOWN
+			.merge(ResourceProfile.UNKNOWN));
+		assertEquals(ResourceProfile.INFINITE, rp1.merge(ResourceProfile.INFINITE));
+		assertEquals(ResourceProfile.INFINITE, ResourceProfile.INFINITE.merge(rp1));
+		assertEquals(ResourceProfile.INFINITE, ResourceProfile.INFINITE.merge(ResourceProfile.INFINITE));
 	}
 
 	@Test
@@ -205,9 +206,9 @@ public class ResourceProfileTest {
 		ResourceProfile rp1 = new ResourceProfile(3.0, 300, 300, 300, 300, 300, Collections.emptyMap());
 		ResourceProfile rp2 = new ResourceProfile(largeDouble, largeInteger, largeInteger, largeInteger, largeInteger, largeInteger, Collections.emptyMap());
 
-		assertEquals(ResourceProfile.ANY, rp2.merge(rp2));
-		assertEquals(ResourceProfile.ANY, rp2.merge(rp1));
-		assertEquals(ResourceProfile.ANY, rp1.merge(rp2));
+		assertEquals(ResourceProfile.INFINITE, rp2.merge(rp2));
+		assertEquals(ResourceProfile.INFINITE, rp2.merge(rp1));
+		assertEquals(ResourceProfile.INFINITE, rp1.merge(rp2));
 	}
 
 	@Test
@@ -231,13 +232,14 @@ public class ResourceProfileTest {
 			// Ignore ex.
 		}
 
-		assertEquals(ResourceProfile.ANY, ResourceProfile.ANY.subtract(rp3));
-		assertEquals(ResourceProfile.ANY, ResourceProfile.ANY.subtract(ResourceProfile.ANY));
-		assertEquals(ResourceProfile.ANY, rp3.subtract(ResourceProfile.ANY));
+		assertEquals(ResourceProfile.INFINITE, ResourceProfile.INFINITE.subtract(rp3));
+		assertEquals(ResourceProfile.INFINITE, ResourceProfile.INFINITE.subtract(ResourceProfile.INFINITE));
+		assertEquals(ResourceProfile.INFINITE, rp3.subtract(ResourceProfile.INFINITE));
 
 		assertEquals(ResourceProfile.UNKNOWN, ResourceProfile.UNKNOWN.subtract(rp3));
 		assertEquals(ResourceProfile.UNKNOWN, rp3.subtract(ResourceProfile.UNKNOWN));
-		assertEquals(ResourceProfile.UNKNOWN, ResourceProfile.UNKNOWN.subtract(ResourceProfile.UNKNOWN));
+		assertEquals(ResourceProfile.UNKNOWN, ResourceProfile.UNKNOWN
+			.subtract(ResourceProfile.UNKNOWN));
 	}
 
 	@Test

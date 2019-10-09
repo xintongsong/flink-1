@@ -447,7 +447,7 @@ public class SlotPoolImplTest extends TestLogger {
 
 			assertEquals(allocationId1, canceledAllocations.take());
 
-			final SlotOffer slotOffer = new SlotOffer(allocationId1, 0, ResourceProfile.UNKNOWN);
+			final SlotOffer slotOffer = new SlotOffer(allocationId1, 0, ResourceProfile.INFINITE);
 
 			slotPool.registerTaskManager(taskManagerLocation.getResourceID());
 
@@ -481,7 +481,7 @@ public class SlotPoolImplTest extends TestLogger {
 					new SlotOffer(
 						new AllocationID(),
 						i,
-						ResourceProfile.UNKNOWN));
+						ResourceProfile.INFINITE));
 			}
 
 			final ArrayBlockingQueue<AllocationID> freedSlotQueue = new ArrayBlockingQueue<>(numSlotOffers);
@@ -534,8 +534,8 @@ public class SlotPoolImplTest extends TestLogger {
 
 			final AllocationID expiredSlotID = new AllocationID();
 			final AllocationID freshSlotID = new AllocationID();
-			final SlotOffer slotToExpire = new SlotOffer(expiredSlotID, 0, ResourceProfile.UNKNOWN);
-			final SlotOffer slotToNotExpire = new SlotOffer(freshSlotID, 1, ResourceProfile.UNKNOWN);
+			final SlotOffer slotToExpire = new SlotOffer(expiredSlotID, 0, ResourceProfile.INFINITE);
+			final SlotOffer slotToNotExpire = new SlotOffer(freshSlotID, 1, ResourceProfile.INFINITE);
 
 			assertThat(slotPool.registerTaskManager(taskManagerLocation.getResourceID()),
 				Matchers.is(true));
@@ -583,7 +583,7 @@ public class SlotPoolImplTest extends TestLogger {
 			Scheduler scheduler = setupScheduler(slotPool, mainThreadExecutor);
 
 			final AllocationID expiredAllocationId = new AllocationID();
-			final SlotOffer slotToExpire = new SlotOffer(expiredAllocationId, 0, ResourceProfile.UNKNOWN);
+			final SlotOffer slotToExpire = new SlotOffer(expiredAllocationId, 0, ResourceProfile.INFINITE);
 
 			OneShotLatch freeSlotLatch = new OneShotLatch();
 			taskManagerGateway.setFreeSlotFunction((AllocationID allocationId, Throwable cause) -> {
@@ -639,7 +639,7 @@ public class SlotPoolImplTest extends TestLogger {
 			final List<SlotOffer> slotOffers = new ArrayList<>(parallelism);
 
 			for (int i = 0; i < parallelism; i++) {
-				slotOffers.add(new SlotOffer(allocationIds.take(), i, ResourceProfile.UNKNOWN));
+				slotOffers.add(new SlotOffer(allocationIds.take(), i, ResourceProfile.INFINITE));
 			}
 
 			slotPool.registerTaskManager(taskManagerLocation.getResourceID());
@@ -697,11 +697,11 @@ public class SlotPoolImplTest extends TestLogger {
 			final List<SlotOffer> slotOffers = new ArrayList<>(2);
 
 			final AllocationID allocatedId = allocationIds.take();
-			slotOffers.add(new SlotOffer(allocatedId, 0, ResourceProfile.UNKNOWN));
+			slotOffers.add(new SlotOffer(allocatedId, 0, ResourceProfile.INFINITE));
 			allocatedSlotInfos.add(new AllocatedSlotInfo(0, allocatedId));
 
 			final AllocationID availableId = new AllocationID();
-			slotOffers.add(new SlotOffer(availableId, 1, ResourceProfile.UNKNOWN));
+			slotOffers.add(new SlotOffer(availableId, 1, ResourceProfile.INFINITE));
 			allocatedSlotInfos.add(new AllocatedSlotInfo(1, availableId));
 
 			slotPool.registerTaskManager(taskManagerLocation.getResourceID());
