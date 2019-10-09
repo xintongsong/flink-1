@@ -128,7 +128,6 @@ public class DataStreamSink<T> {
 	 */
 	private DataStreamSink<T> setResources(ResourceSpec minResources, ResourceSpec preferredResources) {
 		OperatorResourceParallelismUtils.validateMinAndPreferredResources(minResources, preferredResources);
-
 		transformation.setResources(minResources, preferredResources);
 
 		return this;
