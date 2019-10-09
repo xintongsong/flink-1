@@ -1,0 +1,143 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.flink.table.filesystem;
+
+import org.apache.flink.core.fs.Path;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Test for {@link RowPartitionComputer}.
+ */
+public class FileSystemFileCommitterTest {
+
+	@ClassRule
+	public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+	private File tmpFile;
+	private File outputFile;
+
+	private Path tmpPath;
+	private Path outputPath;
+
+	@Before
+	public void before() throws IOException {
+		tmpFile = TEMP_FOLDER.newFolder();
+		outputFile = TEMP_FOLDER.newFolder();
+
+		tmpPath = new Path(tmpFile.getPath());
+		outputPath = new Path(outputFile.getPath());
+	}
+
+	@SuppressWarnings("ResultOfMethodCallIgnored")
+	private void createFile(String path, String... files) throws IOException {
+		File p1 = new File(tmpFile, path);
+		p1.mkdirs();
+		for (String file: files) {
+			new File(p1, file).createNewFile();
+		}
+	}
+
+	@Test
+	public void testDynamicPartition() throws Exception {
+		FileSystemFileCommitter committer = new FileSystemFileCommitter(
+				true, tmpPath, outputPath, new HashMap<>(), 2);
+
+		createFile("cp-1/task-1/p1=0/p2=0/", "f1", "f2");
+		createFile("cp-1/task-2/p1=0/p2=0/", "f3");
+		createFile("cp-1/task-2/p1=0/p2=1/", "f4");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f1").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f2").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f3").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=1/f4").exists());
+
+		createFile("cp-1/task-2/p1=0/p2=1/", "f5");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f1").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f2").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f3").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=1/f5").exists());
+
+		committer = new FileSystemFileCommitter(false, tmpPath, outputPath, new HashMap<>(), 2);
+		createFile("cp-1/task-2/p1=0/p2=1/", "f6");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=1/f5").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=1/f6").exists());
+	}
+
+	@Test
+	public void testNotPartition() throws Exception {
+		FileSystemFileCommitter committer = new FileSystemFileCommitter(
+				true, tmpPath, outputPath, new HashMap<>(), 0);
+
+		createFile("cp-1/task-1/", "f1", "f2");
+		createFile("cp-1/task-2/", "f3");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "f1").exists());
+		Assert.assertTrue(new File(outputFile, "f2").exists());
+		Assert.assertTrue(new File(outputFile, "f3").exists());
+
+		createFile("cp-1/task-2/", "f4");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "f4").exists());
+
+		committer = new FileSystemFileCommitter(false, tmpPath, outputPath, new HashMap<>(), 0);
+		createFile("cp-1/task-2/", "f5");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "f4").exists());
+		Assert.assertTrue(new File(outputFile, "f5").exists());
+	}
+
+	@Test
+	public void testStaticPartition() throws Exception {
+		Map<String, String> partitions = new HashMap<>();
+		partitions.put("p1", "0");
+		partitions.put("p2", "0");
+		FileSystemFileCommitter committer = new FileSystemFileCommitter(
+				true, tmpPath, outputPath, partitions, 2);
+
+		createFile("cp-1/task-1/", "f1", "f2");
+		createFile("cp-1/task-2/", "f3");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f1").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f2").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f3").exists());
+
+		createFile("cp-1/task-2/", "f4");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f4").exists());
+
+		committer = new FileSystemFileCommitter(
+				false, tmpPath, outputPath, partitions, 2);
+		createFile("cp-1/task-2/", "f5");
+		committer.commit(1);
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f4").exists());
+		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f5").exists());
+	}
+}
