@@ -427,7 +427,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 	private TestingTaskExecutor createTestingTaskExecutor(TaskManagerServices taskManagerServices, PartitionTable<JobID> partitionTable) throws IOException {
 		return new TestingTaskExecutor(
 			RPC,
-			TaskManagerConfiguration.fromConfiguration(new Configuration()),
+			TaskManagerConfiguration.fromConfiguration(new Configuration(), null),
 			haServices,
 			taskManagerServices,
 			new HeartbeatServices(10_000L, 30_000L),

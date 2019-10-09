@@ -167,7 +167,7 @@ public class JvmExitOnFatalErrorTest {
 
 				final ShuffleEnvironment<?, ?> shuffleEnvironment = new NettyShuffleEnvironmentBuilder().build();
 
-				final TaskManagerRuntimeInfo tmInfo = TaskManagerConfiguration.fromConfiguration(taskManagerConfig);
+				final TaskManagerRuntimeInfo tmInfo = TaskManagerConfiguration.fromConfiguration(taskManagerConfig, null);
 
 				final Executor executor = Executors.newCachedThreadPool();
 
