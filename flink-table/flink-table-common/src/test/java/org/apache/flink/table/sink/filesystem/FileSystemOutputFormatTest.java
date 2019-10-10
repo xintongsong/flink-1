@@ -18,9 +18,7 @@
 
 package org.apache.flink.table.sink.filesystem;
 
-import org.apache.flink.api.common.io.OutputFormat;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.core.fs.FileSystem;
+import org.apache.flink.api.java.io.TextOutputFormat;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.functions.sink.OutputFormatSinkFunction;
 import org.apache.flink.streaming.api.operators.StreamSink;
@@ -36,8 +34,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -214,31 +210,6 @@ public class FileSystemOutputFormatTest {
 		String[] partitionColumns = partition ? new String[]{"c"} : new String[0];
 		RowPartitionComputer computer = new RowPartitionComputer(columnNames, partitionColumns, "default");
 
-		OutputFormatFactory<Row> factory = (OutputFormatFactory<Row>) path -> new OutputFormat<Row>() {
-
-			private transient Writer writer;
-
-			@Override
-			public void configure(Configuration parameters) {
-			}
-
-			@Override
-			public void open(int taskNumber, int numTasks) throws IOException {
-				writer = new OutputStreamWriter(
-						path.getFileSystem().create(path, FileSystem.WriteMode.OVERWRITE));
-			}
-
-			@Override
-			public void writeRecord(Row record) throws IOException {
-				writer.append(record.toString()).append("\n");
-			}
-
-			@Override
-			public void close() throws IOException {
-				writer.close();
-			}
-		};
-
 		FileSystemFileCommitter committer = new FileSystemFileCommitter(
 				override,
 				new Path(tmpFile.getPath()),
@@ -249,13 +220,14 @@ public class FileSystemOutputFormatTest {
 		FileSystemOutputFormat<Row> sink = new FileSystemOutputFormat<>(
 				computer,
 				PartitionWriterFactory.get(dynamicPartition, grouped),
-				factory,
+				TextOutputFormat::new,
 				committer);
 
 		sinkRef.set(sink);
 
 		return new OneInputStreamOperatorTestHarness<>(
 				new StreamSink<>(new OutputFormatSinkFunction<>(sink)),
-				1, 1, 0);
+				// test parallelism
+				3, 3, 0);
 	}
 }

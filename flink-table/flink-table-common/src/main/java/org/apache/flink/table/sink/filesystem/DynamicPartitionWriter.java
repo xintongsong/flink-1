@@ -58,8 +58,7 @@ public class DynamicPartitionWriter<T> implements PartitionWriter<T> {
 		if (format == null) {
 			// create a new format to write new partition.
 			format = factory.createOutputFormat(context.generatePath(partition));
-			format.configure(context.configuration());
-			format.open(context.taskNumber(), context.numTask());
+			context.prepareOutputFormat(format);
 			formats.put(partition, format);
 		}
 		format.writeRecord(context.projectColumnsToWrite(in));

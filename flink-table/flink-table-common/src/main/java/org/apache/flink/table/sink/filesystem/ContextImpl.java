@@ -19,9 +19,12 @@
 package org.apache.flink.table.sink.filesystem;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.api.common.io.OutputFormat;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.table.sink.filesystem.PartitionWriter.Context;
+
+import java.io.IOException;
 
 /**
  * Default {@link Context} implementation.
@@ -32,37 +35,23 @@ import org.apache.flink.table.sink.filesystem.PartitionWriter.Context;
 public class ContextImpl<T> implements Context<T> {
 
 	private final Configuration conf;
-	private final int taskNumber;
-	private final int numTask;
 	private final FileCommitter.PathGenerator generator;
 	private final PartitionComputer<T> computer;
 
 	public ContextImpl(
 			Configuration conf,
-			int taskNumber,
-			int numTask,
 			FileCommitter.PathGenerator generator,
 			PartitionComputer<T> computer) {
 		this.conf = conf;
-		this.taskNumber = taskNumber;
-		this.numTask = numTask;
 		this.generator = generator;
 		this.computer = computer;
 	}
 
 	@Override
-	public Configuration configuration() {
-		return conf;
-	}
-
-	@Override
-	public int taskNumber() {
-		return taskNumber;
-	}
-
-	@Override
-	public int numTask() {
-		return numTask;
+	public void prepareOutputFormat(OutputFormat<T> format) throws IOException {
+		format.configure(conf);
+		// Here we just think of it as a single file format, so there can only be a single task.
+		format.open(0, 1);
 	}
 
 	@Override

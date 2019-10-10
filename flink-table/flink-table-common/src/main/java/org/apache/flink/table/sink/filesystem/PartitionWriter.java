@@ -19,8 +19,10 @@
 package org.apache.flink.table.sink.filesystem;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.configuration.Configuration;
+import org.apache.flink.api.common.io.OutputFormat;
 import org.apache.flink.core.fs.Path;
+
+import java.io.IOException;
 
 /**
  * Partition writer to write records with partition.
@@ -62,19 +64,9 @@ public interface PartitionWriter<T> {
 	interface Context<T> {
 
 		/**
-		 * The configuration containing the parameters attached to the contract.
+		 * Prepare output format, configure it and open it.
 		 */
-		Configuration configuration();
-
-		/**
-		 * Gets the number of this parallel subtask. The numbering starts from 0 and goes up to parallelism-1.
-		 */
-		int taskNumber();
-
-		/**
-		 * Gets the parallelism with which the parallel task runs.
-		 */
-		int numTask();
+		void prepareOutputFormat(OutputFormat<T> format) throws IOException;
 
 		/**
 		 * Generate a new path without partition.

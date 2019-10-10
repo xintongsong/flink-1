@@ -59,8 +59,7 @@ public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 			}
 
 			currentFormat = factory.createOutputFormat(context.generatePath(partition));
-			currentFormat.configure(context.configuration());
-			currentFormat.open(context.taskNumber(), context.numTask());
+			context.prepareOutputFormat(currentFormat);
 			currentPartition = partition;
 		}
 		currentFormat.writeRecord(context.projectColumnsToWrite(in));

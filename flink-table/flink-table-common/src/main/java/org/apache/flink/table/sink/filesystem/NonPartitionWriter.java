@@ -47,8 +47,7 @@ public class NonPartitionWriter<T> implements PartitionWriter<T> {
 	@Override
 	public void startTransaction() throws Exception {
 		format = factory.createOutputFormat(context.generatePath());
-		format.configure(context.configuration());
-		format.open(context.taskNumber(), context.numTask());
+		context.prepareOutputFormat(format);
 	}
 
 	@Override
