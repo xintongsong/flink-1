@@ -129,8 +129,6 @@ if [ $STAGE == "$STAGE_COMPILE" ]; then
     if [ $EXIT_CODE == 0 ]; then
         if [[ $PROFILE == *"scala-2.11"* ]]; then
           ./tools/releasing/collect_license_files.sh ./build-target
-          # debug licenses-output
-          cat licenses-output/NOTICE-binary
           diff "NOTICE-binary" "licenses-output/NOTICE-binary"
           EXIT_CODE=$(($EXIT_CODE+$?))
           diff -r "licenses-binary" "licenses-output/licenses-binary"
