@@ -108,18 +108,6 @@ This project bundles the following dependencies under the Apache Software Licens
 - org.eclipse.jetty:jetty-util:9.3.19.v20170502
 - org.eclipse.jetty:jetty-util-ajax:9.3.19.v20170502
 
-Apache Commons Lang
-Copyright 2001-2014 The Apache Software Foundation
-
-This product includes software from the Spring Framework,
-under the Apache License 2.0 (see: StringUtils.containsWhitespace())
-
-Apache Commons Collections
-Copyright 2001-2015 The Apache Software Foundation
-
-This product includes software developed by
-The Apache Software Foundation (http://www.apache.org/).
-
 
 flink-hadoop-fs
 Copyright 2014-2019 The Apache Software Foundation
@@ -3113,6 +3101,12 @@ which has the following notices:
 Apache Commons IO
 Copyright 2002-2012 The Apache Software Foundation
 
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
+
+Apache Commons Collections
+Copyright 2001-2015 The Apache Software Foundation
+
 Apache Commons Logging
 Copyright 2003-2013 The Apache Software Foundation
 
@@ -3124,6 +3118,12 @@ Copyright 2000-2016 The Apache Software Foundation
 
 Apache Commons Configuration
 Copyright 2001-2017 The Apache Software Foundation
+
+Apache Commons Lang
+Copyright 2001-2014 The Apache Software Foundation
+
+This product includes software from the Spring Framework,
+under the Apache License 2.0 (see: StringUtils.containsWhitespace())
 
 htrace-core4
 Copyright 2016 The Apache Software Foundation
@@ -4878,6 +4878,18 @@ Copyright 2001-2015 The Apache Software Foundation
 This product includes software developed by
 The Apache Software Foundation (http://www.apache.org/).
 
+Apache Commons Compress
+Copyright 2002-2018 The Apache Software Foundation
+
+This product includes software developed at
+The Apache Software Foundation (https://www.apache.org/).
+
+The files in the package org.apache.commons.compress.archivers.sevenz
+were derived from the LZMA SDK, version 9.20 (C/ and CPP/7zip/),
+which has been placed in the public domain:
+
+"LZMA SDK is placed in the public domain." (http://www.7-zip.org/sdk.html)
+
 flink-hadoop-fs
 Copyright 2014-2019 The Apache Software Foundation
 
@@ -7906,11 +7918,15 @@ To find the details that apply to this artifact see the accompanying LICENSE fil
 For more information, including possible other licensing options, contact
 FasterXML.com (http://fasterxml.com).
 
-Apache HttpClient
-Copyright 1999-2017 The Apache Software Foundation
+Apache Commons CLI
+Copyright 2001-2015 The Apache Software Foundation
 
-Apache HttpCore
-Copyright 2005-2017 The Apache Software Foundation
+Apache Commons Math
+Copyright 2001-2015 The Apache Software Foundation
+
+This product includes software developed for Orekit by
+CS Systèmes d'Information (http://www.c-s.fr/)
+Copyright 2010-2012 CS Systèmes d'Information
 
 Apache Commons Codec
 Copyright 2002-2014 The Apache Software Foundation
@@ -7926,6 +7942,80 @@ from the original php source code available at http://stevemorse.org/phoneticinf
 with permission from the original authors.
 Original source copyright:
 Copyright (c) 2008 Alexander Beider & Stephen P. Morse.
+
+Apache Commons Net
+Copyright 2001-2017 The Apache Software Foundation
+
+This product currently only contains code developed by authors
+of specific components, as identified by the source code files;
+if such notes are missing files have been created by
+Tatu Saloranta.
+
+For additional credits (generally to people who reported problems)
+see CREDITS file.
+
+Apache Avro
+Copyright 2009-2017 The Apache Software Foundation
+
+Curator Framework
+Copyright 2011-2017 The Apache Software Foundation
+
+Curator Client
+Copyright 2011-2017 The Apache Software Foundation
+
+Curator Recipes
+Copyright 2011-2017 The Apache Software Foundation
+
+Kerb Simple Kdc
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb Client
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby Config
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb core
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby PKIX Project
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby ASN1 Project
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby Util
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb Common
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb Crypto
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb Util
+Copyright 2014-2017 The Apache Software Foundation
+
+Token provider
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb Admin
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb Server
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby-kerb Identity
+Copyright 2014-2017 The Apache Software Foundation
+
+Kerby XDR Project
+Copyright 2014-2017 The Apache Software Foundation
+
+Apache HttpClient
+Copyright 1999-2017 The Apache Software Foundation
+
+Apache HttpCore
+Copyright 2005-2017 The Apache Software Foundation
 
 // ------------------------------------------------------------------
 // NOTICE file corresponding to the section 4d of The Apache License,
@@ -7997,6 +8087,15 @@ See bundled license files for details.
 
 - net.razorvine:pyrolite:4.13
 
+Apache Beam
+Copyright 2016-2018 The Apache Software Foundation
+
+Based on source code originally developed by
+Google (http://www.google.com/).
+
+This product includes software developed at
+Google (http://www.google.com/).
+
 # Jackson JSON processor
 
 Jackson is a high-performance, Free/Open Source JSON processing library.
@@ -8028,15 +8127,6 @@ FasterXML.com (http://fasterxml.com).
 =============================================================================
 This product includes software developed by
 Joda.org (http://www.joda.org/).
-
-Apache Beam
-Copyright 2016-2018 The Apache Software Foundation
-
-Based on source code originally developed by
-Google (http://www.google.com/).
-
-This product includes software developed at
-Google (http://www.google.com/).
 
 Apache Commons Compress
 Copyright 2002-2018 The Apache Software Foundation
@@ -8079,18 +8169,6 @@ The Apache Software Foundation (http://www.apache.org/).
 
 flink-s3-fs-hadoop
 Copyright 2014-2019 The Apache Software Foundation
-
-Apache Commons Lang
-Copyright 2001-2014 The Apache Software Foundation
-
-This product includes software from the Spring Framework,
-under the Apache License 2.0 (see: StringUtils.containsWhitespace())
-
-Apache Commons Collections
-Copyright 2001-2015 The Apache Software Foundation
-
-This product includes software developed by
-The Apache Software Foundation (http://www.apache.org/).
 
 flink-s3-fs-base
 Copyright 2014-2019 The Apache Software Foundation
@@ -11106,6 +11184,12 @@ which has the following notices:
 Apache Commons IO
 Copyright 2002-2012 The Apache Software Foundation
 
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
+
+Apache Commons Collections
+Copyright 2001-2015 The Apache Software Foundation
+
 Apache Commons Logging
 Copyright 2003-2013 The Apache Software Foundation
 
@@ -11117,6 +11201,12 @@ Copyright 2000-2016 The Apache Software Foundation
 
 Apache Commons Configuration
 Copyright 2001-2017 The Apache Software Foundation
+
+Apache Commons Lang
+Copyright 2001-2014 The Apache Software Foundation
+
+This product includes software from the Spring Framework,
+under the Apache License 2.0 (see: StringUtils.containsWhitespace())
 
 htrace-core4
 Copyright 2016 The Apache Software Foundation
@@ -11215,18 +11305,6 @@ See bundled license files for details.
 
 - org.hdrhistogram:HdrHistogram:2.1.9
 
-Apache Commons Lang
-Copyright 2001-2014 The Apache Software Foundation
-
-This product includes software from the Spring Framework,
-under the Apache License 2.0 (see: StringUtils.containsWhitespace())
-
-Apache Commons Collections
-Copyright 2001-2015 The Apache Software Foundation
-
-This product includes software developed by
-The Apache Software Foundation (http://www.apache.org/).
-
 
 flink-s3-fs-base
 Copyright 2014-2019 The Apache Software Foundation
@@ -14237,6 +14315,12 @@ which has the following notices:
 Apache Commons IO
 Copyright 2002-2012 The Apache Software Foundation
 
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
+
+Apache Commons Collections
+Copyright 2001-2015 The Apache Software Foundation
+
 Apache Commons Logging
 Copyright 2003-2013 The Apache Software Foundation
 
@@ -14248,6 +14332,12 @@ Copyright 2000-2016 The Apache Software Foundation
 
 Apache Commons Configuration
 Copyright 2001-2017 The Apache Software Foundation
+
+Apache Commons Lang
+Copyright 2001-2014 The Apache Software Foundation
+
+This product includes software from the Spring Framework,
+under the Apache License 2.0 (see: StringUtils.containsWhitespace())
 
 htrace-core4
 Copyright 2016 The Apache Software Foundation
