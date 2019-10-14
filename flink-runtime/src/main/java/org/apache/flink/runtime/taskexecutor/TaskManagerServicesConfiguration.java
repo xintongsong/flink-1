@@ -219,6 +219,14 @@ public class TaskManagerServicesConfiguration {
 		return taskExecutorResourceSpec == null ? null : taskExecutorResourceSpec.getShuffleMemSize();
 	}
 
+	public MemorySize getOnHeapManagedMemorySize() {
+		return taskExecutorResourceSpec == null ? null : taskExecutorResourceSpec.getOnHeapManagedMemorySize();
+	}
+
+	public MemorySize getOffHeapManagedMemorySize() {
+		return taskExecutorResourceSpec == null ? null : taskExecutorResourceSpec.getOffHeapManagedMemorySize();
+	}
+
 	long getTimerServiceShutdownTimeout() {
 		return timerServiceShutdownTimeout;
 	}
