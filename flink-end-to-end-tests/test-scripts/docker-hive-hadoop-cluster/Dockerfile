@@ -22,7 +22,7 @@
 # With bits and pieces added from Lewuathe/docker-hadoop-cluster to extend it to start a proper kerberized Hadoop cluster:
 #   * Lewuathe/docker-hadoop-cluster <https://github.com/Lewuathe/docker-hadoop-cluster>
 #
-# Creates multi-node, kerberized Hadoop cluster on Docker
+# Creates multi-node, no-secure Hadoop cluster on Docker
 
 FROM sequenceiq/pam:ubuntu-14.04
 
@@ -97,20 +97,47 @@ ENV PATH $PATH:$HADOOP_BIN_HOME
 
 RUN mkdir /var/log/hadoop
 
-ADD hadoop-cluster/core-site.xml $HADOOP_HOME/etc/hadoop/core-site.xml
-ADD hadoop-cluster/hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
-ADD hadoop-cluster/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
-ADD hadoop-cluster/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml
-ADD hadoop-cluster/container-executor.cfg $HADOOP_HOME/etc/hadoop/container-executor.cfg
+ADD config/core-site.xml $HADOOP_HOME/etc/hadoop/core-site.xml
+ADD config/hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+ADD config/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
+ADD config/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml
+ADD config/container-executor.cfg $HADOOP_HOME/etc/hadoop/container-executor.cfg
 
 RUN set -x \
     && chmod 400 $HADOOP_HOME/etc/hadoop/container-executor.cfg \
     && chown root:yarn $HADOOP_HOME/etc/hadoop/container-executor.cfg
 
-ADD hadoop-cluster/ssh_config /root/.ssh/config
+ADD config /root/.ssh/config
 RUN set -x \
     && chmod 600 /root/.ssh/config \
     && chown root:root /root/.ssh/config
+
+ARG HIVE_VERSION=2.3.6
+# Download Apche Hive-2.3.4
+RUN set -x \
+#    && wget -O apache-hive.tar.gz https://archive.apache.org/dist/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz \
+    && wget -O apache-hive.tar.gz https://mirrors.tuna.tsinghua.edu.cn/apache/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz \
+    && tar -xzf apache-hive.tar.gz -C /usr/local/ \
+    && rm apache-hive.tar.gz
+
+# Create a soft link to make futher upgrade transparent
+RUN set -x \
+    && ln -s /usr/local/apache-hive-$HIVE_VERSION-bin /usr/local/hive
+
+# Set environment of hive
+ENV HIVE_HOME /usr/local/apache-hive-$HIVE_VERSION-bin
+ENV PATH $PATH:$HIVE_HOME/bin
+
+# Add mysql driver and default config file
+
+RUN set -x \
+    && wget -O mysql-connector-java-5.1.48.tar.gz https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.48.tar.gz \
+    && tar -zxf mysql-connector-java-5.1.48.tar.gz \
+    && mv mysql-connector-java-5.1.48/mysql-connector-java-5.1.48-bin.jar $HIVE_HOME/lib \
+    && rm mysql-connector-java-5.1.48.tar.gz \
+    && rm -r mysql-connector-java-5.1.48
+
+ADD config/hive-site.xml $HIVE_HOME/conf
 
 # workingaround docker.io build error
 RUN set -x \

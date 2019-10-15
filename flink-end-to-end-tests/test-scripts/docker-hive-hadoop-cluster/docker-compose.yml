@@ -49,9 +49,29 @@ services:
     hostname: slave2.docker-hadoop-cluster-network
     networks:
       - docker-hadoop-cluster-network
+  mysql:
+    image: mysql:5.7
+    container_name: "mysql"
+    hostname: mysql.docker-hadoop-cluster-network
+    networks:
+      - docker-hadoop-cluster-network
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: hive
+  hive:
+    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-no-secure-hadoop-cluster:latest}
+    command: "hive"
+    depends_on:
+      - master
+      - slave1
+      - slave2
+      - mysql
+    container_name: "hive"
+    networks:
+      - docker-hadoop-cluster-network
+    hostname: hive.docker-hadoop-cluster-network
   proxy:
     image: newnius/docker-proxy
-    command: worker
     ports:
       - 7001:7001
     container_name: "proxy_docker"

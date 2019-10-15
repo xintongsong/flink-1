@@ -32,7 +32,7 @@ sed -i "s#/usr/local/hadoop/bin/container-executor#${NM_CONTAINER_EXECUTOR_PATH}
 service ssh start
 
 if [ "$1" == "--help" -o "$1" == "-h" ]; then
-    echo "Usage: $(basename $0) (master|worker)"
+    echo "Usage: $(basename $0) (master|worker|hive)"
     exit 0
 elif [ "$1" == "master" ]; then
     yes| sudo -E -u hdfs $HADOOP_PREFIX/bin/hdfs namenode -format
@@ -63,6 +63,14 @@ elif [ "$1" == "master" ]; then
 elif [ "$1" == "worker" ]; then
     nohup sudo -E -u hdfs $HADOOP_PREFIX/bin/hdfs datanode 2>> /var/log/hadoop/datanode.err >> /var/log/hadoop/datanode.out &
     nohup sudo -E -u yarn $HADOOP_PREFIX/bin/yarn nodemanager 2>> /var/log/hadoop/nodemanager.err >> /var/log/hadoop/nodemanager.out &
+    while true; do sleep 1000; done
+elif [ "$1" == "hive" ]; then
+    hdfs dfs -mkdir -p /user/hive/warehouse
+
+    schematool --dbType mysql --initSchema
+
+    # start metastore
+    nohup hive --service metastore 2>> /var/log/hive/hivemetastore.err >> /var/log/hive/hivemetastore.out &
     while true; do sleep 1000; done
 fi
 
