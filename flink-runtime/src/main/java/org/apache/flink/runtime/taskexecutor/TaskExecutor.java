@@ -724,11 +724,17 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		}
 	}
 
+	private final Set<ResultPartitionID> clusterPartitions = new HashSet<>();
+
 	@Override
 	public void releaseOrPromotePartitions(JobID jobId, Collection<ResultPartitionID> partitionToRelease, Collection<ResultPartitionID> partitionsToPromote) {
 		try {
 			partitionTable.stopTrackingPartitions(jobId, partitionToRelease);
 			shuffleEnvironment.releasePartitionsLocally(partitionToRelease);
+
+			partitionTable.stopTrackingPartitions(jobId, partitionsToPromote);
+			clusterPartitions.addAll(partitionsToPromote);
+
 			closeJobManagerConnectionIfNoAllocatedResources(jobId);
 		} catch (Throwable t) {
 			// TODO: Do we still need this catch branch?
@@ -1070,6 +1076,9 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			resourceManagerGateway.disconnectTaskManager(getResourceID(), cause);
 
 			establishedResourceManagerConnection = null;
+
+			shuffleEnvironment.releasePartitionsLocally(clusterPartitions);
+			clusterPartitions.clear();
 		}
 
 		if (resourceManagerConnection != null) {
