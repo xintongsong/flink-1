@@ -139,6 +139,10 @@ RUN set -x \
 
 ADD config/hive-site.xml $HIVE_HOME/conf
 
+RUN set -x \
+    && mkdir -p /tmp/test-data
+ADD test-data/* /tmp/test-data
+
 # workingaround docker.io build error
 RUN set -x \
     && ls -la /usr/local/hadoop/etc/hadoop/*-env.sh \
@@ -163,6 +167,9 @@ EXPOSE 49707 2122
 ADD bootstrap.sh /etc/bootstrap.sh
 RUN chown root:root /etc/bootstrap.sh
 RUN chmod 700 /etc/bootstrap.sh
+ADD init-hive-data.sh /etc/init-hive-data.sh
+RUN chown root:root /etc/init-hive-data.sh
+RUN chmod 700 /etc/init-hive-data.sh
 
 ENV BOOTSTRAP /etc/bootstrap.sh
 ENTRYPOINT ["/etc/bootstrap.sh"]

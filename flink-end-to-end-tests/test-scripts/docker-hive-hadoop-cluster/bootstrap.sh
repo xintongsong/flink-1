@@ -71,6 +71,9 @@ elif [ "$1" == "hive" ]; then
 
     # start metastore
     nohup hive --service metastore 2>> /var/log/hive/hivemetastore.err >> /var/log/hive/hivemetastore.out &
+    sleep 3000
+    # prepare hive data
+    /etc/init-hive-data.sh
     while true; do sleep 1000; done
 fi
 
