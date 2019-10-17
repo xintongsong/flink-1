@@ -65,6 +65,12 @@ elif [ "$1" == "worker" ]; then
     nohup sudo -E -u yarn $HADOOP_PREFIX/bin/yarn nodemanager 2>> /var/log/hadoop/nodemanager.err >> /var/log/hadoop/nodemanager.out &
     while true; do sleep 1000; done
 elif [ "$1" == "hive" ]; then
+    # wait hadoop service start
+    curl master:50070
+    while(( $? != 0 ))
+        do sleep 1000;
+        curl master:50070
+    done
     hdfs dfs -mkdir -p /user/hive/warehouse
 
     schematool --dbType mysql --initSchema
