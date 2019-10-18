@@ -29,8 +29,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * It is summarizer of sparse vector.
- * It uses Map to store median result.
+ * It is summary of sparse vector, and uses Map to store intermediate result.
+ * It will compute sum, squareSum = sum(x_i*x_i), min, max, normL1.
+ * Other statistics value can be calculated from these statistics.
+ *
+ * <p>Inheritance relationship as follow:
+ *            BaseSummarizer
+ *              /       \
+ *             /         \
+ *   TableSummarizer   BaseVectorSummarizer
+ *                       /            \
+ *                      /              \
+ *        SparseVectorSummarizer    DenseVectorSummarizer
+ *
+ * <p>SparseVectorSummarizer is for sparse vector, DenseVectorSummarizer is for dense vector.
+ *  It can use toSummary() to get the result BaseVectorSummary.
  */
 public class SparseVectorSummarizer extends BaseVectorSummarizer {
 
