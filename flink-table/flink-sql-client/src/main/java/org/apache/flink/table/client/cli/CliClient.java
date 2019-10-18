@@ -273,6 +273,9 @@ public class CliClient {
 			case SHOW_TABLES:
 				callShowTables();
 				break;
+			case CREATE_TABLE:
+				callCreateTable(cmdCall);
+				break;
 			case SHOW_FUNCTIONS:
 				callShowFunctions();
 				break;
@@ -434,6 +437,16 @@ public class CliClient {
 	private void callUseDatabase(SqlCommandCall cmdCall) {
 		try {
 			executor.useDatabase(context, cmdCall.operands[0]);
+		} catch (SqlExecutionException e) {
+			printExecutionException(e);
+			return;
+		}
+		terminal.flush();
+	}
+
+	private void callCreateTable(SqlCommandCall cmdCall) {
+		try {
+			executor.createTable(context, cmdCall.operands[0]);
 		} catch (SqlExecutionException e) {
 			printExecutionException(e);
 			return;

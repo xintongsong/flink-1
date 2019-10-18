@@ -161,6 +161,11 @@ public class CliResultViewTest {
 		}
 
 		@Override
+		public void createTable(SessionContext session, String ddl) throws SqlExecutionException {
+
+		}
+
+		@Override
 		public TableSchema getTableSchema(SessionContext session, String name) throws SqlExecutionException {
 			return null;
 		}
