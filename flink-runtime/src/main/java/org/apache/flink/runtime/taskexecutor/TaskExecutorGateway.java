@@ -102,12 +102,12 @@ public interface TaskExecutorGateway extends RpcGateway {
 		@RpcTimeout Time timeout);
 
 	/**
-	 * Batch release intermediate result partitions.
-	 *
+	 * Batch release/promote intermediate result partitions.
 	 * @param jobId id of the job that the partitions belong to
-	 * @param partitionIds partition ids to release
+	 * @param partitionToRelease partition ids to release
+	 * @param partitionsToPromote partitions ids to promote
 	 */
-	void releasePartitions(JobID jobId, Collection<ResultPartitionID> partitionIds);
+	void releaseOrPromotePartitions(JobID jobId, Collection<ResultPartitionID> partitionToRelease, Collection<ResultPartitionID> partitionsToPromote);
 
 	/**
 	 * Trigger the checkpoint for the given task. The checkpoint is identified by the checkpoint ID

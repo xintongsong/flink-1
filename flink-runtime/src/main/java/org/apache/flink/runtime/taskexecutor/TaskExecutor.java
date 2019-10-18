@@ -725,10 +725,10 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 	}
 
 	@Override
-	public void releasePartitions(JobID jobId, Collection<ResultPartitionID> partitionIds) {
+	public void releaseOrPromotePartitions(JobID jobId, Collection<ResultPartitionID> partitionToRelease, Collection<ResultPartitionID> partitionsToPromote) {
 		try {
-			partitionTable.stopTrackingPartitions(jobId, partitionIds);
-			shuffleEnvironment.releasePartitionsLocally(partitionIds);
+			partitionTable.stopTrackingPartitions(jobId, partitionToRelease);
+			shuffleEnvironment.releasePartitionsLocally(partitionToRelease);
 			closeJobManagerConnectionIfNoAllocatedResources(jobId);
 		} catch (Throwable t) {
 			// TODO: Do we still need this catch branch?

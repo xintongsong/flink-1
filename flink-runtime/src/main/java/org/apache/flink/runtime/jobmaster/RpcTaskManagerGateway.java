@@ -33,6 +33,7 @@ import org.apache.flink.runtime.taskexecutor.TaskExecutorGateway;
 import org.apache.flink.util.Preconditions;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -89,7 +90,7 @@ public class RpcTaskManagerGateway implements TaskManagerGateway {
 
 	@Override
 	public void releasePartitions(JobID jobId, Collection<ResultPartitionID> partitionIds) {
-		taskExecutorGateway.releasePartitions(jobId, partitionIds);
+		taskExecutorGateway.releaseOrPromotePartitions(jobId, partitionIds, Collections.emptyList());
 	}
 
 	@Override

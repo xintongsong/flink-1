@@ -168,7 +168,7 @@ public class PartitionTrackerImpl implements PartitionTracker {
 			taskExecutorGatewayLookup
 				.lookup(potentialPartitionLocation)
 				.ifPresent(taskExecutorGateway ->
-					taskExecutorGateway.releasePartitions(jobId, partitionsRequiringRpcReleaseCalls));
+					taskExecutorGateway.releaseOrPromotePartitions(jobId, partitionsRequiringRpcReleaseCalls, Collections.emptyList()));
 		}
 	}
 
