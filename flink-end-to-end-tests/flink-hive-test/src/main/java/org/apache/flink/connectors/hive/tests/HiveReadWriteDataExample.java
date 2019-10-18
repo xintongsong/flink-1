@@ -40,8 +40,8 @@ public class HiveReadWriteDataExample {
 		HiveCatalog hiveCatalog = new HiveCatalog(catalogName, defaultDatabase, hiveConfDir, version);
 
 		tableEnv.registerCatalog("hive", hiveCatalog);
-		tableEnv.sqlUpdate("insert into hive.default.dest_non_partition_table " +
-						"select * from hive.default.non_partition_table");
+		tableEnv.sqlUpdate("insert into hive.`default`.dest_non_partition_table " +
+						"select * from hive.`default`.non_partition_table");
 		tableEnv.execute("HiveReadWriteDataExample");
 	}
 }

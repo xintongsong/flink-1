@@ -23,7 +23,7 @@ networks:
 
 services:
   master:
-    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-no-secure-hadoop-cluster:latest}
+    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-hadoop-hive-cluster:latest}
     command: master
     container_name: "master"
     hostname: master.docker-hadoop-cluster-network
@@ -31,7 +31,7 @@ services:
       - docker-hadoop-cluster-network
 
   slave1:
-    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-no-secure-hadoop-cluster:latest}
+    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-hadoop-hive-cluster:latest}
     command: worker
     depends_on:
       - master
@@ -41,7 +41,7 @@ services:
       - docker-hadoop-cluster-network
 
   slave2:
-    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-no-secure-hadoop-cluster:latest}
+    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-hadoop-hive-cluster:latest}
     command: worker
     depends_on:
       - master
@@ -59,7 +59,7 @@ services:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: hive
   hive:
-    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-no-secure-hadoop-cluster:latest}
+    image: ${DOCKER_HADOOP_IMAGE_NAME:-flink/flink-hadoop-hive-cluster:latest}
     command: "hive"
     depends_on:
       - master
@@ -72,11 +72,11 @@ services:
     hostname: hive.docker-hadoop-cluster-network
 # Following service is used to debug which open a 7001 socks proxy in host and enable all inner
 # webservice access
-  proxy:
-    image: newnius/docker-proxy
-    ports:
-      - 7001:7001
-    container_name: "proxy_docker"
-    hostname: proxy_docker.docker-hadoop-cluster-network
-    networks:
-      - docker-hadoop-cluster-network
+#  proxy:
+#    image: newnius/docker-proxy
+#    ports:
+#      - 7001:7001
+#    container_name: "proxy_docker"
+#    hostname: proxy_docker.docker-hadoop-cluster-network
+#    networks:
+#      - docker-hadoop-cluster-network

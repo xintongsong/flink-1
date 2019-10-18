@@ -55,12 +55,9 @@ RUN set -x \
 ENV JAVA_HOME /usr/java/default
 ENV PATH $PATH:$JAVA_HOME/bin
 
-ARG HADOOP_VERSION=2.8.5
+ARG HADOOP_VERSION=2.8.4
 
-#Todo: uncoment following
-#ENV HADOOP_URL http://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
-#We use mirror in development phase.
-ENV HADOOP_URL http://mirrors.tuna.tsinghua.edu.cn/apache/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
+ENV HADOOP_URL http://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz
 
 RUN set -x \
     && curl -fSL "$HADOOP_URL" -o /tmp/hadoop.tar.gz \
@@ -112,11 +109,10 @@ RUN set -x \
     && chmod 600 /root/.ssh/config \
     && chown root:root /root/.ssh/config
 
-ARG HIVE_VERSION=2.3.6
+ARG HIVE_VERSION=2.3.4
 # Download Apche Hive-2.3.4
 RUN set -x \
-#    && wget -O apache-hive.tar.gz https://archive.apache.org/dist/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz \
-    && wget -O apache-hive.tar.gz https://mirrors.tuna.tsinghua.edu.cn/apache/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz \
+    && wget -O apache-hive.tar.gz https://archive.apache.org/dist/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz \
     && tar -xzf apache-hive.tar.gz -C /usr/local/ \
     && rm apache-hive.tar.gz
 
@@ -127,6 +123,8 @@ RUN set -x \
 # Set environment of hive
 ENV HIVE_HOME /usr/local/apache-hive-$HIVE_VERSION-bin
 ENV PATH $PATH:$HIVE_HOME/bin
+
+RUN mkdir /var/log/hive
 
 # Add mysql driver and default config file
 

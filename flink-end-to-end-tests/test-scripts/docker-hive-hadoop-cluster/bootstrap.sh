@@ -65,21 +65,25 @@ elif [ "$1" == "worker" ]; then
     nohup sudo -E -u yarn $HADOOP_PREFIX/bin/yarn nodemanager 2>> /var/log/hadoop/nodemanager.err >> /var/log/hadoop/nodemanager.out &
     while true; do sleep 1000; done
 elif [ "$1" == "hive" ]; then
+
     # wait hadoop service start
-    curl master:50070
-    while(( $? != 0 ))
-        do sleep 1000;
-        curl master:50070
+    until curl master:50070
+    do sleep 5
     done
+
+    echo "The hadoop cluster has started.."
+    sleep 5
     hdfs dfs -mkdir -p /user/hive/warehouse
 
     schematool --dbType mysql --initSchema
 
     # start metastore
     nohup hive --service metastore 2>> /var/log/hive/hivemetastore.err >> /var/log/hive/hivemetastore.out &
-    sleep 3000
+    sleep 5
     # prepare hive data
     /etc/init-hive-data.sh
+
+    echo "The hadoop cluster and hive service have been ready.."
     while true; do sleep 1000; done
 fi
 
