@@ -281,6 +281,19 @@ public class LocalExecutor implements Executor {
 	}
 
 	@Override
+	public void createTable(SessionContext session, String ddl) throws SqlExecutionException {
+		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
+		final TableEnvironment tEnv = context
+			.createEnvironmentInstance()
+			.getTableEnvironment();
+		try {
+			tEnv.sqlUpdate(ddl);
+		} catch (Exception e) {
+			throw new SqlExecutionException("Could not create a table from ddl: " + ddl, e);
+		}
+	}
+
+	@Override
 	public TableSchema getTableSchema(SessionContext session, String name) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
