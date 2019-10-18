@@ -43,6 +43,7 @@ public final class CliStrings {
 		.append("The following commands are available:\n\n")
 		.append(formatCommand(SqlCommand.CLEAR, "Clears the current terminal."))
 		.append(formatCommand(SqlCommand.CREATE_VIEW, "Creates a virtual table from a SQL query. Syntax: 'CREATE VIEW <name> AS <query>;'"))
+		.append(formatCommand(SqlCommand.CREATE_TABLE, "Create table under current catalog and database."))
 		.append(formatCommand(SqlCommand.DESCRIBE, "Describes the schema of a table with the given name."))
 		.append(formatCommand(SqlCommand.DROP_VIEW, "Deletes a previously created virtual table. Syntax: 'DROP VIEW <name>;'"))
 		.append(formatCommand(SqlCommand.EXPLAIN, "Describes the execution plan of a query or table with the given name."))
@@ -239,7 +240,6 @@ public final class CliStrings {
 			t = t.getCause();
 		}
 		return messageError(message, t.getClass().getName() + ": " + t.getMessage());
-		// return messageError(message, ExceptionUtils.stringifyException(t));
 	}
 
 	public static AttributedString messageError(String message) {
