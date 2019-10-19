@@ -57,7 +57,7 @@ public class ScheduledSignalFXReporterTest {
 
 	@Test
 	public void testInvalidCharacterReplacement() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-		ScheduledSignalFXReporter reporter = new ScheduledSignalFXReporter() {
+		ScheduledSignalFXReporter reporter = new ScheduledSignalFXReporter(null) {
 			@Override
 			public ScheduledReporter getReporter(String token) {
 				return null;
@@ -88,7 +88,7 @@ public class ScheduledSignalFXReporterTest {
 
 		MetricRegistryImpl metricRegistry = new MetricRegistryImpl(
 			metricRegistryConfiguration,
-			Collections.singletonList(ReporterSetup.forReporter("test", new TestingScheduledSignalFXReporter())));
+			Collections.singletonList(ReporterSetup.forReporter("test", new TestingScheduledSignalFXReporter(null))));
 
 		char delimiter = metricRegistry.getDelimiter();
 
@@ -137,7 +137,7 @@ public class ScheduledSignalFXReporterTest {
 	 */
 	@Test
 	public void testMetricCleanup() {
-		TestingScheduledSignalFXReporter rep = new TestingScheduledSignalFXReporter();
+		TestingScheduledSignalFXReporter rep = new TestingScheduledSignalFXReporter(null);
 
 		MetricGroup mp = new UnregisteredMetricsGroup();
 
@@ -221,6 +221,10 @@ public class ScheduledSignalFXReporterTest {
 	 * Dummy test reporter.
 	 */
 	public static class TestingScheduledSignalFXReporter extends ScheduledSignalFXReporter {
+
+		public TestingScheduledSignalFXReporter(String token) {
+			super(token);
+		}
 
 		@Override
 		public ScheduledReporter getReporter(String token) {

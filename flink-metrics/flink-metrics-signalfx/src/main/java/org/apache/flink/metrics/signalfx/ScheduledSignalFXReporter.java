@@ -18,7 +18,6 @@
 
 package org.apache.flink.metrics.signalfx;
 
-import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.metrics.CharacterFilter;
 import org.apache.flink.metrics.Counter;
@@ -28,6 +27,7 @@ import org.apache.flink.metrics.Meter;
 import org.apache.flink.metrics.Metric;
 import org.apache.flink.metrics.MetricConfig;
 import org.apache.flink.metrics.MetricGroup;
+import org.apache.flink.metrics.reporter.InstantiateViaFactory;
 import org.apache.flink.metrics.reporter.MetricReporter;
 import org.apache.flink.metrics.reporter.Scheduled;
 
@@ -38,6 +38,8 @@ import com.signalfx.codahale.reporter.SignalFxReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
@@ -47,11 +49,10 @@ import java.util.SortedMap;
  * Base class for {@link org.apache.flink.metrics.reporter.MetricReporter} that wraps a
  * SignalFX {@link com.codahale.metrics.Reporter}.
  */
-@PublicEvolving
+@InstantiateViaFactory(factoryClassName = "org.apache.flink.metrics.signalfx.SignalFXReporterFactory")
 public class ScheduledSignalFXReporter implements MetricReporter, Scheduled, Reporter, CharacterFilter {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
-
-	private static final String TOKEN = "token";
+	private String token;
 
 	// ------------------------------------------------------------------------
 
@@ -66,8 +67,9 @@ public class ScheduledSignalFXReporter implements MetricReporter, Scheduled, Rep
 
 	// ------------------------------------------------------------------------
 
-	public ScheduledSignalFXReporter() {
+	public ScheduledSignalFXReporter(@Nullable String token) {
 		this.registry = new MetricRegistry();
+		this.token = token;
 	}
 
 	// ------------------------------------------------------------------------
@@ -100,7 +102,6 @@ public class ScheduledSignalFXReporter implements MetricReporter, Scheduled, Rep
 
 	@Override
 	public void open(MetricConfig config) {
-		String token = config.getString(TOKEN, "");
 		this.reporter = getReporter(token);
 	}
 

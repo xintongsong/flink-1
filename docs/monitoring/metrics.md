@@ -808,7 +808,7 @@ Example configuration:
 
 {% highlight yaml %}
 
-metrics.reporter.signalfx.class: org.apache.flink.metrics.signalfx.ScheduledSignalFXReporter
+metrics.reporter.signalfx.class: org.apache.flink.metrics.signalfx.SignalFXReporterFactory
 metrics.reporter.signalfx.interval: 60 SECONDS
 metrics.reporter.signalfx.token: xxx
 

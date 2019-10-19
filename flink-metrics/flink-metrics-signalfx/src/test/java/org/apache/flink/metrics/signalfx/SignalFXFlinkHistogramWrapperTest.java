@@ -128,7 +128,7 @@ public class SignalFXFlinkHistogramWrapperTest extends AbstractHistogramTest {
 		try {
 			registry = new MetricRegistryImpl(
 				MetricRegistryConfiguration.defaultMetricRegistryConfiguration(),
-				Collections.singletonList(ReporterSetup.forReporter("test", config, new TestingReporter())));
+				Collections.singletonList(ReporterSetup.forReporter("test", config, new TestingReporter("test"))));
 			SignalFXHistogramWrapper histogramWrapper = new SignalFXHistogramWrapper(
 				new ResettingHistogram());
 
@@ -180,6 +180,10 @@ public class SignalFXFlinkHistogramWrapperTest extends AbstractHistogramTest {
 	 */
 	public static class TestingReporter extends ScheduledSignalFXReporter {
 		TestingScheduledReporter scheduledReporter = null;
+
+		public TestingReporter(String token) {
+			super(token);
+		}
 
 		@Override
 		public ScheduledReporter getReporter(String token) {
