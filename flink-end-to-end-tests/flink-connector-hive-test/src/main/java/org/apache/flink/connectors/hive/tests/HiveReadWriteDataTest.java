@@ -27,10 +27,10 @@ import org.apache.flink.table.catalog.hive.HiveCatalog;
  * End to end test for HiveConnector.
  */
 public class HiveReadWriteDataTest {
-	public static final String catalogName = "hive";
-	public static final String defaultDatabase = "default";
-	public static final String hiveConfDir = "/usr/local/hive/conf";
-	public static final String version = "2.3.4";
+	public static final String CATALOG_NAME = "hive";
+	public static final String DEFAULT_DATABASE = "default";
+	public static final String HIVE_CONF_DIR = "/usr/local/hive/conf";
+	public static final String VERSION = "2.3.4";
 
 	public static void main(String[] args) throws Exception {
 		EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build();
@@ -38,7 +38,7 @@ public class HiveReadWriteDataTest {
 		tableEnv.getConfig().getConfiguration().setInteger(ExecutionConfigOptions.TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM.key(), 1);
 		tableEnv.getConfig().setSqlDialect(SqlDialect.HIVE);
 
-		HiveCatalog hiveCatalog = new HiveCatalog(catalogName, defaultDatabase, hiveConfDir, version);
+		HiveCatalog hiveCatalog = new HiveCatalog(CATALOG_NAME, DEFAULT_DATABASE, HIVE_CONF_DIR, VERSION);
 
 		tableEnv.registerCatalog("hive", hiveCatalog);
 		tableEnv.sqlUpdate("insert into hive.`default`.dest_non_partition_table " +
