@@ -115,7 +115,7 @@ mkdir -p $FLINK_TARBALL_DIR
 tar czf $FLINK_TARBALL_DIR/$FLINK_TARBALL -C $(dirname $FLINK_DIR) .
 
 docker cp $FLINK_TARBALL_DIR/$FLINK_TARBALL master:/home/hadoop-user/
-docker cp $END_TO_END_DIR/flink-hive-test/target/testHive.jar master:/home/hadoop-user/
+docker cp $END_TO_END_DIR/flink-connector-hive-test/target/testHive.jar master:/home/hadoop-user/
 
 # now, at least the container is ready
 docker exec -it master bash -c "tar xzf /home/hadoop-user/$FLINK_TARBALL --directory /home/hadoop-user/"
@@ -151,7 +151,7 @@ function copy_and_show_logs {
 start_time=$(date +%s)
 if docker exec -it master bash -c "export HADOOP_CLASSPATH=\`hadoop classpath\` && \
    /home/hadoop-user/$FLINK_DIRNAME/bin/flink run -m yarn-cluster -ys 1 -ytm 1000 -yjm 1000 \
-   -p 1 /home/hadoop-user/testHive.jar";
+   -p 1 /home/hadoop-user/testHive.jar org.apache.flink.connectors.hive.tests.HiveReadWriteDataTest";
 then
     echo "run e2e test hive job successful"
     OUTPUT=$(docker exec -it master bash -c "hive -e \"select * from dest_non_partition_table\"")

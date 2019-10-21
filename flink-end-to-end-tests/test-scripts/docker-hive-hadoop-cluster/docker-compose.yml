@@ -70,13 +70,3 @@ services:
     networks:
       - docker-hadoop-cluster-network
     hostname: hive.docker-hadoop-cluster-network
-# Following service is used to debug which open a 7001 socks proxy in host and enable all inner
-# webservice access
-#  proxy:
-#    image: newnius/docker-proxy
-#    ports:
-#      - 7001:7001
-#    container_name: "proxy_docker"
-#    hostname: proxy_docker.docker-hadoop-cluster-network
-#    networks:
-#      - docker-hadoop-cluster-network

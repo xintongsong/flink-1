@@ -26,17 +26,18 @@ import org.apache.flink.table.catalog.hive.HiveCatalog;
 /**
  * End to end test for HiveConnector.
  */
-public class HiveReadWriteDataExample {
+public class HiveReadWriteDataTest {
+	public static final String catalogName = "hive";
+	public static final String defaultDatabase = "default";
+	public static final String hiveConfDir = "/usr/local/hive/conf";
+	public static final String version = "2.3.4";
+
 	public static void main(String[] args) throws Exception {
 		EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build();
 		TableEnvironment tableEnv = TableEnvironment.create(settings);
 		tableEnv.getConfig().getConfiguration().setInteger(ExecutionConfigOptions.TABLE_EXEC_RESOURCE_DEFAULT_PARALLELISM.key(), 1);
 		tableEnv.getConfig().setSqlDialect(SqlDialect.HIVE);
 
-		String catalogName = "hive";
-		String defaultDatabase = "default";
-		String hiveConfDir = "/usr/local/hive/conf";
-		String version = "2.3.4";
 		HiveCatalog hiveCatalog = new HiveCatalog(catalogName, defaultDatabase, hiveConfDir, version);
 
 		tableEnv.registerCatalog("hive", hiveCatalog);
