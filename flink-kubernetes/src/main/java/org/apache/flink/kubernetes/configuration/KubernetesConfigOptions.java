@@ -87,7 +87,7 @@ public class KubernetesConfigOptions {
 	/**
 	 * The following config options need to be set according to the image.
 	 */
-	public static final ConfigOption<String> KUBERNETES_ENTRY_DIR =
+	public static final ConfigOption<String> KUBERNETES_ENTRY_PATH =
 		key("kubernetes.entry.path")
 			.defaultValue("/opt/flink/bin/kubernetes-entry.sh")
 			.withDescription("The entrypoint script of kubernetes in the image. It will be used as command for jobmanager " +
