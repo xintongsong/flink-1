@@ -37,6 +37,7 @@ import org.apache.flink.runtime.executiongraph.ExecutionGraphException;
 import org.apache.flink.runtime.executiongraph.JobInformation;
 import org.apache.flink.runtime.executiongraph.PartitionInfo;
 import org.apache.flink.runtime.executiongraph.TaskInformation;
+import org.apache.flink.runtime.messages.TaskBackPressureSampleResponse;
 import org.apache.flink.runtime.shuffle.ShuffleEnvironment;
 import org.apache.flink.runtime.io.network.partition.PartitionNotFoundException;
 import org.apache.flink.runtime.io.network.partition.ResultPartitionType;
@@ -684,6 +685,100 @@ public class TaskExecutorSubmissionTest extends TestLogger {
 			taskCanceledFuture.get();
 
 			StackTraceSampleResponse responseAfterCancel = canceldSampleFuture.get();
+
+			assertEquals(eid, responseAfterCancel.getExecutionAttemptID());
+			assertEquals(sampleId4, responseAfterCancel.getSampleId());
+		}
+	}
+
+	// ------------------------------------------------------------------------
+	// Back pressure sample
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Tests sampling of task back pressure. TODO
+	 */
+	@Test(timeout = 10000L)
+	@SuppressWarnings("unchecked")
+	public void testSampleTaskBackPressure() throws Exception {
+		final ExecutionAttemptID eid = new ExecutionAttemptID();
+		final TaskDeploymentDescriptor tdd = createTestTaskDeploymentDescriptor("test task", eid, BlockingNoOpInvokable.class);
+
+		final int sampleId1 = 112223;
+		final int sampleId2 = 19230;
+		final int sampleId3 = 1337;
+		final int sampleId4 = 44;
+
+		final CompletableFuture<Void> taskRunningFuture = new CompletableFuture<>();
+		final CompletableFuture<Void> taskCanceledFuture = new CompletableFuture<>();
+
+		try (TaskSubmissionTestEnvironment env =
+				 new TaskSubmissionTestEnvironment.Builder(jobId)
+					 .setSlotSize(1)
+					 .addTaskManagerActionListener(eid, ExecutionState.RUNNING, taskRunningFuture)
+					 .addTaskManagerActionListener(eid, ExecutionState.CANCELED, taskCanceledFuture)
+					 .build()) {
+			TaskExecutorGateway tmGateway = env.getTaskExecutorGateway();
+			TaskSlotTable taskSlotTable = env.getTaskSlotTable();
+
+			taskSlotTable.allocateSlot(0, jobId, tdd.getAllocationId(), Time.seconds(60));
+			tmGateway.submitTask(tdd, env.getJobMasterId(), timeout).get();
+			taskRunningFuture.get();
+
+			//
+			// 1) Trigger sample for non-existing task
+			//
+			ExecutionAttemptID nonExistTaskEid = new ExecutionAttemptID();
+
+			CompletableFuture<TaskBackPressureSampleResponse> failedSampleFuture =
+				tmGateway.sampleTaskBackPressure(nonExistTaskEid, sampleId1, 100, Time.seconds(60L), timeout);
+			try {
+				failedSampleFuture.get();
+			} catch (Exception e) {
+				assertThat(e.getCause(), instanceOf(IllegalStateException.class));
+				assertThat(e.getCause().getMessage(), startsWith("Cannot sample task"));
+			}
+
+			//
+			// 2) Trigger sample for the blocking task
+			//
+			int numSamples = 5;
+
+			CompletableFuture<TaskBackPressureSampleResponse> successfulSampleFuture =
+				tmGateway.sampleTaskBackPressure(eid, sampleId2, numSamples, Time.milliseconds(100L), timeout);
+
+			TaskBackPressureSampleResponse response = successfulSampleFuture.get();
+
+			assertEquals(response.getSampleId(), sampleId2);
+			assertEquals(response.getExecutionAttemptID(), eid);
+
+			//
+			// 3) Trigger sample for the blocking task with max depth
+			//
+
+			CompletableFuture<TaskBackPressureSampleResponse> successfulSampleFutureWithMaxDepth =
+				tmGateway.sampleTaskBackPressure(eid, sampleId3, numSamples, Time.milliseconds(100L), timeout);
+
+			TaskBackPressureSampleResponse responseWithMaxDepth = successfulSampleFutureWithMaxDepth.get();
+
+			assertEquals(sampleId3, responseWithMaxDepth.getSampleId());
+			assertEquals(eid, responseWithMaxDepth.getExecutionAttemptID());
+
+			//
+			// 4) Trigger sample for the blocking task, but cancel it during sampling
+			//
+			int sleepTime = 100;
+			numSamples = 100;
+
+			CompletableFuture<TaskBackPressureSampleResponse> canceldSampleFuture =
+				tmGateway.sampleTaskBackPressure(eid, sampleId4, numSamples, Time.milliseconds(10L), timeout);
+
+			Thread.sleep(sleepTime);
+
+			tmGateway.cancelTask(eid, timeout);
+			taskCanceledFuture.get();
+
+			TaskBackPressureSampleResponse responseAfterCancel = canceldSampleFuture.get();
 
 			assertEquals(eid, responseAfterCancel.getExecutionAttemptID());
 			assertEquals(sampleId4, responseAfterCancel.getSampleId());
