@@ -30,6 +30,7 @@ import org.apache.flink.configuration.JobManagerOptions;
 import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
 import org.apache.flink.kubernetes.configuration.KubernetesConfigOptions;
+import org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint;
 import org.apache.flink.kubernetes.kubeclient.Endpoint;
 import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.kubeclient.decorators.FlinkMasterDeploymentDecorator;
@@ -103,9 +104,8 @@ public class KubernetesClusterDescriptor implements ClusterDescriptor<String> {
 	public ClusterClient<String> deploySessionCluster(ClusterSpecification clusterSpecification)
 		throws ClusterDeploymentException {
 
-		// TODO replace the entrypoint class to KubernetesSessionClusterEntrypoint after implementation.
 		ClusterClient<String> clusterClient = this.deployClusterInternal(
-			ClusterEntrypoint.class.getName(), clusterSpecification, false);
+			KubernetesSessionClusterEntrypoint.class.getName(), clusterSpecification, false);
 
 		LOG.info("Create flink session cluster {} successfully, JobManager Web Interface: {}",
 			clusterId, clusterClient.getWebInterfaceURL());
