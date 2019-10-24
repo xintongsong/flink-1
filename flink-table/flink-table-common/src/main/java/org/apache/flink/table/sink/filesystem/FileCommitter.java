@@ -33,6 +33,8 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 @Internal
 public abstract class FileCommitter implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+
 	protected final Path temporaryPath;
 	protected final boolean overwrite;
 
@@ -61,7 +63,7 @@ public abstract class FileCommitter implements Serializable {
 	}
 
 	/**
-	 * Path generator to generate new path to write and prepare task temporary director.
+	 * Path generator to generate new path to write and prepare task temporary directory.
 	 */
 	public final class PathGenerator {
 
@@ -75,7 +77,7 @@ public abstract class FileCommitter implements Serializable {
 		}
 
 		/**
-		 * Start a transaction, remember the checkpoint id and delete task temporary director to write.
+		 * Start a transaction, remember the checkpoint id and delete task temporary directory to write.
 		 */
 		public void startTransaction(long checkpointId) throws Exception {
 			this.checkpointId = checkpointId;

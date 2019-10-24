@@ -35,6 +35,8 @@ import static org.apache.flink.table.sink.filesystem.FileSystemFileCommitter.mak
 @Internal
 public class RowPartitionComputer implements PartitionComputer<Row> {
 
+	private static final long serialVersionUID = 1L;
+
 	private final String[] partitionColumns;
 	private final int[] nonPartitionIndexes;
 	private final int[] partitionIndexes;

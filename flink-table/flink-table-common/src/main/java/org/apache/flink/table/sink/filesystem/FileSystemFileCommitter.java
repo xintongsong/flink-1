@@ -43,6 +43,8 @@ import java.util.regex.Pattern;
 @Internal
 public class FileSystemFileCommitter extends FileCommitter {
 
+	private static final long serialVersionUID = 1L;
+
 	private static final Pattern PARTITION_NAME_PATTERN = Pattern.compile("([^/]+)=([^/]+)");
 
 	private final Path outputPath;
@@ -127,7 +129,7 @@ public class FileSystemFileCommitter extends FileCommitter {
 	}
 
 	/**
-	 * Moves all files under srcDir into destDir. Delete destDir all files first when overwrite.
+	 * Moves files from srcDir to destDir. Delete files in destDir first when overwrite.
 	 */
 	private void moveFiles(Path srcDir, Path destDir) throws Exception {
 		if (!srcDir.equals(destDir)) {

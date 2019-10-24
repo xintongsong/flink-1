@@ -35,6 +35,8 @@ import java.io.Serializable;
 @Internal
 public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMaster, Serializable {
 
+	private static final long serialVersionUID = 1L;
+
 	private static final long CHECKPOINT_ID = 0;
 
 	private final PartitionComputer<T> computer;
