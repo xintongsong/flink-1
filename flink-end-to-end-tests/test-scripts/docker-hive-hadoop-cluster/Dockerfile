@@ -112,9 +112,9 @@ RUN set -x \
 ARG HIVE_VERSION=2.3.4
 # Download Apche Hive-2.3.4
 RUN set -x \
-    && wget -O apache-hive.tar.gz https://archive.apache.org/dist/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz \
-    && tar -xzf apache-hive.tar.gz -C /usr/local/ \
-    && rm apache-hive.tar.gz
+    && curl -fSL https://archive.apache.org/dist/hive/hive-$HIVE_VERSION/apache-hive-$HIVE_VERSION-bin.tar.gz -o /tmp/apache-hive.tar.gz \
+    && tar -xzf /tmp/apache-hive.tar.gz -C /usr/local/ \
+    && rm /tmp/apache-hive.tar.gz
 
 # Create a soft link to make futher upgrade transparent
 RUN set -x \
