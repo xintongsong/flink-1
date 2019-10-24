@@ -191,8 +191,8 @@ public class YarnClusterDescriptorTest extends TestLogger {
 			"-XX:+PrintGCCause";
 		final String heapdumpOpts =
 			"-XX:+HeapDumpOnOutOfMemoryError " +
-				"-XX:HeapDumpPath=/tmp/test-flink-jm-heapdump.hprof " +
-				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\nCheck gc logs and heapdump file(/tmp/test-flink-jm-heapdump.hprof) for details.' > " +
+				"-XX:HeapDumpPath=/tmp/test-flink-jobmanager-heapdump.hprof " +
+				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\nCheck gc logs and heapdump file(/tmp/test-flink-jobmanager-heapdump.hprof) for details.' > " +
 				"<LOG_DIR>/jobmanager.err; kill -9 %p\"";
 		final String jvmOpts = "-Djvm"; // if set
 		final String jmJvmOpts = "-DjmJvm"; // if set

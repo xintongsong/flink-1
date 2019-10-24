@@ -163,8 +163,8 @@ public class BootstrapToolsTest extends TestLogger {
 			"-XX:+PrintGCCause";
 		final String heapdumpOpts =
 			"-XX:+HeapDumpOnOutOfMemoryError " +
-				"-XX:HeapDumpPath=/tmp/test-flink-tm-heapdump.hprof " +
-				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\nCheck gc logs and heapdump file(/tmp/test-flink-tm-heapdump.hprof) for details.' > " +
+				"-XX:HeapDumpPath=/tmp/test-flink-taskmanager-heapdump.hprof " +
+				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\nCheck gc logs and heapdump file(/tmp/test-flink-taskmanager-heapdump.hprof) for details.' > " +
 				"./logs/taskmanager.err; kill -9 %p\"";
 		final String jvmOpts = "-Djvm"; // if set
 		final String tmJvmOpts = "-DtmJvm"; // if set
