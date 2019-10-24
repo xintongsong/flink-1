@@ -807,3 +807,37 @@ calculateTaskManagerHeapSizeMB() {
 
     echo ${tm_heap_size_mb}
 }
+
+# Format default gc logging options
+getGCLoggingOpts() {
+    local gclog=$1
+    if [ ${FLINK_JVM_GC_LOGGING} ];then
+        FLINK_JVM_GC_LOGGING_OPTS="-XLoggc:${gclog} " \
+          "-XX:+PrintGCApplicationStoppedTime " \
+          "-XX:+PrintGCDetails " \
+          "-XX:+PrintGCDateStamps " \
+          "-XX:+UseGCLogFileRotation " \
+          "-XX:NumberOfGCLogFiles=10 " \
+          "-XX:GCLogFileSize=10M " \
+          "-XX:+PrintPromotionFailure " \
+          "-XX:+PrintGCCause"
+        echo ${FLINK_JVM_GC_LOGGING_OPTS}
+    else
+        echo
+    fi
+}
+
+# Format default heapdump options
+getHeapDumpOpts() {
+    local dump_dest_name=$1
+    local log=$2
+    if [ ${FLINK_JVM_HEAPDUMP_ON_OOM} ];then
+        FLINK_JVM_HEAPDUMP_OPTS="-XX:+HeapDumpOnOutOfMemoryError " \
+          "-XX:HeapDumpPath=${FLINK_JVM_HEAPDUMP_DIRECTORY}/$dump_dest_name " \
+          "-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\n" \
+          "Check gc logs and heapdump file(${FLINK_JVM_HEAPDUMP_DIRECTORY}/$dump_dest_name) for details.' > ${log}; kill -9 %p\""
+        echo $FLINK_JVM_HEAPDUMP_OPTS
+    else
+        echo
+    fi
+}
