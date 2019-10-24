@@ -54,6 +54,7 @@ import org.apache.flink.runtime.instance.HardwareDescription;
 import org.apache.flink.runtime.instance.InstanceID;
 import org.apache.flink.runtime.io.network.partition.ResultPartitionConsumableNotifier;
 import org.apache.flink.runtime.io.network.partition.ResultPartitionID;
+import org.apache.flink.runtime.jobgraph.IntermediateResultPartitionID;
 import org.apache.flink.runtime.jobgraph.tasks.InputSplitProvider;
 import org.apache.flink.runtime.jobmaster.AllocatedSlotInfo;
 import org.apache.flink.runtime.jobmaster.AllocatedSlotReport;
@@ -724,7 +725,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 		}
 	}
 
-	private final Set<ResultPartitionID> clusterPartitions = new HashSet<>();
+	private final Map<IntermediateResultPartitionID, Collection<ResultPartitionID>> clusterPartitions = new HashMap<>();
 
 	@Override
 	public void releaseOrPromotePartitions(JobID jobId, Collection<ResultPartitionID> partitionToRelease, Collection<ResultPartitionID> partitionsToPromote) {
@@ -733,7 +734,19 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			shuffleEnvironment.releasePartitionsLocally(partitionToRelease);
 
 			partitionTable.stopTrackingPartitions(jobId, partitionsToPromote);
-			clusterPartitions.addAll(partitionsToPromote);
+			final Map<IntermediateResultPartitionID, List<ResultPartitionID>> partitionsByIntermediateResult = partitionsToPromote.stream()
+				.collect(Collectors.groupingBy(ResultPartitionID::getPartitionId));
+
+			partitionsByIntermediateResult.forEach(
+				(intermediateResult, newResultPartitionIds) ->
+					clusterPartitions.compute(intermediateResult, (ignored, existingResultPartitionIds) -> {
+						if (existingResultPartitionIds == null) {
+							return newResultPartitionIds;
+						} else {
+							existingResultPartitionIds.addAll(newResultPartitionIds);
+							return existingResultPartitionIds;
+						}
+					}));
 
 			closeJobManagerConnectionIfNoAllocatedResources(jobId);
 		} catch (Throwable t) {
@@ -1077,7 +1090,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
 			establishedResourceManagerConnection = null;
 
-			shuffleEnvironment.releasePartitionsLocally(clusterPartitions);
+			clusterPartitions.values().forEach(shuffleEnvironment::releasePartitionsLocally);
 			clusterPartitions.clear();
 		}
 
