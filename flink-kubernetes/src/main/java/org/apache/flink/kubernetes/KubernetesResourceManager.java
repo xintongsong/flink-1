@@ -26,6 +26,7 @@ import org.apache.flink.kubernetes.kubeclient.FlinkKubeClient;
 import org.apache.flink.kubernetes.kubeclient.KubeClientFactory;
 import org.apache.flink.kubernetes.kubeclient.TaskManagerPodParameter;
 import org.apache.flink.kubernetes.kubeclient.resources.FlinkPod;
+import org.apache.flink.kubernetes.taskmanager.KubernetesTaskExecutorRunner;
 import org.apache.flink.kubernetes.utils.Constants;
 import org.apache.flink.kubernetes.utils.KubernetesUtils;
 import org.apache.flink.runtime.clusterframework.ApplicationStatus;
@@ -308,9 +309,8 @@ public class KubernetesResourceManager extends ResourceManager<KubernetesWorkerN
 
 		String logDir = flinkConfig.getString(KubernetesConfigOptions.FLINK_LOG_DIR);
 
-		// TODO Update the main class to KubernetesTaskExecutorRunner when implemented.
 		String command = KubernetesUtils.getTaskManagerShellCommand(flinkConfig, taskManagerParameters,
-			confDir, logDir, hasLogback, hasLog4j, this.getClass(), getTaskManagerMainClassArgs());
+			confDir, logDir, hasLogback, hasLog4j, KubernetesTaskExecutorRunner.class, getTaskManagerMainClassArgs());
 		return Arrays.asList("/bin/bash", "-c", command);
 	}
 
