@@ -115,6 +115,7 @@ public class ExecutionContext<T> {
 	private final RunOptions runOptions;
 	private final T clusterId;
 	private final ClusterSpecification clusterSpec;
+	private final EnvironmentInstance environmentInstance;
 
 	public ExecutionContext(Environment defaultEnvironment, SessionContext sessionContext, List<URL> dependencies,
 							Configuration flinkConfig, Options commandLineOptions, List<CustomCommandLine<?>> availableCommandLines) {
@@ -159,6 +160,9 @@ public class ExecutionContext<T> {
 		runOptions = createRunOptions(commandLine);
 		clusterId = activeCommandLine.getClusterId(commandLine);
 		clusterSpec = createClusterSpecification(activeCommandLine, commandLine);
+
+		// Initialize the environment instance.
+		this.environmentInstance = wrapClassLoader(EnvironmentInstance::new);
 	}
 
 	public SessionContext getSessionContext() {
@@ -185,13 +189,8 @@ public class ExecutionContext<T> {
 		return activeCommandLine.createClusterDescriptor(commandLine);
 	}
 
-	public EnvironmentInstance createEnvironmentInstance() {
-		try {
-			return wrapClassLoader(EnvironmentInstance::new);
-		} catch (Throwable t) {
-			// catch everything such that a wrong environment does not affect invocations
-			throw new SqlExecutionException("Could not create environment instance.", t);
-		}
+	public EnvironmentInstance getEnvironmentInstance() {
+		return this.environmentInstance;
 	}
 
 	public Map<String, Catalog> getCatalogs() {

@@ -197,7 +197,7 @@ public class LocalExecutor implements Executor {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 
 		return context.wrapClassLoader(() -> Arrays.asList(tableEnv.listCatalogs()));
@@ -208,7 +208,7 @@ public class LocalExecutor implements Executor {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 
 		return context.wrapClassLoader(() -> Arrays.asList(tableEnv.listDatabases()));
@@ -218,7 +218,7 @@ public class LocalExecutor implements Executor {
 	public List<String> listTables(SessionContext session) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 		return context.wrapClassLoader(() -> Arrays.asList(tableEnv.listTables()));
 	}
@@ -227,7 +227,7 @@ public class LocalExecutor implements Executor {
 	public List<String> listUserDefinedFunctions(SessionContext session) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 		return context.wrapClassLoader(() -> Arrays.asList(tableEnv.listUserDefinedFunctions()));
 	}
@@ -236,7 +236,7 @@ public class LocalExecutor implements Executor {
 	public List<String> listFunctions(SessionContext session) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 		return context.wrapClassLoader(() -> Arrays.asList(tableEnv.listFunctions()));
 	}
@@ -245,7 +245,7 @@ public class LocalExecutor implements Executor {
 	public void useCatalog(SessionContext session, String catalogName) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 
 		context.wrapClassLoader(() -> {
@@ -265,7 +265,7 @@ public class LocalExecutor implements Executor {
 	public void useDatabase(SessionContext session, String databaseName) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 
 		context.wrapClassLoader(() -> {
@@ -284,7 +284,7 @@ public class LocalExecutor implements Executor {
 	public void createTable(SessionContext session, String ddl) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 		try {
 			tEnv.sqlUpdate(ddl);
@@ -297,7 +297,7 @@ public class LocalExecutor implements Executor {
 	public TableSchema getTableSchema(SessionContext session, String name) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 		try {
 			return context.wrapClassLoader(() -> tableEnv.scan(name).getSchema());
@@ -311,7 +311,7 @@ public class LocalExecutor implements Executor {
 	public String explainStatement(SessionContext session, String statement) throws SqlExecutionException {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-			.createEnvironmentInstance()
+			.getEnvironmentInstance()
 			.getTableEnvironment();
 
 		// translate
@@ -328,7 +328,7 @@ public class LocalExecutor implements Executor {
 	public List<String> completeStatement(SessionContext session, String statement, int position) {
 		final ExecutionContext<?> context = getOrCreateExecutionContext(session);
 		final TableEnvironment tableEnv = context
-				.createEnvironmentInstance()
+				.getEnvironmentInstance()
 				.getTableEnvironment();
 
 		try {
@@ -401,7 +401,7 @@ public class LocalExecutor implements Executor {
 	@Override
 	public void validateSession(SessionContext session) throws SqlExecutionException {
 		// throws exceptions if an environment cannot be created with the given session context
-		getOrCreateExecutionContext(session).createEnvironmentInstance();
+		getOrCreateExecutionContext(session).getEnvironmentInstance();
 	}
 
 	@Override
@@ -458,7 +458,7 @@ public class LocalExecutor implements Executor {
 	}
 
 	private <C> ProgramTargetDescriptor executeUpdateInternal(ExecutionContext<C> context, String statement) {
-		final ExecutionContext<C>.EnvironmentInstance envInst = context.createEnvironmentInstance();
+		final ExecutionContext<C>.EnvironmentInstance envInst = context.getEnvironmentInstance();
 
 		applyUpdate(context, envInst.getTableEnvironment(), envInst.getQueryConfig(), statement);
 
@@ -487,7 +487,7 @@ public class LocalExecutor implements Executor {
 	}
 
 	private <C> ResultDescriptor executeQueryInternal(ExecutionContext<C> context, String query) {
-		final ExecutionContext<C>.EnvironmentInstance envInst = context.createEnvironmentInstance();
+		final ExecutionContext<C>.EnvironmentInstance envInst = context.getEnvironmentInstance();
 
 		// create table
 		final Table table = createTable(context, envInst.getTableEnvironment(), query);

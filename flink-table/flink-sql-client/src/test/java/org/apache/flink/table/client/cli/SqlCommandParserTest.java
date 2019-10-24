@@ -75,7 +75,11 @@ public class SqlCommandParserTest {
 		testValidSqlCommand("source /my/file", new SqlCommandCall(SqlCommand.SOURCE, new String[] {"/my/file"}));
 		testInvalidSqlCommand("source"); // missing path
 		testValidSqlCommand("USE CATALOG default", new SqlCommandCall(SqlCommand.USE_CATALOG, new String[]{"default"}));
-		testValidSqlCommand("use default", new SqlCommandCall(SqlCommand.USE, new String[] {"default"}));
+		testValidSqlCommand("use default", new SqlCommandCall(SqlCommand.USE, new String[]{"default"}));
+		testValidSqlCommand("create Table hello(a int)", new SqlCommandCall(SqlCommand.CREATE_TABLE, new String[]{"create Table hello(a int)"}));
+		testValidSqlCommand("  CREATE TABLE hello(a int)", new SqlCommandCall(SqlCommand.CREATE_TABLE, new String[]{"CREATE TABLE hello(a int)"}));
+		testInvalidSqlCommand("CREATE tables");
+		testInvalidSqlCommand("CREATE   tables");
 		testInvalidSqlCommand("use catalog");
 	}
 

@@ -124,7 +124,7 @@ public final class SqlCommandParser {
 			SINGLE_OPERAND),
 
 		CREATE_TABLE(
-			"(CREATE\\s+TABLE.*)",
+			"(CREATE\\s+TABLE\\s+.*)",
 			SINGLE_OPERAND),
 
 		CREATE_VIEW(

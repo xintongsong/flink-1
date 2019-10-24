@@ -67,7 +67,7 @@ public class ExecutionContextTest {
 	@Test
 	public void testExecutionConfig() throws Exception {
 		final ExecutionContext<?> context = createDefaultExecutionContext();
-		final ExecutionConfig config = context.createEnvironmentInstance().getExecutionConfig();
+		final ExecutionConfig config = context.getEnvironmentInstance().getExecutionConfig();
 
 		assertEquals(99, config.getAutoWatermarkInterval());
 
@@ -87,7 +87,7 @@ public class ExecutionContextTest {
 		final String hiveDefaultVersionCatalog = "hivedefaultversion";
 
 		final ExecutionContext<?> context = createCatalogExecutionContext();
-		final TableEnvironment tableEnv = context.createEnvironmentInstance().getTableEnvironment();
+		final TableEnvironment tableEnv = context.getEnvironmentInstance().getTableEnvironment();
 
 		assertEquals(inmemoryCatalog, tableEnv.getCurrentCatalog());
 		assertEquals("mydatabase", tableEnv.getCurrentDatabase());
@@ -128,7 +128,7 @@ public class ExecutionContextTest {
 		final String hiveCatalog = "hivecatalog";
 
 		final ExecutionContext<?> context = createCatalogExecutionContext();
-		final TableEnvironment tableEnv = context.createEnvironmentInstance().getTableEnvironment();
+		final TableEnvironment tableEnv = context.getEnvironmentInstance().getTableEnvironment();
 
 		assertEquals(1, tableEnv.listDatabases().length);
 		assertEquals("mydatabase", tableEnv.listDatabases()[0]);
@@ -157,7 +157,7 @@ public class ExecutionContextTest {
 	@Test
 	public void testFunctions() throws Exception {
 		final ExecutionContext<?> context = createDefaultExecutionContext();
-		final TableEnvironment tableEnv = context.createEnvironmentInstance().getTableEnvironment();
+		final TableEnvironment tableEnv = context.getEnvironmentInstance().getTableEnvironment();
 		final String[] expected = new String[]{"scalarUDF", "tableUDF", "aggregateUDF"};
 		final String[] actual = tableEnv.listUserDefinedFunctions();
 		Arrays.sort(expected);
@@ -203,7 +203,7 @@ public class ExecutionContextTest {
 			new TypeInformation[]{Types.BOOLEAN(), Types.STRING()},
 			sinks.get("TableSourceSink").getTableSchema().getFieldTypes());
 
-		final TableEnvironment tableEnv = context.createEnvironmentInstance().getTableEnvironment();
+		final TableEnvironment tableEnv = context.getEnvironmentInstance().getTableEnvironment();
 
 		assertArrayEquals(
 			new String[]{"TableNumber1", "TableNumber2", "TableSourceSink", "TestView1", "TestView2"},
@@ -218,7 +218,7 @@ public class ExecutionContextTest {
 			new HashSet<>(Arrays.asList("EnrichmentSource", "HistorySource")),
 			context.getTableSources().keySet());
 
-		final StreamTableEnvironment tableEnv = (StreamTableEnvironment) context.createEnvironmentInstance().getTableEnvironment();
+		final StreamTableEnvironment tableEnv = (StreamTableEnvironment) context.getEnvironmentInstance().getTableEnvironment();
 
 		assertArrayEquals(
 			new String[]{"EnrichmentSource", "HistorySource", "HistoryView", "TemporalTableUsage"},
@@ -236,7 +236,7 @@ public class ExecutionContextTest {
 	@Test
 	public void testConfiguration() throws Exception {
 		final ExecutionContext<?> context = createConfigurationExecutionContext();
-		final TableEnvironment tableEnv = context.createEnvironmentInstance().getTableEnvironment();
+		final TableEnvironment tableEnv = context.getEnvironmentInstance().getTableEnvironment();
 
 		assertEquals(
 			100,
