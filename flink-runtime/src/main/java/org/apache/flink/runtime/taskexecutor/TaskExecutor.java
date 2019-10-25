@@ -56,6 +56,7 @@ import org.apache.flink.runtime.io.network.partition.PartitionTrackerEntry;
 import org.apache.flink.runtime.io.network.partition.ResultPartitionConsumableNotifier;
 import org.apache.flink.runtime.io.network.partition.ResultPartitionID;
 import org.apache.flink.runtime.io.network.partition.TaskExecutorPartitionTracker;
+import org.apache.flink.runtime.jobgraph.IntermediateDataSetID;
 import org.apache.flink.runtime.jobgraph.tasks.InputSplitProvider;
 import org.apache.flink.runtime.jobmaster.AllocatedSlotInfo;
 import org.apache.flink.runtime.jobmaster.AllocatedSlotReport;
@@ -630,8 +631,9 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
 		for (ResultPartitionDeploymentDescriptor resultPartitionDeploymentDescriptor : partitionsRequiringRelease) {
 			final ResultPartitionID resultPartitionId = resultPartitionDeploymentDescriptor.getShuffleDescriptor().getResultPartitionID();
+			final IntermediateDataSetID dataSetId = resultPartitionDeploymentDescriptor.getResultId();
 
-			partitionTracker.startTrackingPartition(jobId, resultPartitionId);
+			partitionTracker.startTrackingPartition(jobId, resultPartitionId, dataSetId);
 		}
 
 		final CompletableFuture<ExecutionState> taskTerminationWithResourceCleanupFuture =
