@@ -10,10 +10,10 @@ import org.apache.flink.types.Row;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.apache.flink.formats.csv.RowCsvInputFormatTest.PATH;
 import static org.apache.flink.formats.csv.RowCsvInputFormatTest.createTempFile;
 import static org.junit.Assert.assertEquals;
@@ -25,78 +25,113 @@ public class RowCsvInputFormatSplitTest {
 
 	@Test
 	public void readAll() throws Exception {
-		String content = "11$\n1,222\n" + "22$2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 0, -1, '$');
-		assertEquals(Arrays.asList(Row.of("11\n1", "222"), Row.of("222", "333")), rows);
+		test("11$\n1,222\n" + "22$2,333\n", 0, -1, '$', asList(Row.of("11\n1", "222"), Row.of("222", "333")));
 	}
 
 	@Test
 	public void readStartOffset() throws Exception {
-		String content = "11$\n1,222\n" + "22$2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 1, -1, '$');
-		assertEquals(Collections.singletonList(Row.of("222", "333")), rows);
+		test("11$\n1,222\n" + "22$2,333\n", 1, -1, '$', singletonList(Row.of("222", "333")));
 	}
 
 	@Test
 	public void readStartOffsetWithSeparator() throws Exception {
-		String content = "11$\n1,222\n" + "22$2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 3, -1, '$');
-		assertEquals(Collections.singletonList(Row.of("222", "333")), rows);
+		test("11$\n1,222\n" + "22$2,333\n", 3, -1, '$', singletonList(Row.of("222", "333")));
 	}
 
 	@Test
 	public void readLengthWithSeparator() throws Exception {
-		String content = "11$\n1,222\n" + "22$\n2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 0, 13, '$');
-		assertEquals(Arrays.asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")), rows);
+		test("11$\n1,222\n" + "22$\n2,333\n", 0, 13, '$', asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")));
 	}
 
 	@Test
 	public void readLengthWithMultiBytesEscapeChar() throws Exception {
-		String content = "11好\n1,222\n" + "22好\n2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 0, 13, '好');
-		assertEquals(Arrays.asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")), rows);
+		test("11好\n1,222\n" + "22好\n2,333\n", 0, 13, '好', asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")));
 	}
 
 	@Test
 	public void readLengthWithMultiBytesEscapeChar2() throws Exception {
-		String content = "11好\n1,222\n" + "22好\n2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 0, 16, '好');
-		assertEquals(Arrays.asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")), rows);
+		test("11好\n1,222\n" + "22好\n2,333\n", 0, 16, '好', asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")));
 	}
 
 	@Test
 	public void readLengthWithMultiBytesEscapeChar3() throws Exception {
-		String content = "11好\n1,222\n" + "22好\n2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 0, 18, '好');
-		assertEquals(Arrays.asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")), rows);
+		test("11好\n1,222\n" + "22好\n2,333\n", 0, 18, '好', asList(Row.of("11\n1", "222"), Row.of("22\n2", "333")));
 	}
 
 	@Test
 	public void readStartOffsetAndLength() throws Exception {
-		String content = "11好\n1,222\n" + "22好\n2,333\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 3, 18, '好');
-		assertEquals(Collections.singletonList(Row.of("22\n2", "333")), rows);
+		test("11好\n1,222\n" + "22好\n2,333\n", 3, 18, '好', singletonList(Row.of("22\n2", "333")));
 	}
 
 	@Test
 	public void readMultiLineSeparator() throws Exception {
-		String content = "111,222\r\n" + "222,333\r\n";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 3, 18, '好');
-		assertEquals(Collections.singletonList(Row.of("222", "333")), rows);
+		test("111,222\r\n" + "222,333\r\n", 3, 18, '好', singletonList(Row.of("222", "333")));
 	}
 
 	@Test
 	public void readRLineSeparator() throws Exception {
-		String content = "111,222\r" + "222,333\r";
-		List<Row> rows = testEscapeLineDelimiterInField(content, 3, 18, '好');
-		assertEquals(Collections.singletonList(Row.of("222", "333")), rows);
+		test("111,222\r" + "222,333\r", 3, 18, '好', singletonList(Row.of("222", "333")));
 	}
 
-	private List<Row> testEscapeLineDelimiterInField(String content, long offset, long length, char escapeChar) throws Exception {
+	@Test
+	public void testQuotationMark() throws Exception {
+		test("\"111\",222\r" + "222,333\r", 0, 18, '$', asList(Row.of("111", "222"), Row.of("222", "333")));
+		test("\"111\",222\r" + "222,333\r", 3, 18, '$', singletonList(Row.of("222", "333")));
+		test("\"111\",222\r" + "222,333\r", 5, 18, '$', singletonList(Row.of("222", "333")));
+		test("\"111\",222\r" + "222,333\r", 6, 18, '$', singletonList(Row.of("222", "333")));
+
+		testOneField("\"111\"\r" + "222\r", 0, 18, '$', asList(Row.of("111"), Row.of("222")));
+		testOneField("\"111\"\r" + "222\r", 3, 18, '$', singletonList(Row.of("222")));
+		testOneField("\"111\"\r" + "222\r", 5, 18, '$', singletonList(Row.of("222")));
+	}
+
+	@Test
+	public void testSurroundEscapedDelimiter() throws Exception {
+		test("$11$1,222\r" + "222,333\r", 0, 18, '$', asList(Row.of("111", "222"), Row.of("222", "333")));
+		test("$11$1,222\r" + "222,333\r", 3, 18, '$', singletonList(Row.of("222", "333")));
+		test("$11$1,222\r" + "222,333\r", 5, 18, '$', singletonList(Row.of("222", "333")));
+		test("$11$1,222\r" + "222,333\r", 6, 18, '$', singletonList(Row.of("222", "333")));
+
+		testOneField("123*'4**\r" + "123*'4**\n", 0, 18, '*', asList(Row.of("123'4*"), Row.of("123'4*")));
+		testOneField("123*'4**\r" + "123*'4**\n", 3, 18, '*', singletonList(Row.of("123'4*")));
+		testOneField("123*'4**\r" + "123*'4**\n", 4, 18, '*', singletonList(Row.of("123'4*")));
+		testOneField("123*'4**\r" + "123*'4**\n", 5, 18, '*', singletonList(Row.of("123'4*")));
+
+		testOneField("'123''4**'\r" + "'123''4**'\n", 0, 18, '*', asList(Row.of("'123''4*'"), Row.of("'123''4*'")));
+		testOneField("'123''4**'\r" + "'123''4**'\n", 3, 18, '*', singletonList(Row.of("'123''4*'")));
+		testOneField("'123''4**'\r" + "'123''4**'\n", 4, 18, '*', singletonList(Row.of("'123''4*'")));
+		testOneField("'123''4**'\r" + "'123''4**'\n", 5, 18, '*', singletonList(Row.of("'123''4*'")));
+		testOneField("'123''4**'\r" + "'123''4**'\n", 6, 18, '*', singletonList(Row.of("'123''4*'")));
+	}
+
+	private void test(String content, long offset, long length, char escapeChar, List<Row> expected) throws Exception {
+		test(
+				content,
+				offset,
+				length,
+				escapeChar,
+				expected,
+				new TypeInformation[]{BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO});
+	}
+
+	private void testOneField(String content, long offset, long length, char escapeChar, List<Row> expected) throws Exception {
+		test(
+				content,
+				offset,
+				length,
+				escapeChar,
+				expected,
+				new TypeInformation[]{BasicTypeInfo.STRING_TYPE_INFO});
+	}
+
+	private void test(
+			String content,
+			long offset, long length,
+			char escapeChar,
+			List<Row> expected,
+			TypeInformation[] fieldTypes) throws Exception {
 		FileInputSplit split = createTempFile(content, offset, length);
 
-		TypeInformation[] fieldTypes = new TypeInformation[]{BasicTypeInfo.STRING_TYPE_INFO, BasicTypeInfo.STRING_TYPE_INFO};
 		RowCsvInputFormat.Builder builder = RowCsvInputFormat.builder(new RowTypeInfo(fieldTypes), PATH)
 				.setEscapeCharacter(escapeChar);
 
@@ -114,6 +149,7 @@ public class RowCsvInputFormatSplitTest {
 				rows.add(result);
 			}
 		}
-		return rows;
+
+		assertEquals(expected, rows);
 	}
 }

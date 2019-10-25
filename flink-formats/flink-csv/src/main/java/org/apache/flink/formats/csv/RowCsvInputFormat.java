@@ -47,6 +47,17 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Input format that reads csv into {@link Row}.
+ *
+ * <p>Different from old csv {@code org.apache.flink.api.java.io.RowCsvInputFormat}:
+ * 1.New csv will emit this row (Fill null the remaining fields) when row is too short.
+ *   But Old csv will skip this too short row.
+ * 2.New csv, escape char will be removed. But old csv will keep the escape char.
+ *
+ * <p>These can be continuously improved in new csv input format:
+ * 1.New csv not support configure comment char. The comment char is "#".
+ * 2.New csv not support configure multi chars field delimiter.
+ * 3.New csv not support read first N, it will throw exception.
+ * 4.New new csv not support line delimiter, it's line delimiter is "\r" or "\n" or "\r\n".
  */
 public class RowCsvInputFormat extends FileInputFormat<Row> {
 
@@ -226,7 +237,7 @@ public class RowCsvInputFormat extends FileInputFormat<Row> {
 		private int[] selectedFields;
 
 		/**
-		 * Creates a CSV deserialization schema for the given {@link TypeInformation} and file paths
+		 * Creates a row CSV input format for the given {@link TypeInformation} and file paths
 		 * with optional parameters.
 		 */
 		private Builder(TypeInformation<Row> typeInfo, Path... filePaths) {

@@ -125,7 +125,6 @@ public class RowCsvInputFormatTest {
 
 		result = new Row(3);
 
-		// NOTE: old csv will skip this too short row.
 		result = format.nextRecord(result);
 		assertNotNull(result);
 		assertEquals("#description of the data", result.getField(0));
@@ -142,7 +141,6 @@ public class RowCsvInputFormatTest {
 		assertEquals(1, result.getField(1));
 		assertEquals(2.0, result.getField(2));
 
-		// NOTE: old csv will skip this too short row.
 		result = format.nextRecord(result);
 		assertNotNull(result);
 		assertEquals("//a comment", result.getField(0));
@@ -203,8 +201,6 @@ public class RowCsvInputFormatTest {
 		result = format.nextRecord(result);
 		assertNull(result);
 	}
-
-	// NOTE: new csv not support configure comments char.
 
 	@Test
 	public void readStringFields() throws Exception {
@@ -298,8 +294,6 @@ public class RowCsvInputFormatTest {
 		assertNull(result);
 		assertTrue(format.reachedEnd());
 	}
-
-	// NOTE: new csv not support configure multi chars field delimiter.
 
 	@Test
 	public void testTailingEmptyFields() throws Exception {
@@ -493,8 +487,6 @@ public class RowCsvInputFormatTest {
 		assertTrue(format.reachedEnd());
 	}
 
-	// NOTE: new csv not support read first N
-
 	@Test
 	public void testReadSparseWithPositionSetter() throws Exception {
 		String fileContent = "111|222|333|444|555|666|777|888|999|000|\n" +
@@ -502,7 +494,6 @@ public class RowCsvInputFormatTest {
 
 		FileInputSplit split = createTempFile(fileContent);
 
-		// NOTE: new csv field types should contains all fields instead of selected fields
 		TypeInformation[] fieldTypes = new TypeInformation[]{
 				BasicTypeInfo.INT_TYPE_INFO,
 				BasicTypeInfo.INT_TYPE_INFO,
@@ -542,8 +533,6 @@ public class RowCsvInputFormatTest {
 		assertTrue(format.reachedEnd());
 	}
 
-	// TODO NOTE: new csv not support line delimiter
-
 	@Test
 	public void testWindowsLineEndRemoval() throws Exception {
 
@@ -565,7 +554,6 @@ public class RowCsvInputFormatTest {
 
 	@Test
 	public void testQuotedStringParsingWithIncludeFields() throws Exception {
-		// NOTE: new csv quote must appear in pairs in excluded fields too.
 		String fileContent = "\"20:41:52-1-3-2015\"|\"Re: Taskmanager memory error in Eclipse\"|" +
 				"\"Blahblah <blah@blahblah.org>\"|\"blaaa\"|\"blubb\"";
 		File tempFile = File.createTempFile("CsvReaderQuotedString", "tmp");
@@ -576,7 +564,6 @@ public class RowCsvInputFormatTest {
 		writer.write(fileContent);
 		writer.close();
 
-		// NOTE: new csv field types should contains all fields instead of selected fields
 		TypeInformation[] fieldTypes = new TypeInformation[]{
 				BasicTypeInfo.STRING_TYPE_INFO,
 				BasicTypeInfo.STRING_TYPE_INFO,
@@ -629,7 +616,6 @@ public class RowCsvInputFormatTest {
 		inputFormat.open(splits[0]);
 
 		Row record = inputFormat.nextRecord(new Row(2));
-		// NOTE: new csv, escape char will be removed.
 		assertEquals("\"Hello\" World", record.getField(0));
 		assertEquals("We are\" young", record.getField(1));
 	}
@@ -684,7 +670,6 @@ public class RowCsvInputFormatTest {
 						"000|999|888|777|666|555|444|333|222|111|";
 		FileInputSplit split = createTempFile(fileContent);
 
-		// NOTE: new csv field types should contains all fields instead of selected fields
 		TypeInformation[] fieldTypes = new TypeInformation[]{
 				BasicTypeInfo.INT_TYPE_INFO,
 				BasicTypeInfo.INT_TYPE_INFO,
