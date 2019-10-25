@@ -22,6 +22,7 @@ import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.deployment.ResultPartitionDeploymentDescriptor;
 import org.apache.flink.runtime.shuffle.ShuffleDescriptor;
 import org.apache.flink.runtime.shuffle.ShuffleMaster;
+import org.apache.flink.util.CollectionUtil;
 import org.apache.flink.util.Preconditions;
 
 import java.util.Collection;
@@ -29,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
@@ -94,7 +94,7 @@ public class JobMasterPartitionTrackerImpl
 		Preconditions.checkNotNull(producingTaskExecutorId);
 
 		Collection<ResultPartitionDeploymentDescriptor> resultPartitionIds =
-			project(stopTrackingPartitionsFor(producingTaskExecutorId), PartitionTrackerEntry::getMetaInfo);
+			CollectionUtil.project(stopTrackingPartitionsFor(producingTaskExecutorId), PartitionTrackerEntry::getMetaInfo);
 
 		internalReleasePartitions(producingTaskExecutorId, resultPartitionIds);
 	}
@@ -129,12 +129,5 @@ public class JobMasterPartitionTrackerImpl
 		partitionDeploymentDescriptors.stream()
 			.map(ResultPartitionDeploymentDescriptor::getShuffleDescriptor)
 			.forEach(shuffleMaster::releasePartitionExternally);
-	}
-
-	private static <I, O> Collection<O> project(Collection<I> collection, Function<I, O> projector) {
-		return collection
-			.stream()
-			.map(projector)
-			.collect(toList());
 	}
 }
