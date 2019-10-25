@@ -28,6 +28,7 @@ import org.apache.flink.runtime.akka.AkkaUtils;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
 import org.apache.flink.runtime.registration.RetryingRegistrationConfiguration;
 import org.apache.flink.runtime.util.ConfigurationParserUtils;
+import org.apache.flink.util.Preconditions;
 
 import javax.annotation.Nullable;
 
@@ -115,6 +116,8 @@ public class TaskManagerServicesConfiguration {
 		this.maxJvmHeapMemory = maxJvmHeapMemory;
 		this.localRecoveryEnabled = checkNotNull(localRecoveryEnabled);
 		this.queryableStateConfig = queryableStateConfig;
+
+		Preconditions.checkArgument(0 < numberOfSlots, "The number of task slots must be greater than 0.");
 		this.numberOfSlots = checkNotNull(numberOfSlots);
 
 		this.configuredMemory = configuredMemory;
