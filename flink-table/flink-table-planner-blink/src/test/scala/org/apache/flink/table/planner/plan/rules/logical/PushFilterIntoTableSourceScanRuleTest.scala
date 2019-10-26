@@ -123,9 +123,4 @@ class PushFilterIntoTableSourceScanRuleTest extends TableTestBase {
 
     util.verifyPlan("SELECT * FROM MTable WHERE UPPER(a) like 'foo'")
   }
-
-  @Test
-  def testGreatThanPushdown(): Unit = {
-    util.verifyPlan("SELECT * FROM MyTable WHERE a > 10")
-  }
 }
