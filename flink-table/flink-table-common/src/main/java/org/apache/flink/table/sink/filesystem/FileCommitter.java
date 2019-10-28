@@ -70,6 +70,7 @@ public abstract class FileCommitter implements Serializable {
 		private final int taskNumber;
 
 		private transient long checkpointId = -1;
+		private transient Path taskTmpDir;
 		private transient int nameCounter = 0;
 
 		private PathGenerator(int taskNumber) {
@@ -80,27 +81,28 @@ public abstract class FileCommitter implements Serializable {
 		 * Start a transaction, remember the checkpoint id and delete task temporary directory to write.
 		 */
 		public void startTransaction(long checkpointId) throws Exception {
-			this.checkpointId = checkpointId;
-			deletePath(getTaskTmpDir());
-		}
-
-		private Path getTaskTmpDir() {
 			checkArgument(checkpointId != -1);
-			return new Path(new Path(temporaryPath, "cp-" + checkpointId), "task-" + taskNumber);
+			this.checkpointId = checkpointId;
+			this.taskTmpDir = new Path(new Path(temporaryPath, "cp-" + checkpointId), "task-" + taskNumber);
+			deletePath(taskTmpDir);
 		}
 
 		/**
 		 * Generate a new path without partition.
 		 */
-		public Path generate() {
-			return new Path(getTaskTmpDir(), newFileName());
+		public Path generate() throws Exception {
+			Path path = new Path(taskTmpDir, newFileName());
+			deletePath(path);
+			return path;
 		}
 
 		/**
 		 * Generate a new path with partition path.
 		 */
-		public Path generate(String partition) {
-			return new Path(new Path(getTaskTmpDir(), partition), newFileName());
+		public Path generate(String partition) throws Exception {
+			Path path = new Path(new Path(taskTmpDir, partition), newFileName());
+			deletePath(path);
+			return path;
 		}
 
 		private String newFileName() {
