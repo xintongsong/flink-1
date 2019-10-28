@@ -283,7 +283,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		}
 		else if (status == InputStatus.NOTHING_AVAILABLE) {
 			SuspendedMailboxDefaultAction suspendedDefaultAction = context.suspendDefaultAction();
-			inputProcessor.isAvailable().thenRun(suspendedDefaultAction::resume);
+			inputProcessor.getAvailableFuture().thenRun(suspendedDefaultAction::resume);
 		}
 	}
 
