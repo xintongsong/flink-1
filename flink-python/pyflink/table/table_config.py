@@ -19,6 +19,7 @@
 from py4j.compat import long
 
 from pyflink.common import Configuration, SqlDialect
+from pyflink.common.dependency_manager import DependencyManager
 from pyflink.java_gateway import get_gateway
 
 __all__ = ['TableConfig']
@@ -273,6 +274,24 @@ class TableConfig(object):
         :type sql_dialect: SqlDialect
         """
         self._j_table_config.setSqlDialect(SqlDialect._to_j_sql_dialect(sql_dialect))
+
+    def set_python_executable(self, python_exec):
+        """
+        Set the path of the python interpreter for running the python udf worker.
+
+        e.g. "/usr/local/bin/python3".
+
+        .. note::
+
+            The python udf worker depends on Apache Beam (version must be 2.15.0),
+            CloudPickle (version >= 1.2.2), Pip (version >= 7.1.0) and
+            SetupTools (version >= 37.0.0).
+            Please ensure that the specified environment meets above requirements.
+
+        :param python_exec: The path of python interpreter.
+        :type python_exec: str
+        """
+        self.get_configuration().set_string(DependencyManager.PYTHON_EXEC, python_exec)
 
     @staticmethod
     def get_default():
