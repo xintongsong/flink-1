@@ -29,30 +29,14 @@ import java.util.concurrent.CompletableFuture;
 public interface AvailabilityProvider {
 	/**
 	 * Constant that allows to avoid volatile checks {@link CompletableFuture#isDone()}. Check
-	 * {@link #isAvailable()} for more explanation.
+	 * {@link #getAvailableFuture()} for more explanation.
 	 */
 	CompletableFuture<?> AVAILABLE = CompletableFuture.completedFuture(null);
 
 	/**
-	 * Check if this instance is available for further processing.
-	 *
-	 * <p>When hot looping to avoid volatile access in {@link CompletableFuture#isDone()} user of
-	 * this method should do the following check:
-	 * <pre>
-	 * {@code
-	 *	AvailabilityProvider input = ...;
-	 *	if (input.isAvailable() == AvailabilityProvider.AVAILABLE || input.isAvailable().isDone()) {
-	 *		// do something;
-	 *	}
-	 * }
-	 * </pre>
-	 *
-	 * @return a future that is completed if there are more records available. If there are more
-	 * records available immediately, {@link #AVAILABLE} should be returned. Previously returned
-	 * not completed futures should become completed once there is more input available or if
-	 * the input is finished.
+	 * @return a future that is completed if the respective provider is available.
 	 */
-	CompletableFuture<?> isAvailable();
+	CompletableFuture<?> getAvailableFuture();
 
 	/**
 	 * A availability implementation for providing the helpful functions of resetting the
@@ -60,15 +44,15 @@ public interface AvailabilityProvider {
 	 */
 	final class AvailabilityHelper implements AvailabilityProvider {
 
-		private CompletableFuture<?> isAvailable = new CompletableFuture<>();
+		private CompletableFuture<?> availableFuture = new CompletableFuture<>();
 
 		/**
 		 * Judges to reset the current available state as unavailable.
 		 */
 		public void resetUnavailable() {
 			// try to avoid volatile access in isDone()}
-			if (isAvailable == AVAILABLE || isAvailable.isDone()) {
-				isAvailable = new CompletableFuture<>();
+			if (availableFuture == AVAILABLE || availableFuture.isDone()) {
+				availableFuture = new CompletableFuture<>();
 			}
 		}
 
@@ -76,7 +60,7 @@ public interface AvailabilityProvider {
 		 * Resets the constant completed {@link #AVAILABLE} as the current state.
 		 */
 		public void resetAvailable() {
-			isAvailable = AVAILABLE;
+			availableFuture = AVAILABLE;
 		}
 
 		/**
@@ -84,17 +68,14 @@ public interface AvailabilityProvider {
 		 *  {@link #AVAILABLE} as the current state.
 		 */
 		public CompletableFuture<?> getUnavailableToResetAvailable() {
-			CompletableFuture<?> toNotify = isAvailable;
-			isAvailable = AVAILABLE;
+			CompletableFuture<?> toNotify = availableFuture;
+			availableFuture = AVAILABLE;
 			return toNotify;
 		}
 
-		/**
-		 * @return a future that is completed if the respective provider is available.
-		 */
 		@Override
-		public CompletableFuture<?> isAvailable() {
-			return isAvailable;
+		public CompletableFuture<?> getAvailableFuture() {
+			return availableFuture;
 		}
 	}
 }
