@@ -228,7 +228,7 @@ class LocalBufferPool implements BufferPool {
 		while ((segment = requestMemorySegment()) == null) {
 			try {
 				// wait until available
-				isAvailable().get();
+				getAvailableFuture().get();
 			} catch (ExecutionException e) {
 				LOG.error("The available future is completed exceptionally.", e);
 				ExceptionUtils.rethrow(e);
@@ -347,9 +347,9 @@ class LocalBufferPool implements BufferPool {
 					listener.notifyBufferDestroyed();
 				}
 
-				final CompletableFuture<?> isAvailable = availabilityHelper.isAvailable();
-				if (isAvailable != AVAILABLE && !isAvailable.isDone()) {
-					toNotify = isAvailable;
+				final CompletableFuture<?> future = availabilityHelper.getAvailableFuture();
+				if (!isAvailable()) {
+					toNotify = future;
 				}
 
 				isDestroyed = true;
@@ -407,13 +407,13 @@ class LocalBufferPool implements BufferPool {
 	}
 
 	@Override
-	public CompletableFuture<?> isAvailable() {
+	public CompletableFuture<?> getAvailableFuture() {
 		if (numberOfRequestedMemorySegments >= currentPoolSize) {
-			return availabilityHelper.isAvailable();
-		} else if (availabilityHelper.isAvailable() == AVAILABLE || networkBufferPool.isAvailable() == AVAILABLE) {
+			return availabilityHelper.getAvailableFuture();
+		} else if (availabilityHelper.isApproximatelyAvailable() || networkBufferPool.isApproximatelyAvailable()) {
 			return AVAILABLE;
 		} else {
-			return CompletableFuture.anyOf(availabilityHelper.isAvailable(), networkBufferPool.isAvailable());
+			return CompletableFuture.anyOf(availabilityHelper.getAvailableFuture(), networkBufferPool.getAvailableFuture());
 		}
 	}
 
