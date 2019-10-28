@@ -111,10 +111,9 @@ public class PythonScalarFunctionOperator extends AbstractPythonScalarFunctionOp
 			getRuntimeContext().getTaskName(),
 			resultReceiver,
 			scalarFunctions,
-			scalarFunctions[0].getPythonFunction().getPythonEnv(),
+			environmentManager,
 			udfInputType,
-			udfOutputType,
-			getContainingTask().getEnvironment().getTaskManagerInfo().getTmpDirectories());
+			udfOutputType);
 	}
 
 	/**

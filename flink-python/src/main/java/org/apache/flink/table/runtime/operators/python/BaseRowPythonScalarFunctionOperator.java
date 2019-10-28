@@ -118,10 +118,9 @@ public class BaseRowPythonScalarFunctionOperator
 			getRuntimeContext().getTaskName(),
 			resultReceiver,
 			scalarFunctions,
-			scalarFunctions[0].getPythonFunction().getPythonEnv(),
+			environmentManager,
 			udfInputType,
-			udfOutputType,
-			getContainingTask().getEnvironment().getTaskManagerInfo().getTmpDirectories());
+			udfOutputType);
 	}
 
 	private Projection<BaseRow, BinaryRow> createUdfInputProjection() {

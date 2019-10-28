@@ -19,10 +19,14 @@
 package org.apache.flink.table.runtime.operators.python;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.python.ProcessEnvironmentManager;
+import org.apache.flink.python.PythonDependencyManager;
+import org.apache.flink.python.PythonEnvironmentManager;
 import org.apache.flink.python.PythonFunctionRunner;
 import org.apache.flink.streaming.api.operators.python.AbstractPythonFunctionOperator;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.table.functions.python.PythonEnv;
 import org.apache.flink.table.functions.python.PythonFunctionInfo;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.util.Preconditions;
@@ -142,6 +146,18 @@ public abstract class AbstractPythonScalarFunctionOperator<IN, OUT, UDFIN, UDFOU
 		bufferInput(element.getValue());
 		super.processElement(element);
 		emitResults();
+	}
+
+	@Override
+	public PythonEnvironmentManager createPythonEnvironmentManager(
+		PythonDependencyManager dependencyManager, String tmpDirectoryRoot) {
+		PythonEnv pythonEnv = scalarFunctions[0].getPythonFunction().getPythonEnv();
+		if (pythonEnv.getExecType() == PythonEnv.ExecType.PROCESS) {
+			return ProcessEnvironmentManager.create(dependencyManager, tmpDirectoryRoot, System.getenv());
+		} else {
+			throw new UnsupportedOperationException(String.format(
+				"Execution type '%s' is not supported.", pythonEnv.getExecType()));
+		}
 	}
 
 	@Override

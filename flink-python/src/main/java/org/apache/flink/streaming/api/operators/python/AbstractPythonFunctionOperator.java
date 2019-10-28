@@ -19,6 +19,9 @@
 package org.apache.flink.streaming.api.operators.python;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.python.PythonDependencyManager;
+import org.apache.flink.python.PythonEnvironmentManager;
 import org.apache.flink.python.PythonFunctionRunner;
 import org.apache.flink.python.PythonOptions;
 import org.apache.flink.streaming.api.operators.AbstractStreamOperator;
@@ -27,7 +30,9 @@ import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -75,6 +80,7 @@ public abstract class AbstractPythonFunctionOperator<IN, OUT>
 	 * A timer that finishes the current bundle after a fixed amount of time.
 	 */
 	private transient ScheduledFuture<?> checkFinishBundleTimer;
+	protected PythonEnvironmentManager environmentManager;
 
 	/**
 	 * Callback to be executed after the current bundle was finished.
@@ -110,6 +116,23 @@ public abstract class AbstractPythonFunctionOperator<IN, OUT>
 				LOG.info("The maximum bundle time is configured to {} milliseconds.", this.maxBundleTimeMills);
 			}
 
+			String[] tmpDirectories =
+				getContainingTask().getEnvironment().getTaskManagerInfo().getTmpDirectories();
+			Random rand = new Random();
+			int tmpDirectoryIndex = rand.nextInt() % tmpDirectories.length;
+			String pythonTmpDirectoryRoot = tmpDirectories[tmpDirectoryIndex];
+			ExecutionConfig.GlobalJobParameters globalJobParameters = getExecutionConfig().getGlobalJobParameters();
+			Map<String, String> parameters;
+			if (globalJobParameters != null) {
+				parameters = globalJobParameters.toMap();
+			} else {
+				parameters = new HashMap<>();
+			}
+			PythonDependencyManager dependencyManager = PythonDependencyManager.createDependencyManager(
+				parameters,
+				getRuntimeContext().getDistributedCache());
+
+			this.environmentManager = createPythonEnvironmentManager(dependencyManager, pythonTmpDirectoryRoot);
 			this.pythonFunctionRunner = createPythonFunctionRunner();
 			this.pythonFunctionRunner.open();
 
@@ -132,6 +155,7 @@ public abstract class AbstractPythonFunctionOperator<IN, OUT>
 	public void close() throws Exception {
 		try {
 			invokeFinishBundle();
+			environmentManager.cleanup();
 		} finally {
 			super.close();
 		}
@@ -226,6 +250,9 @@ public abstract class AbstractPythonFunctionOperator<IN, OUT>
 	 * Creates the {@link PythonFunctionRunner} which is responsible for Python user-defined function execution.
 	 */
 	public abstract PythonFunctionRunner<IN> createPythonFunctionRunner();
+
+	public abstract PythonEnvironmentManager createPythonEnvironmentManager(
+		PythonDependencyManager dependencyManager, String tmpDirectoryRoot);
 
 	/**
 	 * Sends the execution results to the downstream operator.
