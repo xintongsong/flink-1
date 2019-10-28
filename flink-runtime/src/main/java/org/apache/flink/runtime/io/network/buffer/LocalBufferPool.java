@@ -405,8 +405,8 @@ class LocalBufferPool implements BufferPool {
 	}
 
 	@Override
-	public CompletableFuture<?> isAvailable() {
-		return availabilityHelper.isAvailable();
+	public CompletableFuture<?> getAvailableFuture() {
+		return availabilityHelper.getAvailableFuture();
 	}
 
 	@Override
