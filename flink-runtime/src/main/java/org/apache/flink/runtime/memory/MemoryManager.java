@@ -93,6 +93,18 @@ public class MemoryManager {
 	 * Creates a memory manager with the given memory types, capacity and given page size.
 	 *
 	 * @param memorySizeByType The total size of the memory to be managed by this memory manager for each type (heap / off-heap).
+	 * @param pageSize The size of the pages handed out by the memory manager.
+	 */
+	public MemoryManager(
+			Map<MemoryType, Long> memorySizeByType,
+			int pageSize) {
+		this(memorySizeByType, 1, pageSize);
+	}
+
+	/**
+	 * Creates a memory manager with the given memory types, capacity and given page size.
+	 *
+	 * @param memorySizeByType The total size of the memory to be managed by this memory manager for each type (heap / off-heap).
 	 * @param numberOfSlots The number of slots of the task manager.
 	 * @param pageSize The size of the pages handed out by the memory manager.
 	 */

@@ -73,6 +73,7 @@ public class TaskSlotTableBuilder {
 
 	public static List<TaskSlot> createDefaultSlots(int numberOfDefaultSlots) {
 		return TaskManagerServices.createTaskSlotsFromResources(
-			Collections.nCopies(numberOfDefaultSlots, DEFAULT_RESOURCE_PROFILE));
+			Collections.nCopies(numberOfDefaultSlots, DEFAULT_RESOURCE_PROFILE),
+			MemoryManager.MIN_PAGE_SIZE);
 	}
 }
