@@ -283,7 +283,7 @@ public final class StreamTwoInputProcessor<IN1, IN2> implements StreamInputProce
 	}
 
 	private void updateAvailability(InputStatus status, StreamTaskInput input) {
-		if (status == InputStatus.MORE_AVAILABLE || (status != InputStatus.END_OF_INPUT && input.getAvailableFuture() == AVAILABLE)) {
+		if (status == InputStatus.MORE_AVAILABLE || (status != InputStatus.END_OF_INPUT && input.isAvailable())) {
 			inputSelectionHandler.setAvailableInput(input.getInputIndex());
 		} else {
 			inputSelectionHandler.setUnavailableInput(input.getInputIndex());
@@ -295,11 +295,11 @@ public final class StreamTwoInputProcessor<IN1, IN2> implements StreamInputProce
 		if (status == InputStatus.END_OF_INPUT) {
 			return;
 		}
-		CompletableFuture<?> inputAvailable = getInput(inputIndex).getAvailableFuture();
-		// TODO: inputAvailable.isDone() can be a costly operation (checking volatile). If one of
+
+		// TODO: isVolatileAvailable() can be a costly operation (checking volatile). If one of
 		// the input is constantly available and another is not, we will be checking this volatile
 		// once per every record. This might be optimized to only check once per processed NetworkBuffer
-		if (inputAvailable == AVAILABLE || inputAvailable.isDone()) {
+		if (getInput(inputIndex).isVolatileAvailable()) {
 			inputSelectionHandler.setAvailableInput(inputIndex);
 		}
 	}
@@ -313,11 +313,8 @@ public final class StreamTwoInputProcessor<IN1, IN2> implements StreamInputProce
 			return input1.getAvailableFuture();
 		}
 
-		CompletableFuture<?> input1Available = input1.getAvailableFuture();
-		CompletableFuture<?> input2Available = input2.getAvailableFuture();
-
-		return (input1Available == AVAILABLE || input2Available == AVAILABLE) ?
-			AVAILABLE : CompletableFuture.anyOf(input1Available, input2Available);
+		return (input1.isAvailable() || input2.isAvailable()) ?
+			AVAILABLE : CompletableFuture.anyOf(input1.getAvailableFuture(), input2.getAvailableFuture());
 	}
 
 	private StreamTaskInput getInput(int inputIndex) {

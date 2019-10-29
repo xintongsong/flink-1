@@ -29,9 +29,29 @@ import java.util.concurrent.CompletableFuture;
 public interface AvailabilityProvider {
 	/**
 	 * Constant that allows to avoid volatile checks {@link CompletableFuture#isDone()}. Check
-	 * {@link #getAvailableFuture()} for more explanation.
+	 * {@link #isAvailable()} and {@link #isVolatileAvailable()}for more explanation.
 	 */
 	CompletableFuture<?> AVAILABLE = CompletableFuture.completedFuture(null);
+
+	/**
+	 * Checks whether this instance is available via constant {@link #AVAILABLE} to avoid volatile access.
+	 *
+	 * @return true if this instance is available for further processing.
+	 */
+	default boolean isAvailable() {
+		return getAvailableFuture() == AVAILABLE;
+	}
+
+	/**
+	 * In order to avoid volatile access in {@link CompletableFuture#isDone()}, we check the condition
+	 * of <code>future == AVAILABLE</code> firstly, so it would get performance benefits when hot looping.
+	 *
+	 * @return true if this instance is available for further processing.
+	 */
+	default boolean isVolatileAvailable() {
+		CompletableFuture<?> future = getAvailableFuture();
+		return future == AVAILABLE || future.isDone();
+	}
 
 	/**
 	 * @return a future that is completed if the respective provider is available.
@@ -50,8 +70,7 @@ public interface AvailabilityProvider {
 		 * Judges to reset the current available state as unavailable.
 		 */
 		public void resetUnavailable() {
-			// try to avoid volatile access in isDone()}
-			if (availableFuture == AVAILABLE || availableFuture.isDone()) {
+			if (isVolatileAvailable()) {
 				availableFuture = new CompletableFuture<>();
 			}
 		}
