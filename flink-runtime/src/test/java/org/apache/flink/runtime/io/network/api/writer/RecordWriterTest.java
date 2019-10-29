@@ -532,7 +532,7 @@ public class RecordWriterTest {
 	/**
 	 * Partition writer that collects the added buffers/events in multiple queue.
 	 */
-	static class CollectingPartitionWriter implements ResultPartitionWriter {
+	static class CollectingPartitionWriter extends ResultPartitionWriter {
 		private final Queue<BufferConsumer>[] queues;
 		private final BufferProvider bufferProvider;
 		private final ResultPartitionID partitionId = new ResultPartitionID();
@@ -620,7 +620,7 @@ public class RecordWriterTest {
 	/**
 	 * Partition writer that recycles all received buffers and does no further processing.
 	 */
-	private static class RecyclingPartitionWriter implements ResultPartitionWriter {
+	private static class RecyclingPartitionWriter extends ResultPartitionWriter {
 		private final BufferProvider bufferProvider;
 		private final ResultPartitionID partitionId = new ResultPartitionID();
 

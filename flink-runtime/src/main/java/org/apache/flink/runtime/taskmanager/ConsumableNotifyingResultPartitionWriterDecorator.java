@@ -40,7 +40,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * results, receivers are deployed as soon as the first buffer is added to the result partition.
  * With blocking results on the other hand, receivers are deployed after the partition is finished.
  */
-public class ConsumableNotifyingResultPartitionWriterDecorator implements ResultPartitionWriter {
+public class ConsumableNotifyingResultPartitionWriterDecorator extends ResultPartitionWriter {
 
 	private final TaskActions taskActions;
 

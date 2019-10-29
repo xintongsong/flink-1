@@ -39,7 +39,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * {@link ResultPartitionWriter} that collects output on the List.
  */
 @ThreadSafe
-public abstract class AbstractCollectingResultPartitionWriter implements ResultPartitionWriter {
+public abstract class AbstractCollectingResultPartitionWriter extends ResultPartitionWriter {
 	private final BufferProvider bufferProvider;
 	private final ArrayDeque<BufferConsumer> bufferConsumers = new ArrayDeque<>();
 

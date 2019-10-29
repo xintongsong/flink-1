@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.io.network.api.writer;
 
+import org.apache.flink.runtime.io.AvailabilityProvider;
 import org.apache.flink.runtime.io.network.buffer.BufferBuilder;
 import org.apache.flink.runtime.io.network.buffer.BufferConsumer;
 import org.apache.flink.runtime.io.network.partition.ResultPartitionID;
@@ -25,7 +26,6 @@ import org.apache.flink.runtime.io.network.partition.ResultPartitionID;
 import javax.annotation.Nullable;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * A buffer-oriented runtime result writer API for producing results.
@@ -35,23 +35,23 @@ import java.util.concurrent.CompletableFuture;
  * In this case {@link ResultPartitionWriter#fail(Throwable)} still needs to be called afterwards to fully release
  * all resources associated the the partition and propagate failure cause to the consumer if possible.
  */
-public interface ResultPartitionWriter extends AutoCloseable {
+public abstract class ResultPartitionWriter implements AutoCloseable, AvailabilityProvider {
 
 	/**
 	 * Setup partition, potentially heavy-weight, blocking operation comparing to just creation.
 	 */
-	void setup() throws IOException;
+	public abstract void setup() throws IOException;
 
-	ResultPartitionID getPartitionId();
+	public abstract ResultPartitionID getPartitionId();
 
-	int getNumberOfSubpartitions();
+	public abstract int getNumberOfSubpartitions();
 
-	int getNumTargetKeyGroups();
+	public abstract int getNumTargetKeyGroups();
 
 	/**
 	 * Requests a {@link BufferBuilder} from this partition for writing data.
 	 */
-	BufferBuilder getBufferBuilder() throws IOException, InterruptedException;
+	public abstract BufferBuilder getBufferBuilder() throws IOException, InterruptedException;
 
 	/**
 	 * Adds the bufferConsumer to the subpartition with the given index.
@@ -64,17 +64,17 @@ public interface ResultPartitionWriter extends AutoCloseable {
 	 *
 	 * @return true if operation succeeded and bufferConsumer was enqueued for consumption.
 	 */
-	boolean addBufferConsumer(BufferConsumer bufferConsumer, int subpartitionIndex) throws IOException;
+	public abstract boolean addBufferConsumer(BufferConsumer bufferConsumer, int subpartitionIndex) throws IOException;
 
 	/**
 	 * Manually trigger consumption from enqueued {@link BufferConsumer BufferConsumers} in all subpartitions.
 	 */
-	void flushAll();
+	public abstract void flushAll();
 
 	/**
 	 * Manually trigger consumption from enqueued {@link BufferConsumer BufferConsumers} in one specified subpartition.
 	 */
-	void flush(int subpartitionIndex);
+	public abstract void flush(int subpartitionIndex);
 
 	/**
 	 * Fail the production of the partition.
@@ -85,19 +85,12 @@ public interface ResultPartitionWriter extends AutoCloseable {
 	 *
 	 * @param throwable failure cause
 	 */
-	void fail(@Nullable Throwable throwable);
+	public abstract void fail(@Nullable Throwable throwable);
 
 	/**
 	 * Successfully finish the production of the partition.
 	 *
 	 * <p>Closing of partition is still needed afterwards.
 	 */
-	void finish() throws IOException;
-
-	/**
-	 * Check whether the writer is available for output or not.
-	 *
-	 * @return a future that is completed if it is available for output.
-	 */
-	CompletableFuture<?> getAvailableFuture();
+	public abstract void finish() throws IOException;
 }
