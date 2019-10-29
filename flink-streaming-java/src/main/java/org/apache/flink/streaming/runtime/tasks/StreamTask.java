@@ -85,6 +85,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -202,6 +203,12 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
 	private final List<RecordWriter<SerializationDelegate<StreamRecord<OUT>>>> recordWriters;
 
+	/**
+	 * A combination of input and output futures and the processor can process next input
+	 * iif all the futures are completed.
+	 */
+	private final CompletableFuture<?>[] inputOutputFutures;
+
 	protected final MailboxProcessor mailboxProcessor;
 
 	private Long syncSavepointId = null;
@@ -250,6 +257,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		this.configuration = new StreamConfig(getTaskConfiguration());
 		this.accumulatorMap = getEnvironment().getAccumulatorRegistry().getUserMap();
 		this.recordWriters = createRecordWriters(configuration, environment);
+		this.inputOutputFutures = new CompletableFuture[recordWriters.size() + 1];
 		this.mailboxProcessor = new MailboxProcessor(this::processInput);
 		this.asyncExceptionHandler = new StreamTaskAsyncExceptionHandler(environment);
 	}
@@ -281,10 +289,41 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 		if (status == InputStatus.END_OF_INPUT) {
 			context.allActionsCompleted();
 		}
-		else if (status == InputStatus.NOTHING_AVAILABLE) {
+
+		CompletableFuture<?> jointFuture = getInputOutputJointFuture(status);
+		if (jointFuture != null) {
 			SuspendedMailboxDefaultAction suspendedDefaultAction = context.suspendDefaultAction();
-			inputProcessor.getAvailableFuture().thenRun(suspendedDefaultAction::resume);
+			jointFuture.thenRun(suspendedDefaultAction::resume);
 		}
+	}
+
+	/**
+	 * @return a combination of input and output futures if at-least one future of them is not
+	 * completed, otherwise return null if all input and outputs are available.
+	 */
+	private CompletableFuture<?> getInputOutputJointFuture(InputStatus status) {
+		if (status == InputStatus.MORE_AVAILABLE && isOutputAvailable()) {
+			return null;
+		}
+
+		int length = recordWriters.size();
+		for (int i = 0; i < length; i++) {
+			inputOutputFutures[i] = recordWriters.get(i).getAvailableFuture();
+		}
+		inputOutputFutures[length] = inputProcessor.getAvailableFuture();
+		return CompletableFuture.allOf(inputOutputFutures);
+	}
+
+	/**
+	 * @return true if all the record writers are available.
+	 */
+	private boolean isOutputAvailable() {
+		for (RecordWriter recordWriter : recordWriters) {
+			if (!recordWriter.isAvailable()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void resetSynchronousSavepointId() {
