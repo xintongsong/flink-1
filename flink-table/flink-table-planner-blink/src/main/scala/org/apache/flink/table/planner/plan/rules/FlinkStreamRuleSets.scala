@@ -326,6 +326,9 @@ object FlinkStreamRuleSets {
     * RuleSet to do rewrite on FlinkLogicalRel for Stream
     */
   val LOGICAL_REWRITE: RuleSet = RuleSets.ofList(
+    // Rule that splits python ScalarFunctions from
+    // java/scala ScalarFunctions in Correlate Condition
+    SplitPythonConditionFromCorrelateRule.INSTANCE,
     // transform over window to topn node
     FlinkLogicalRankRule.INSTANCE,
     // transpose calc past rank to reduce rank input fields
