@@ -147,6 +147,8 @@ object FlinkRuleSets {
     * RuleSet to do rewrite on FlinkLogicalRel
     */
   val LOGICAL_REWRITE_RULES: RuleSet = RuleSets.ofList(
+    SplitPythonConditionFromCorrelateRule.INSTANCE,
+    CalcMergeRule.INSTANCE,
     PythonCalcSplitRule.SPLIT_CONDITION,
     PythonCalcSplitRule.SPLIT_PROJECT,
     PythonCalcSplitRule.PUSH_CONDITION,
