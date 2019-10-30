@@ -180,20 +180,9 @@ public class YarnClusterDescriptorTest extends TestLogger {
 		final String java = "$JAVA_HOME/bin/java";
 		final String jvmmem = "-Xms424m -Xmx424m";
 		final String defaultGCLoggingOpts =
-			"-Xloggc:" + ApplicationConstants.LOG_DIR_EXPANSION_VAR + "/gc.log " +
-			"-XX:+PrintGCApplicationStoppedTime " +
-			"-XX:+PrintGCDetails " +
-			"-XX:+PrintGCDateStamps " +
-			"-XX:+UseGCLogFileRotation " +
-			"-XX:NumberOfGCLogFiles=10 " +
-			"-XX:GCLogFileSize=10M " +
-			"-XX:+PrintPromotionFailure " +
-			"-XX:+PrintGCCause";
+      BootstrapToolsTest.getGCLoggingOpts(ApplicationConstants.LOG_DIR_EXPANSION_VAR);
 		final String heapdumpOpts =
-			"-XX:+HeapDumpOnOutOfMemoryError " +
-				"-XX:HeapDumpPath=/tmp/test-flink-jobmanager-heapdump.hprof " +
-				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\nCheck gc logs and heapdump file(/tmp/test-flink-jobmanager-heapdump.hprof) for details.' > " +
-				"<LOG_DIR>/jobmanager.err; kill -9 %p\"";
+      BootstrapToolsTest.getHeapdumpOpts("test", "jobmanager", ApplicationConstants.LOG_DIR_EXPANSION_VAR, "/tmp");
 		final String jvmOpts = "-Djvm"; // if set
 		final String jmJvmOpts = "-DjmJvm"; // if set
 		final String krb5 = "-Djava.security.krb5.conf=krb5.conf";

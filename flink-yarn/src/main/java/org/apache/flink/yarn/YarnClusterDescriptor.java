@@ -1599,18 +1599,8 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 			int jobManagerMemoryMb) {
 		// ------------------ Prepare Application Master Container  ------------------------------
 
-		String javaOpts = "";
-		// Add default gc logging options if enabled
-		javaOpts += BootstrapTools.getGCLoggingOpts(ApplicationConstants.LOG_DIR_EXPANSION_VAR, flinkConfiguration);
-		// Add default heap dump options if enabled
-		javaOpts += " " + BootstrapTools.getHeapdumpOpts(
-			appId,
-			"jobmanager",
-			ApplicationConstants.LOG_DIR_EXPANSION_VAR,
-			flinkConfiguration);
-		// respect custom JVM options in the YAML file
-		javaOpts += " " + flinkConfiguration.getString(CoreOptions.FLINK_JVM_OPTIONS);
-
+		String javaOpts = BootstrapTools.getCommonJvmOpts(
+        appId, "jobmanager", ApplicationConstants.LOG_DIR_EXPANSION_VAR, flinkConfiguration);
 		if (flinkConfiguration.getString(CoreOptions.FLINK_JM_JVM_OPTIONS).length() > 0) {
 			javaOpts += " " + flinkConfiguration.getString(CoreOptions.FLINK_JM_JVM_OPTIONS);
 		}
