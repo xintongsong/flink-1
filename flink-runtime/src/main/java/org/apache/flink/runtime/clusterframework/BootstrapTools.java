@@ -398,12 +398,7 @@ public class BootstrapTools {
 
 		startCommandValues.put("jvmmem", StringUtils.join(params, ' '));
 
-		String javaOpts = "";
-		// Add default gc logging options if enabled
-		javaOpts += getGCLoggingOpts(logDirectory, flinkConfig);
-		// Add default heap dump options if enabled
-		javaOpts += " " + getHeapdumpOpts(appId, "taskmanager", logDirectory, flinkConfig);
-		javaOpts += " " + flinkConfig.getString(CoreOptions.FLINK_JVM_OPTIONS);
+		String javaOpts = getCommonJvmOpts(appId, "taskmanager", logDirectory, flinkConfig);
 		if (flinkConfig.getString(CoreOptions.FLINK_TM_JVM_OPTIONS).length() > 0) {
 			javaOpts += " " + flinkConfig.getString(CoreOptions.FLINK_TM_JVM_OPTIONS);
 		}
@@ -522,23 +517,18 @@ public class BootstrapTools {
 	/**
 	 * Format the default gc logging options
 	 * @param logDirectory to save the gc log
-	 * @param conf flink configuration
 	 * @return the formatted gc logging options string
 	 */
-	public static String getGCLoggingOpts(String logDirectory, Configuration conf) {
-		boolean enableGCLogging = conf.getBoolean(CoreOptions.FLINK_JVM_DEFAULT_GC_LOGGING);
-		if (enableGCLogging) {
-			return "-Xloggc:" + logDirectory + "/gc.log " +
-				"-XX:+PrintGCApplicationStoppedTime " +
-				"-XX:+PrintGCDetails " +
-				"-XX:+PrintGCDateStamps " +
-				"-XX:+UseGCLogFileRotation " +
-				"-XX:NumberOfGCLogFiles=10 " +
-				"-XX:GCLogFileSize=10M " +
-				"-XX:+PrintPromotionFailure " +
-				"-XX:+PrintGCCause";
-		}
-		return "";
+	public static String getGCLoggingOpts(String logDirectory) {
+    return "-Xloggc:" + logDirectory + "/gc.log " +
+      "-XX:+PrintGCApplicationStoppedTime " +
+      "-XX:+PrintGCDetails " +
+      "-XX:+PrintGCDateStamps " +
+      "-XX:+UseGCLogFileRotation " +
+      "-XX:NumberOfGCLogFiles=10 " +
+      "-XX:GCLogFileSize=10M " +
+      "-XX:+PrintPromotionFailure " +
+      "-XX:+PrintGCCause";
 	}
 
 	/**
@@ -546,28 +536,53 @@ public class BootstrapTools {
 	 * @param appId application id
 	 * @param ident the ident of the process, taskmanager/jobmanager
 	 * @param logDirectory to print some logs
-	 * @param conf flink configuration
+	 * @param heapdumpDir to save heap dump file
 	 * @return the formatted heapdump options string
 	 */
-	public static String getHeapdumpOpts(String appId, String ident, String logDirectory, Configuration conf) {
-		boolean enableHeapDump = conf.getBoolean(CoreOptions.FLINK_JVM_HEAPDUMP_ON_OOM);
-		String heapdumpDir = conf.getString(CoreOptions.FLINK_JVM_HEAPDUMP_DIRECTORY);
-		if (enableHeapDump) {
-			String dumpDestName = String.format("flink-%s-heapdump.hprof", ident);
-			String dumpFileDestPath = new File(heapdumpDir, appId + "-" + dumpDestName).getAbsolutePath();
-			String oomScript = String.format("echo -e 'OutOfMemoryError! Killing current process %%p...\n" +
-					"Check gc logs and heapdump file(%s) for details.' > " +
-					logDirectory + "/%s.err; " +
-					"kill -9 %%p",
-				dumpFileDestPath, ident);
-			return String.format("-XX:+HeapDumpOnOutOfMemoryError " +
-					"-XX:HeapDumpPath=%s " +
-					"-XX:OnOutOfMemoryError=\"%s\"",
-				dumpFileDestPath,
-				oomScript);
-		}
-		return "";
+	public static String getHeapdumpOpts(String appId, String ident, String logDirectory, String heapdumpDir) {
+    String dumpDestName = String.format("flink-%s-heapdump.hprof", ident);
+    String dumpFileDestPath = new File(heapdumpDir, appId + "-" + dumpDestName).getAbsolutePath();
+    String oomScript = String.format("echo -e 'OutOfMemoryError! Killing current process %%p...\n" +
+        "Check gc logs and heapdump file(%s) for details.' > " +
+        logDirectory + "/%s.err; " +
+        "kill -9 %%p",
+      dumpFileDestPath, ident);
+    return String.format("-XX:+HeapDumpOnOutOfMemoryError " +
+        "-XX:HeapDumpPath=%s " +
+        "-XX:OnOutOfMemoryError=\"%s\"",
+      dumpFileDestPath,
+      oomScript);
 	}
+
+	/**
+	 * Get the common jvm options
+	 * @param appId application id
+	 * @param ident the ident of the process, taskmanager/jobmanager
+	 * @param logDirectory to print some logs
+   * @param conf flink configuration
+   */
+  public static String getCommonJvmOpts(
+      String appId,
+      String ident,
+      String logDirectory,
+      Configuration conf) {
+    String commonOpts = "";
+		boolean enableGCLogging = conf.getBoolean(CoreOptions.FLINK_JVM_DEFAULT_GC_LOGGING);
+    if (enableGCLogging) {
+      // Add default gc logging options if enabled
+      commonOpts += getGCLoggingOpts(logDirectory);
+    }
+		boolean enableHeapDump = conf.getBoolean(CoreOptions.FLINK_JVM_HEAPDUMP_ON_OOM);
+    if (enableHeapDump) {
+      // Add default heap dump options if enabled
+		  String heapdumpDir = conf.getString(CoreOptions.FLINK_JVM_HEAPDUMP_DIRECTORY);
+      commonOpts += " " + getHeapdumpOpts(appId, "taskmanager", logDirectory, heapdumpDir);
+    }
+    if (conf.getString(CoreOptions.FLINK_JVM_OPTIONS).length() > 0) {
+		  commonOpts += " " + conf.getString(CoreOptions.FLINK_JVM_OPTIONS);
+    }
+    return commonOpts;
+  }
 
 	/**
 	 * Configuration interface for {@link ActorSystem} underlying executor.

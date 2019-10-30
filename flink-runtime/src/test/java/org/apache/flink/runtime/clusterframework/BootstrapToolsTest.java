@@ -140,6 +140,25 @@ public class BootstrapToolsTest extends TestLogger {
 		}
 	}
 
+  public static String getGCLoggingOpts(String logDirectory) {
+			return "-Xloggc:" + logDirectory + "/gc.log " +
+			"-XX:+PrintGCApplicationStoppedTime " +
+			"-XX:+PrintGCDetails " +
+			"-XX:+PrintGCDateStamps " +
+			"-XX:+UseGCLogFileRotation " +
+			"-XX:NumberOfGCLogFiles=10 " +
+			"-XX:GCLogFileSize=10M " +
+			"-XX:+PrintPromotionFailure " +
+			"-XX:+PrintGCCause";
+  }
+
+  public static String getHeapdumpOpts(String appId, String ident, String logDirectory, String heapdumpDir) {
+			return String.format("-XX:+HeapDumpOnOutOfMemoryError " +
+				"-XX:HeapDumpPath=%s/%s-flink-%s-heapdump.hprof " +
+				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %%p...\nCheck gc logs and heapdump file(%s/%s-flink-%s-heapdump.hprof) for details.' > " +
+				"%s/taskmanager.err; kill -9 %%p\"", heapdumpDir, appId, ident, heapdumpDir, appId, ident, logDirectory);
+  }
+
 	@Test
 	public void testGetTaskManagerShellCommand() {
 		final Configuration cfg = new Configuration();
@@ -151,21 +170,8 @@ public class BootstrapToolsTest extends TestLogger {
 		// no logging, with/out krb5
 		final String java = "$JAVA_HOME/bin/java";
 		final String jvmmem = "-Xms768m -Xmx768m -XX:MaxDirectMemorySize=256m";
-		final String defaultGCLoggingOpts =
-			"-Xloggc:./logs/gc.log " +
-			"-XX:+PrintGCApplicationStoppedTime " +
-			"-XX:+PrintGCDetails " +
-			"-XX:+PrintGCDateStamps " +
-			"-XX:+UseGCLogFileRotation " +
-			"-XX:NumberOfGCLogFiles=10 " +
-			"-XX:GCLogFileSize=10M " +
-			"-XX:+PrintPromotionFailure " +
-			"-XX:+PrintGCCause";
-		final String heapdumpOpts =
-			"-XX:+HeapDumpOnOutOfMemoryError " +
-				"-XX:HeapDumpPath=/tmp/test-flink-taskmanager-heapdump.hprof " +
-				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %p...\nCheck gc logs and heapdump file(/tmp/test-flink-taskmanager-heapdump.hprof) for details.' > " +
-				"./logs/taskmanager.err; kill -9 %p\"";
+		final String defaultGCLoggingOpts = getGCLoggingOpts("./logs");
+		final String heapdumpOpts = getHeapdumpOpts("test", "taskmanager", "./logs", "/tmp");
 		final String jvmOpts = "-Djvm"; // if set
 		final String tmJvmOpts = "-DtmJvm"; // if set
 		final String logfile = "-Dlog.file=./logs/taskmanager.log"; // if set
