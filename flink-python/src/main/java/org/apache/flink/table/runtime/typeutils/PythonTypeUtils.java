@@ -34,6 +34,7 @@ import org.apache.flink.table.runtime.typeutils.serializers.python.BaseRowSerial
 import org.apache.flink.table.runtime.typeutils.serializers.python.DateSerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.StringSerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.TimeSerializer;
+import org.apache.flink.table.runtime.typeutils.serializers.python.TimestampSerializer;
 import org.apache.flink.table.types.logical.BigIntType;
 import org.apache.flink.table.types.logical.BinaryType;
 import org.apache.flink.table.types.logical.BooleanType;
@@ -46,6 +47,7 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.SmallIntType;
 import org.apache.flink.table.types.logical.TimeType;
+import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TinyIntType;
 import org.apache.flink.table.types.logical.VarBinaryType;
 import org.apache.flink.table.types.logical.VarCharType;
@@ -139,6 +141,11 @@ public final class PythonTypeUtils {
 		}
 
 		@Override
+		public TypeSerializer visit(TimestampType timestampType) {
+			return TimestampSerializer.INSTANCE;
+		}
+
+		@Override
 		public TypeSerializer visit(RowType rowType) {
 			final TypeSerializer[] fieldTypeSerializers = rowType.getFields()
 				.stream()
@@ -183,6 +190,11 @@ public final class PythonTypeUtils {
 		@Override
 		public TypeSerializer visit(TimeType timeType) {
 			return IntSerializer.INSTANCE;
+		}
+
+		@Override
+		public TypeSerializer visit(TimestampType timestampType) {
+			return LongSerializer.INSTANCE;
 		}
 	}
 
@@ -288,6 +300,14 @@ public final class PythonTypeUtils {
 			return FlinkFnApi.Schema.FieldType.newBuilder()
 				.setTypeName(FlinkFnApi.Schema.TypeName.TIME)
 				.setNullable(timeType.isNullable())
+				.build();
+		}
+
+		@Override
+		public FlinkFnApi.Schema.FieldType visit(TimestampType timestampType) {
+			return FlinkFnApi.Schema.FieldType.newBuilder()
+				.setTypeName(FlinkFnApi.Schema.TypeName.DATETIME)
+				.setNullable(timestampType.isNullable())
 				.build();
 		}
 
