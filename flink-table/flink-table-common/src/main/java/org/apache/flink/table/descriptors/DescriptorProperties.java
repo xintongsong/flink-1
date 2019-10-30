@@ -72,6 +72,10 @@ public class DescriptorProperties {
 
 	public static final String TABLE_SCHEMA_TYPE = "type";
 
+	public static final String PARTITION_KEYS = "partition.keys";
+
+	public static final String PARTITION_KEYS_NAME = "name";
+
 	private static final Consumer<String> EMPTY_CONSUMER = (value) -> {};
 
 	private final boolean normalizeKeys;
@@ -193,6 +197,18 @@ public class DescriptorProperties {
 			key,
 			Arrays.asList(TABLE_SCHEMA_NAME, TABLE_SCHEMA_TYPE),
 			values);
+	}
+
+	/**
+	 * Adds table partition keys.
+	 */
+	public void putPartitionKeys(List<String> keys) {
+		checkNotNull(keys);
+
+		putIndexedFixedProperties(
+				PARTITION_KEYS,
+				Collections.singletonList(PARTITION_KEYS_NAME),
+				keys.stream().map(Collections::singletonList).collect(Collectors.toList()));
 	}
 
 	/**
@@ -527,6 +543,17 @@ public class DescriptorProperties {
 	 */
 	public TableSchema getTableSchema(String key) {
 		return getOptionalTableSchema(key).orElseThrow(exceptionSupplier(key));
+	}
+
+	/**
+	 * Returns partition keys.
+	 */
+	public List<String> getPartitionKeys() {
+		return getFixedIndexedProperties(
+				PARTITION_KEYS, Collections.singletonList(PARTITION_KEYS_NAME))
+				.stream()
+				.map(map -> map.values().iterator().next())
+				.map(this::getString).collect(Collectors.toList());
 	}
 
 	/**
