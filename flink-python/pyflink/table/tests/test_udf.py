@@ -396,6 +396,18 @@ class UserDefinedFunctionTests(object):
                            ["1,null,1,true,32767,-2147483648,1.23,1.98932,"
                             "[102, 108, 105, 110, 107],pyflink,2014-09-13"])
 
+
+# decide whether two floats are equal
+def float_equal(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
+class PyFlinkStreamUserDefinedFunctionTests(UserDefinedFunctionTests,
+                                            PyFlinkStreamTableTestCase):
+    pass
+
+
+class BlinkUserDefinedFunctionTests(object):
     def test_add_python_file(self):
         python_file_dir = os.path.join(self.tempdir, "python_file_dir_" + str(uuid.uuid4()))
         os.mkdir(python_file_dir)
@@ -421,17 +433,8 @@ class UserDefinedFunctionTests(object):
         self.assert_equals(actual, ["3,1", "4,2", "5,3"])
 
 
-# decide whether two floats are equal
-def float_equal(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-
-class PyFlinkStreamUserDefinedFunctionTests(UserDefinedFunctionTests,
-                                            PyFlinkStreamTableTestCase):
-    pass
-
-
 class PyFlinkBlinkStreamUserDefinedFunctionTests(UserDefinedFunctionTests,
+                                                 BlinkUserDefinedFunctionTests,
                                                  PyFlinkBlinkStreamTableTestCase):
     def test_deterministic(self):
         add_one = udf(lambda i: i + 1, DataTypes.BIGINT(), DataTypes.BIGINT())
@@ -613,6 +616,7 @@ class PyFlinkBlinkStreamUserDefinedFunctionTests(UserDefinedFunctionTests,
 
 
 class PyFlinkBlinkBatchUserDefinedFunctionTests(UserDefinedFunctionTests,
+                                                BlinkUserDefinedFunctionTests,
                                                 PyFlinkBlinkBatchTableTestCase):
     pass
 
