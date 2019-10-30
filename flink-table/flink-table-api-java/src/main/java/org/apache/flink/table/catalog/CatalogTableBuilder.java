@@ -27,7 +27,9 @@ import org.apache.flink.table.descriptors.DescriptorProperties;
 import org.apache.flink.table.descriptors.TableDescriptor;
 import org.apache.flink.util.Preconditions;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,11 +68,23 @@ public final class CatalogTableBuilder extends TableDescriptor<CatalogTableBuild
 
 	private final boolean isGeneric;
 
+	private final List<String> partitionKeys;
+
 	private Map<String, String> properties = Collections.emptyMap();
 
-	public CatalogTableBuilder(ConnectorDescriptor connectorDescriptor, TableSchema tableSchema) {
+	public CatalogTableBuilder(
+			ConnectorDescriptor connectorDescriptor,
+			TableSchema tableSchema) {
+		this(connectorDescriptor, tableSchema, new ArrayList<>());
+	}
+
+	public CatalogTableBuilder(
+			ConnectorDescriptor connectorDescriptor,
+			TableSchema tableSchema,
+			List<String> partitionKeys) {
 		super(connectorDescriptor);
 		this.tableSchema = Preconditions.checkNotNull(tableSchema);
+		this.partitionKeys = Preconditions.checkNotNull(partitionKeys);
 
 		// We don't support non-generic table currently
 		this.isGeneric = true;
@@ -92,6 +106,7 @@ public final class CatalogTableBuilder extends TableDescriptor<CatalogTableBuild
 	public CatalogTable build() {
 		return new CatalogTableImpl(
 			tableSchema,
+			partitionKeys,
 			toProperties(),
 			comment);
 	}
