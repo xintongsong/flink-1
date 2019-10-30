@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -136,14 +137,24 @@ public abstract class ConnectTableDescriptor
 					" use registerTableSource/registerTableSink/registerTableSourceAndSink.");
 		}
 
+		Map<String, String> properties = new HashMap<>(toProperties());
+
+		// handle schema
 		Map<String, String> schemaProperties = schemaDescriptor.toProperties();
 		TableSchema tableSchema = getTableSchema(schemaProperties);
-
-		Map<String, String> properties = new HashMap<>(toProperties());
 		schemaProperties.keySet().forEach(properties::remove);
+
+		// handle partition keys
+		DescriptorProperties descriptor = new DescriptorProperties();
+		descriptor.putProperties(properties);
+		List<String> partitionKeys = descriptor.getPartitionKeys();
+		DescriptorProperties partitionDescriptor = new DescriptorProperties();
+		partitionDescriptor.putPartitionKeys(partitionKeys);
+		partitionDescriptor.asMap().keySet().forEach(properties::remove);
 
 		CatalogTableImpl catalogTable = new CatalogTableImpl(
 			tableSchema,
+			partitionKeys,
 			properties,
 			""
 		);

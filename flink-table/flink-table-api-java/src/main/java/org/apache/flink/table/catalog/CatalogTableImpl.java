@@ -73,6 +73,7 @@ public class CatalogTableImpl extends AbstractCatalogTable {
 		DescriptorProperties descriptor = new DescriptorProperties();
 
 		descriptor.putTableSchema(Schema.SCHEMA, getSchema());
+		descriptor.putPartitionKeys(getPartitionKeys());
 
 		Map<String, String> properties = new HashMap<>(getProperties());
 		properties.remove(CatalogConfig.IS_GENERIC);
