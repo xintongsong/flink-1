@@ -27,8 +27,11 @@ import org.apache.flink.table.planner.runtime.batch.sql.PartitionableSinkITCase
 import org.apache.flink.table.planner.utils.TableTestBase
 
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
-class PartitionableSinkTest extends TableTestBase {
+@RunWith(classOf[Parameterized])
+class PartitionableSinkTest(isTemporary: Boolean) extends TableTestBase {
 
   val conf = new TableConfig
   conf.setSqlDialect(SqlDialect.HIVE)
@@ -41,7 +44,8 @@ class PartitionableSinkTest extends TableTestBase {
       Array[TypeInformation[_]](Types.LONG, Types.LONG, Types.LONG),
       Array("a", "b", "c")),
     grouping = true,
-    Array("b", "c"))
+    Array("b", "c"),
+    isTemporary)
 
   @Test
   def testStatic(): Unit = {
@@ -66,5 +70,12 @@ class PartitionableSinkTest extends TableTestBase {
   @Test(expected = classOf[ValidationException])
   def testWrongFields(): Unit = {
     util.verifySqlUpdate("INSERT INTO sink PARTITION (b=1) SELECT a, b, c FROM MyTable")
+  }
+}
+
+object PartitionableSinkTest {
+  @Parameterized.Parameters(name = "isTemporary: {0}")
+  def parameters(): java.util.Collection[Boolean] = {
+    java.util.Arrays.asList(true, false)
   }
 }
