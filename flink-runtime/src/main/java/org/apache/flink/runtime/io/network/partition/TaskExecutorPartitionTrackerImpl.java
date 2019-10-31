@@ -24,12 +24,18 @@ import org.apache.flink.util.CollectionUtil;
 import org.apache.flink.util.Preconditions;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Utility for tracking partitions and issuing release calls to task executors and shuffle masters.
  */
 public class TaskExecutorPartitionTrackerImpl extends AbstractPartitionTracker<JobID, TaskExecutorPartitionInfo> implements TaskExecutorPartitionTracker {
 
+	private final Map<DataSetMetaInfo, Set<ResultPartitionID>> clusterPartitions = new HashMap<>();
 	private final ShuffleEnvironment<?, ?> shuffleEnvironment;
 
 	public TaskExecutorPartitionTrackerImpl(ShuffleEnvironment<?, ?> shuffleEnvironment) {
@@ -57,5 +63,61 @@ public class TaskExecutorPartitionTrackerImpl extends AbstractPartitionTracker<J
 			stopTrackingPartitionsFor(producingJobId),
 			PartitionTrackerEntry::getResultPartitionId);
 		shuffleEnvironment.releasePartitionsLocally(partitionsForJob);
+	}
+
+	@Override
+	public void promoteJobPartitions(Collection<ResultPartitionID> partitionsToPromote) {
+		final Collection<PartitionTrackerEntry<JobID, TaskExecutorPartitionInfo>> partitionTrackerEntries = stopTrackingPartitions(partitionsToPromote);
+
+		final Map<DataSetMetaInfo, Set<ResultPartitionID>> newClusterPartitions = partitionTrackerEntries.stream()
+			.collect(Collectors.groupingBy(
+				pte -> new DataSetMetaInfo(pte.getMetaInfo().getIntermediateDataSetId()),
+				Collectors.mapping(PartitionTrackerEntry::getResultPartitionId, Collectors.toSet())));
+
+		newClusterPartitions.forEach(
+			(dataSetMetaInfo, newPartitionEntries) -> clusterPartitions.compute(dataSetMetaInfo, (ignored, existingPartitions) -> {
+				if (existingPartitions == null) {
+					return newPartitionEntries;
+				} else {
+					existingPartitions.addAll(newPartitionEntries);
+					return existingPartitions;
+				}
+			}));
+	}
+
+	@Override
+	public void stopTrackingAndReleaseAllClusterPartitions() {
+		clusterPartitions.values().forEach(shuffleEnvironment::releasePartitionsLocally);
+		clusterPartitions.clear();
+	}
+
+	private static class DataSetMetaInfo {
+
+		private final IntermediateDataSetID dataSetId;
+
+		private DataSetMetaInfo(IntermediateDataSetID dataSetId) {
+			this.dataSetId = dataSetId;
+		}
+
+		public IntermediateDataSetID getDataSetId() {
+			return dataSetId;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || getClass() != o.getClass()) {
+				return false;
+			}
+			DataSetMetaInfo that = (DataSetMetaInfo) o;
+			return Objects.equals(dataSetId, that.dataSetId);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(dataSetId);
+		}
 	}
 }
