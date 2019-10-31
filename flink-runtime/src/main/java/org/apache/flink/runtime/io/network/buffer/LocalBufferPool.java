@@ -249,7 +249,7 @@ class LocalBufferPool implements BufferPool {
 				segment = availableMemorySegments.poll();
 			}
 
-			if (isBlocking && isUnavailable()) {
+			if (isUnavailable()) {
 				availabilityHelper.resetUnavailable();
 			}
 		}
