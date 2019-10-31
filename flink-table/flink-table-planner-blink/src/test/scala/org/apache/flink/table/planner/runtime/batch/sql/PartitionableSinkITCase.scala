@@ -26,11 +26,11 @@ import org.apache.flink.streaming.api.datastream.{DataStream, DataStreamSink}
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
 import org.apache.flink.table.api.config.ExecutionConfigOptions
-import org.apache.flink.table.api.{SqlDialect, TableEnvironment, TableException, TableSchema, ValidationException}
+import org.apache.flink.table.api.{SqlDialect, TableEnvironment, TableSchema, ValidationException}
 import org.apache.flink.table.catalog.{CatalogTableImpl, ObjectPath}
 import org.apache.flink.table.descriptors.ConnectorDescriptorValidator.CONNECTOR_TYPE
-import org.apache.flink.table.descriptors.{ConnectorDescriptor, DescriptorProperties, Schema}
 import org.apache.flink.table.descriptors.Schema.SCHEMA
+import org.apache.flink.table.descriptors.{ConnectorDescriptor, DescriptorProperties, Schema}
 import org.apache.flink.table.factories.{TableSinkFactory, TableSourceFactory}
 import org.apache.flink.table.planner.runtime.batch.sql.PartitionableSinkITCase._
 import org.apache.flink.table.planner.runtime.utils.BatchTestBase
@@ -46,7 +46,7 @@ import org.junit.rules.ExpectedException
 import org.junit.{Before, Rule, Test}
 
 import java.util
-import java.util.{function, ArrayList => JArrayList, LinkedList => JLinkedList, List => JList, Map => JMap}
+import java.util.{ArrayList => JArrayList, LinkedList => JLinkedList, List => JList, Map => JMap}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -175,7 +175,7 @@ class PartitionableSinkITCase extends BatchTestBase {
 
   @Test
   def testInsertStaticPartitionOnNonPartitionedSink(): Unit = {
-    expectedEx.expect(classOf[TableException])
+    expectedEx.expect(classOf[ValidationException])
     registerTableSink(tableName = "sinkTable2", rowType = type4, partitionColumns = Array())
     tEnv.sqlUpdate("insert into sinkTable2 partition(c=1) select a, b from sinkTable2")
     tEnv.execute("testJob")
