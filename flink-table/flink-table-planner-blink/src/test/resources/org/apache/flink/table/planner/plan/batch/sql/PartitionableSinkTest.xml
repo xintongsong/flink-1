@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <Root>
-  <TestCase name="testDynamic">
+  <TestCase name="testDynamic[isTemporary: false]">
     <Resource name="sql">
       <![CDATA[INSERT INTO sink SELECT a, b, c FROM MyTable]]>
 
@@ -39,7 +39,30 @@ Sink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
 
     </Resource>
   </TestCase>
-  <TestCase name="testPartial">
+  <TestCase name="testDynamic[isTemporary: true]">
+    <Resource name="sql">
+      <![CDATA[INSERT INTO sink SELECT a, b, c FROM MyTable]]>
+
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalSink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
++- LogicalProject(a=[$0], b=[$1], c=[$2])
+   +- LogicalTableScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]])
+]]>
+
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+Sink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
++- Sort(orderBy=[b ASC, c ASC])
+   +- Exchange(distribution=[hash[b, c]])
+      +- TableSourceScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
+]]>
+
+    </Resource>
+  </TestCase>
+  <TestCase name="testPartial[isTemporary: false]">
     <Resource name="sql">
       <![CDATA[INSERT INTO sink PARTITION (b=1) SELECT a, c FROM MyTable]]>
 
@@ -63,7 +86,31 @@ Sink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
 
     </Resource>
   </TestCase>
-  <TestCase name="testStatic">
+  <TestCase name="testPartial[isTemporary: true]">
+    <Resource name="sql">
+      <![CDATA[INSERT INTO sink PARTITION (b=1) SELECT a, c FROM MyTable]]>
+
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalSink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
++- LogicalProject(a=[$0], EXPR$1=[1:BIGINT], c=[$2])
+   +- LogicalTableScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]])
+]]>
+
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+Sink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
++- Sort(orderBy=[c ASC])
+   +- Exchange(distribution=[hash[c]])
+      +- Calc(select=[a, 1:BIGINT AS EXPR$1, c])
+         +- TableSourceScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
+]]>
+
+    </Resource>
+  </TestCase>
+  <TestCase name="testStatic[isTemporary: false]">
     <Resource name="sql">
       <![CDATA[INSERT INTO sink PARTITION (b=1, c=1) SELECT a FROM MyTable]]>
 
@@ -85,13 +132,47 @@ Sink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
 
     </Resource>
   </TestCase>
-  <TestCase name="testWrongFields">
+  <TestCase name="testStatic[isTemporary: true]">
+    <Resource name="sql">
+      <![CDATA[INSERT INTO sink PARTITION (b=1, c=1) SELECT a FROM MyTable]]>
+
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalSink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
++- LogicalProject(a=[$0], EXPR$1=[1:BIGINT], EXPR$2=[1:BIGINT])
+   +- LogicalTableScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]])
+]]>
+
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+Sink(name=[`default_catalog`.`default_database`.`sink`], fields=[a, b, c])
++- Calc(select=[a, 1:BIGINT AS EXPR$1, 1:BIGINT AS EXPR$2])
+   +- TableSourceScan(table=[[default_catalog, default_database, MyTable, source: [TestTableSource(a, b, c)]]], fields=[a, b, c])
+]]>
+
+    </Resource>
+  </TestCase>
+  <TestCase name="testWrongFields[isTemporary: false]">
     <Resource name="sql">
       <![CDATA[INSERT INTO sink PARTITION (b=1) SELECT a, b, c FROM MyTable]]>
 
     </Resource>
   </TestCase>
-  <TestCase name="testWrongStatic">
+  <TestCase name="testWrongFields[isTemporary: true]">
+    <Resource name="sql">
+      <![CDATA[INSERT INTO sink PARTITION (b=1) SELECT a, b, c FROM MyTable]]>
+
+    </Resource>
+  </TestCase>
+  <TestCase name="testWrongStatic[isTemporary: true]">
+    <Resource name="sql">
+      <![CDATA[INSERT INTO sink PARTITION (a=1) SELECT b, c FROM MyTable]]>
+
+    </Resource>
+  </TestCase>
+  <TestCase name="testWrongStatic[isTemporary: false]">
     <Resource name="sql">
       <![CDATA[INSERT INTO sink PARTITION (a=1) SELECT b, c FROM MyTable]]>
 

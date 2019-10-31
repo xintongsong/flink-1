@@ -30,7 +30,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.table.api.{TableEnvironment, TableSchema, Types}
 import org.apache.flink.table.catalog.{CatalogTableImpl, ObjectPath}
 import org.apache.flink.table.descriptors.ConnectorDescriptorValidator.CONNECTOR_TYPE
-import org.apache.flink.table.descriptors.DescriptorProperties
+import org.apache.flink.table.descriptors.{ConnectorDescriptor, DescriptorProperties, Schema}
 import org.apache.flink.table.expressions.utils.ApiExpressionUtils.unresolvedCall
 import org.apache.flink.table.expressions.{CallExpression, Expression, FieldReferenceExpression, ValueLiteralExpression}
 import org.apache.flink.table.factories.TableSourceFactory
@@ -714,10 +714,10 @@ object TestPartitionableSourceFactory {
       tEnv: TableEnvironment,
       tableName: String,
       isBounded: Boolean,
-      remainingPartitions: JList[JMap[String, String]] = null): Unit = {
+      remainingPartitions: JList[JMap[String, String]] = null,
+      isTemporary: Boolean = false): Unit = {
     val properties = new DescriptorProperties()
     properties.putString("is-bounded", isBounded.toString)
-    properties.putString(CONNECTOR_TYPE, "TestPartitionableSource")
     if (remainingPartitions != null) {
       remainingPartitions.zipWithIndex.foreach { case (part, i) =>
         properties.putString(
@@ -736,13 +736,19 @@ object TestPartitionableSourceFactory {
       BasicTypeInfo.INT_TYPE_INFO)
     val fieldNames = Array("id", "name", "part1", "part2")
 
-    val table = new CatalogTableImpl(
-      new TableSchema(fieldNames, fieldTypes),
-      util.Arrays.asList[String]("part1", "part2"),
-      properties.asMap(),
-      ""
-    )
-    tEnv.getCatalog(tEnv.getCurrentCatalog).get()
-        .createTable(new ObjectPath(tEnv.getCurrentDatabase, tableName), table, false)
+    val schema = new TableSchema(fieldNames, fieldTypes)
+    val partKeys = util.Arrays.asList[String]("part1", "part2")
+
+    if (isTemporary) {
+      properties.putPartitionKeys(partKeys)
+      tEnv.connect(new ConnectorDescriptor("TestPartitionableSource", 1, false) {
+        override protected def toConnectorProperties: JMap[String, String] = properties.asMap()
+      }).withSchema(new Schema().schema(schema)).createTemporaryTable(tableName)
+    } else {
+      properties.putString(CONNECTOR_TYPE, "TestPartitionableSource")
+      val table = new CatalogTableImpl(schema, partKeys, properties.asMap(), "")
+      tEnv.getCatalog(tEnv.getCurrentCatalog).get()
+          .createTable(new ObjectPath(tEnv.getCurrentDatabase, tableName), table, false)
+    }
   }
 }

@@ -28,6 +28,8 @@ import org.apache.flink.table.sources.TableSource
 import org.apache.flink.table.types.DataType
 import org.apache.flink.types.Row
 
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.junit.{Before, Test}
 
 class TableSourceTest extends TableTestBase {
@@ -48,7 +50,6 @@ class TableSourceTest extends TableTestBase {
       Seq.empty[Row])
     )
     util.tableEnv.registerTableSource("FilterableTable", TestFilterableTableSource(true))
-    TestPartitionableSourceFactory.registerTableSource(util.tableEnv, "PartitionableTable", true)
   }
 
   @Test
@@ -179,12 +180,31 @@ class TableSourceTest extends TableTestBase {
   }
 
   @Test
-  def testPartitionTableSource(): Unit = {
+  def testPartitionTableSourceTemporary(): Unit = {
+    TestPartitionableSourceFactory.registerTableSource(
+      util.tableEnv, "PartitionableTable", true, isTemporary = true)
     util.verifyPlan("SELECT * FROM PartitionableTable WHERE part2 > 1 and id > 2 AND part1 = 'A' ")
   }
 
   @Test
+  def testPartitionTableSource(): Unit = {
+    TestPartitionableSourceFactory.registerTableSource(
+      util.tableEnv, "PartitionableTable", true)
+    util.verifyPlan("SELECT * FROM PartitionableTable WHERE part2 > 1 and id > 2 AND part1 = 'A' ")
+  }
+
+  @Test
+  def testPartitionTableSourceWithUdfTemporary(): Unit = {
+    TestPartitionableSourceFactory.registerTableSource(
+      util.tableEnv, "PartitionableTable", true, isTemporary = true)
+    util.addFunction("MyUdf", Func1)
+    util.verifyPlan("SELECT * FROM PartitionableTable WHERE id > 2 AND MyUdf(part2) < 3")
+  }
+
+  @Test
   def testPartitionTableSourceWithUdf(): Unit = {
+    TestPartitionableSourceFactory.registerTableSource(
+      util.tableEnv, "PartitionableTable", true)
     util.addFunction("MyUdf", Func1)
     util.verifyPlan("SELECT * FROM PartitionableTable WHERE id > 2 AND MyUdf(part2) < 3")
   }
