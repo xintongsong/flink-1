@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.apache.flink.table.sink.filesystem.FileSystemFileCommitter.makePartitionName;
+import static org.apache.flink.table.filesystem.FileSystemFileCommitter.makePartitionName;
 
 /**
  * {@link PartitionComputer} for {@link Row}.
