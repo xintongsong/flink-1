@@ -29,7 +29,7 @@ import org.apache.flink.table.api.config.ExecutionConfigOptions
 import org.apache.flink.table.api.{SqlDialect, TableEnvironment, TableException, TableSchema, ValidationException}
 import org.apache.flink.table.catalog.{CatalogTableImpl, ObjectPath}
 import org.apache.flink.table.descriptors.ConnectorDescriptorValidator.CONNECTOR_TYPE
-import org.apache.flink.table.descriptors.DescriptorProperties
+import org.apache.flink.table.descriptors.{ConnectorDescriptor, DescriptorProperties, Schema}
 import org.apache.flink.table.descriptors.Schema.SCHEMA
 import org.apache.flink.table.factories.{TableSinkFactory, TableSourceFactory}
 import org.apache.flink.table.planner.runtime.batch.sql.PartitionableSinkITCase._
@@ -264,22 +264,24 @@ object PartitionableSinkITCase {
       tableName: String,
       rowType: RowTypeInfo,
       grouping: Boolean,
-      partitionColumns: Array[String]): Unit = {
+      partitionColumns: Array[String],
+      isTemporary: Boolean = false): Unit = {
     val properties = new DescriptorProperties()
     properties.putString("supports-grouping", grouping.toString)
-    properties.putString(CONNECTOR_TYPE, "TestPartitionableSink")
-    partitionColumns.zipWithIndex.foreach { case (part, i) =>
-      properties.putString("partition-column." + i, part)
-    }
 
-    val table = new CatalogTableImpl(
-      new TableSchema(Array("a", "b", "c"), rowType.getFieldTypes),
-      util.Arrays.asList[String](partitionColumns: _*),
-      properties.asMap(),
-      ""
-    )
-    tEnv.getCatalog(tEnv.getCurrentCatalog).get()
-        .createTable(new ObjectPath(tEnv.getCurrentDatabase, tableName), table, false)
+    val schema = new TableSchema(Array("a", "b", "c"), rowType.getFieldTypes)
+
+    if (isTemporary) {
+      properties.putPartitionKeys(partitionColumns.toSeq)
+      tEnv.connect(new ConnectorDescriptor("TestPartitionableSink", 1, false) {
+        override protected def toConnectorProperties: JMap[String, String] = properties.asMap()
+      }).withSchema(new Schema().schema(schema)).createTemporaryTable(tableName)
+    } else {
+      properties.putString(CONNECTOR_TYPE, "TestPartitionableSink")
+      val table = new CatalogTableImpl(schema, partitionColumns.toSeq, properties.asMap(), "")
+      tEnv.getCatalog(tEnv.getCurrentCatalog).get()
+          .createTable(new ObjectPath(tEnv.getCurrentDatabase, tableName), table, false)
+    }
   }
 }
 
@@ -342,13 +344,10 @@ class TestPartitionableSinkFactory extends TableSinkFactory[Row] with TableSourc
 
     val schema = dp.getTableSchema(SCHEMA)
     val supportsGrouping = dp.getBoolean("supports-grouping")
-    val partitionColumns = dp.getArray("partition-column", new function.Function[String, String] {
-      override def apply(t: String): String = dp.getString(t)
-    })
     new TestSink(
       schema.toRowType.asInstanceOf[RowTypeInfo],
       supportsGrouping,
-      partitionColumns.asScala.toArray[String])
+      dp.getPartitionKeys.asScala.toArray[String])
   }
 
   /**
