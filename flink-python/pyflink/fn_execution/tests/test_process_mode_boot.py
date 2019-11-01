@@ -24,6 +24,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 from stat import ST_MODE
 
 import grpc
@@ -116,6 +117,18 @@ class PythonBootTests(PyFlinkTestCase):
                     break
         self.assertEqual(checked, len(files))
 
+    def check_installed_files(self, prefix_dir, package_list):
+        from distutils.dist import Distribution
+        install_obj = Distribution().get_command_obj('install', create=True)
+        install_obj.prefix = prefix_dir
+        install_obj.finalize_options()
+        installed_dir = [install_obj.install_purelib]
+        if install_obj.install_purelib != install_obj.install_platlib:
+            installed_dir.append(install_obj.install_platlib)
+        for package_name in package_list:
+            self.assertTrue(any([os.path.exists(os.path.join(package_dir, package_name))
+                                 for package_dir in installed_dir]))
+
     def test_python_boot(self):
         self.tmp_dir = tempfile.mkdtemp(str(time.time()))
         print("Using %s as the semi_persist_dir." % self.tmp_dir)
@@ -134,28 +147,73 @@ class PythonBootTests(PyFlinkTestCase):
     def test_param_validation(self):
         args = [self.runner_path]
         exit_message = subprocess.check_output(args, env=self.env).decode("utf-8")
-        self.assertTrue(exit_message.endswith("No id provided.\n"))
+        self.assertIn("No id provided.", exit_message)
 
         args = [self.runner_path, "--id", "1"]
         exit_message = subprocess.check_output(args, env=self.env).decode("utf-8")
-        self.assertTrue(exit_message.endswith("No logging endpoint provided.\n"))
+        self.assertIn("No logging endpoint provided.", exit_message)
 
         args = [self.runner_path, "--id", "1", "--logging_endpoint", "localhost:0000"]
         exit_message = subprocess.check_output(args, env=self.env).decode("utf-8")
-        self.assertTrue(exit_message.endswith("No artifact endpoint provided.\n"))
+        self.assertIn("No artifact endpoint provided.", exit_message)
 
         args = [self.runner_path, "--id", "1",
                 "--logging_endpoint", "localhost:0000",
                 "--artifact_endpoint", "localhost:%d" % self.artifact_port]
         exit_message = subprocess.check_output(args, env=self.env).decode("utf-8")
-        self.assertTrue(exit_message.endswith("No provision endpoint provided.\n"))
+        self.assertIn("No provision endpoint provided.", exit_message)
 
         args = [self.runner_path, "--id", "1",
                 "--logging_endpoint", "localhost:0000",
                 "--artifact_endpoint", "localhost:%d" % self.artifact_port,
                 "--provision_endpoint", "localhost:%d" % self.provision_port]
         exit_message = subprocess.check_output(args, env=self.env).decode("utf-8")
-        self.assertTrue(exit_message.endswith("No control endpoint provided.\n"))
+        self.assertIn("No control endpoint provided.", exit_message)
+
+    def test_install_requirements_without_cached_dir(self):
+        self.tmp_dir = tempfile.mkdtemp(str(time.time()))
+        print("Using %s as the semi_persist_dir." % self.tmp_dir)
+        requirements_txt_path = os.path.join(self.tmp_dir, "requirements_txt_" + str(uuid.uuid4()))
+        with open(requirements_txt_path, 'w') as f:
+            f.write("cloudpickle\\ \n#test line continuation\n==1.2.2\npy4j==0.10.8.1")
+
+        args = [self.runner_path, "--id", "1",
+                "--logging_endpoint", "localhost:0000",
+                "--artifact_endpoint", "localhost:%d" % self.artifact_port,
+                "--provision_endpoint", "localhost:%d" % self.provision_port,
+                "--control_endpoint", "localhost:0000",
+                "--semi_persist_dir", self.tmp_dir]
+
+        self.env["_PYTHON_REQUIREMENTS_FILE"] = requirements_txt_path
+        requirements_target_dir_path = \
+            os.path.join(self.tmp_dir, "requirements_target_dir_" + str(uuid.uuid4()))
+        self.env["_PYTHON_REQUIREMENTS_TARGET_DIR"] = requirements_target_dir_path
+        exit_code = subprocess.call(args, stdout=sys.stdout, stderr=sys.stderr, env=self.env)
+        self.assertTrue(exit_code == 0, "the boot.py exited with non-zero code.")
+        self.check_installed_files(requirements_target_dir_path, ["cloudpickle", "py4j"])
+
+    def test_install_requirements_with_cached_dir(self):
+        self.tmp_dir = tempfile.mkdtemp(str(time.time()))
+        print("Using %s as the semi_persist_dir." % self.tmp_dir)
+        requirements_txt_path = os.path.join(self.tmp_dir, "requirements_txt_" + str(uuid.uuid4()))
+        with open(requirements_txt_path, 'w') as f:
+            f.write("python-package1==0.0.0")
+
+        args = [self.runner_path, "--id", "1",
+                "--logging_endpoint", "localhost:0000",
+                "--artifact_endpoint", "localhost:%d" % self.artifact_port,
+                "--provision_endpoint", "localhost:%d" % self.provision_port,
+                "--control_endpoint", "localhost:0000",
+                "--semi_persist_dir", self.tmp_dir]
+
+        self.env["_PYTHON_REQUIREMENTS_FILE"] = requirements_txt_path
+        self.env["_PYTHON_REQUIREMENTS_CACHE"] = os.path.join(self.tmp_dir, "staged")
+        requirements_target_dir_path = \
+            os.path.join(self.tmp_dir, "requirements_target_dir_" + str(uuid.uuid4()))
+        self.env["_PYTHON_REQUIREMENTS_TARGET_DIR"] = requirements_target_dir_path
+        exit_code = subprocess.call(args, stdout=sys.stdout, stderr=sys.stderr, env=self.env)
+        self.assertTrue(exit_code == 0, "the boot.py exited with non-zero code.")
+        self.check_installed_files(requirements_target_dir_path, ["python_package1"])
 
     def tearDown(self):
         self.artifact_server.stop(0)
