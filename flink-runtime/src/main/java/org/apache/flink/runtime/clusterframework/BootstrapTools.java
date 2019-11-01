@@ -576,7 +576,7 @@ public class BootstrapTools {
     if (enableHeapDump) {
       // Add default heap dump options if enabled
 		  String heapdumpDir = conf.getString(CoreOptions.FLINK_JVM_HEAPDUMP_DIRECTORY);
-      commonOpts += " " + getHeapdumpOpts(appId, "taskmanager", logDirectory, heapdumpDir);
+      commonOpts += " " + getHeapdumpOpts(appId, ident, logDirectory, heapdumpDir);
     }
     if (conf.getString(CoreOptions.FLINK_JVM_OPTIONS).length() > 0) {
 		  commonOpts += " " + conf.getString(CoreOptions.FLINK_JVM_OPTIONS);

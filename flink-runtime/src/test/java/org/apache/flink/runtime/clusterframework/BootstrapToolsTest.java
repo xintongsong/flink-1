@@ -156,7 +156,7 @@ public class BootstrapToolsTest extends TestLogger {
 			return String.format("-XX:+HeapDumpOnOutOfMemoryError " +
 				"-XX:HeapDumpPath=%s/%s-flink-%s-heapdump.hprof " +
 				"-XX:OnOutOfMemoryError=\"echo -e 'OutOfMemoryError! Killing current process %%p...\nCheck gc logs and heapdump file(%s/%s-flink-%s-heapdump.hprof) for details.' > " +
-				"%s/taskmanager.err; kill -9 %%p\"", heapdumpDir, appId, ident, heapdumpDir, appId, ident, logDirectory);
+				"%s/%s.err; kill -9 %%p\"", heapdumpDir, appId, ident, heapdumpDir, appId, ident, logDirectory, ident);
   }
 
 	@Test
@@ -189,7 +189,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " +// jvmOpts
 				" " + // logging
 				" " + mainClass + " " + args + " " + redirects,
 			BootstrapTools
@@ -201,7 +200,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " + // jvmOpts
 				" " + krb5 +
 				" " + // logging
 				" " + mainClass + " " + args + " " + redirects,
@@ -214,7 +212,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " + // jvmOpts
 				" " + logfile + " " + logback +
 				" " + mainClass + " " + args + " " + redirects,
 			BootstrapTools
@@ -225,7 +222,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " + // jvmOpts
 				" " + krb5 +
 				" " + logfile + " " + logback +
 				" " + mainClass + " " + args + " " + redirects,
@@ -238,7 +234,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " + // jvmOpts
 				" " + logfile + " " + log4j +
 				" " + mainClass + " " + args + " " + redirects,
 			BootstrapTools
@@ -249,7 +244,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " + // jvmOpts
 				" " + krb5 +
 				" " + logfile + " " + log4j +
 				" " + mainClass + " " + args + " " + redirects,
@@ -262,7 +256,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " + // jvmOpts
 				" " + logfile + " " + logback + " " + log4j +
 				" " + mainClass + " " + args + " " + redirects,
 			BootstrapTools
@@ -273,7 +266,6 @@ public class BootstrapToolsTest extends TestLogger {
 			java + " " + jvmmem +
 				" " + defaultGCLoggingOpts +
 				" " + heapdumpOpts +
-				" " + // jvmOpts
 				" " + krb5 +
 				" " + logfile + " " + logback + " " + log4j +
 				" " + mainClass + " " + args + " " + redirects,

@@ -26,6 +26,7 @@ import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.configuration.IllegalConfigurationException;
 import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.core.testutils.CommonTestUtils;
+import org.apache.flink.runtime.clusterframework.BootstrapToolsTest;
 import org.apache.flink.util.TestLogger;
 import org.apache.flink.yarn.cli.FlinkYarnSessionCli;
 import org.apache.flink.yarn.configuration.YarnConfigOptions;
@@ -206,7 +207,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + // logging
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
@@ -223,7 +223,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + krb5 +
 					" " + // logging
 					" " + mainClass + " " + args + " " + redirects,
@@ -242,7 +241,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + logfile + " " + logback +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
@@ -259,7 +257,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + krb5 +
 					" " + logfile + " " + logback +
 					" " + mainClass + " " + args + " " + redirects,
@@ -278,7 +275,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + logfile + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
@@ -295,7 +291,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + krb5 +
 					" " + logfile + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
@@ -314,7 +309,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
 				clusterDescriptor
@@ -331,7 +325,6 @@ public class YarnClusterDescriptorTest extends TestLogger {
 				java + " " + jvmmem +
 					" " + defaultGCLoggingOpts +
 					" " + heapdumpOpts +
-					" " + // jvmOpts
 					" " + krb5 +
 					" " + logfile + " " + logback + " " + log4j +
 					" " + mainClass + " " + args + " " + redirects,
