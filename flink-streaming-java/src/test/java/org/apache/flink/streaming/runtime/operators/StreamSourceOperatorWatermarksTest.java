@@ -226,7 +226,7 @@ public class StreamSourceOperatorWatermarksTest {
 	private static OperatorChain<?, ?> createOperatorChain(AbstractStreamOperator<?> operator) {
 		return new OperatorChain<>(
 			operator.getContainingTask(),
-			StreamTask.createRecordWriters(operator.getOperatorConfig(), new MockEnvironmentBuilder().build()));
+			StreamTask.createRecordWriterDelegate(operator.getOperatorConfig(), new MockEnvironmentBuilder().build()));
 	}
 
 	// ------------------------------------------------------------------------
