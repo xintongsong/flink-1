@@ -24,6 +24,7 @@ import org.apache.flink.api.common.typeutils.base.BooleanSerializer;
 import org.apache.flink.api.common.typeutils.base.ByteSerializer;
 import org.apache.flink.api.common.typeutils.base.DoubleSerializer;
 import org.apache.flink.api.common.typeutils.base.FloatSerializer;
+import org.apache.flink.api.common.typeutils.base.GenericArraySerializer;
 import org.apache.flink.api.common.typeutils.base.IntSerializer;
 import org.apache.flink.api.common.typeutils.base.LongSerializer;
 import org.apache.flink.api.common.typeutils.base.ShortSerializer;
@@ -31,8 +32,10 @@ import org.apache.flink.api.common.typeutils.base.array.BytePrimitiveArraySerial
 import org.apache.flink.api.java.typeutils.runtime.RowSerializer;
 import org.apache.flink.fnexecution.v1.FlinkFnApi;
 import org.apache.flink.table.runtime.typeutils.serializers.python.BaseRowSerializer;
+import org.apache.flink.table.runtime.typeutils.serializers.python.BinaryArraySerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.DateSerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.StringSerializer;
+import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.BigIntType;
 import org.apache.flink.table.types.logical.BinaryType;
 import org.apache.flink.table.types.logical.BooleanType;
@@ -44,10 +47,17 @@ import org.apache.flink.table.types.logical.IntType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.SmallIntType;
+import org.apache.flink.table.types.logical.TimeType;
+import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.TinyIntType;
 import org.apache.flink.table.types.logical.VarBinaryType;
 import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeDefaultVisitor;
+
+import java.lang.reflect.Array;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 /**
  * Utilities for converting Flink logical types, such as convert it to the related
@@ -68,6 +78,43 @@ public final class PythonTypeUtils {
 
 	public static FlinkFnApi.Schema.FieldType toProtoType(LogicalType logicalType) {
 		return logicalType.accept(new LogicalTypeToProtoTypeConverter());
+	}
+
+	/**
+	 * Convert LogicalType to conversion class.
+	 */
+	public static class LogicalTypeToConversionClassConverter extends LogicalTypeDefaultVisitor<Class> {
+
+		public static final LogicalTypeToConversionClassConverter INSTANCE = new LogicalTypeToConversionClassConverter();
+
+		private LogicalTypeToConversionClassConverter() {
+		}
+
+		@Override
+		public Class visit(DateType dateType) {
+			return Date.class;
+		}
+
+		@Override
+		public Class visit(TimeType timeType) {
+			return Time.class;
+		}
+
+		@Override
+		public Class visit(TimestampType timestampType) {
+			return Timestamp.class;
+		}
+
+		@Override
+		public Class visit(ArrayType arrayType) {
+			Class elementClass = arrayType.getElementType().accept(this);
+			return Array.newInstance(elementClass, 0).getClass();
+		}
+
+		@Override
+		protected Class defaultMethod(LogicalType logicalType) {
+			return logicalType.getDefaultConversion();
+		}
 	}
 
 	private static class LogicalTypeToTypeSerializerConverter extends LogicalTypeDefaultVisitor<TypeSerializer> {
@@ -132,6 +179,15 @@ public final class PythonTypeUtils {
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
+		public TypeSerializer visit(ArrayType arrayType) {
+			LogicalType elementType = arrayType.getElementType();
+			TypeSerializer<?> elementTypeSerializer = elementType.accept(this);
+			Class<?> elementClass = LogicalTypeToConversionClassConverter.INSTANCE.visit(elementType);
+			return new GenericArraySerializer(elementClass, elementTypeSerializer);
+		}
+
+		@Override
 		public TypeSerializer visit(RowType rowType) {
 			final TypeSerializer[] fieldTypeSerializers = rowType.getFields()
 				.stream()
@@ -171,6 +227,13 @@ public final class PythonTypeUtils {
 		@Override
 		public TypeSerializer visit(DateType dateType) {
 			return IntSerializer.INSTANCE;
+		}
+
+		@Override
+		public TypeSerializer visit(ArrayType arrayType) {
+			LogicalType elementType = arrayType.getElementType();
+			TypeSerializer<?> elementTypeSerializer = elementType.accept(this);
+			return new BinaryArraySerializer<>(elementType, elementTypeSerializer);
 		}
 	}
 
@@ -269,6 +332,18 @@ public final class PythonTypeUtils {
 				.setTypeName(FlinkFnApi.Schema.TypeName.DATE)
 				.setNullable(dateType.isNullable())
 				.build();
+		}
+
+		@Override
+		public FlinkFnApi.Schema.FieldType visit(ArrayType arrayType) {
+			FlinkFnApi.Schema.FieldType.Builder builder =
+				FlinkFnApi.Schema.FieldType.newBuilder()
+					.setTypeName(FlinkFnApi.Schema.TypeName.ARRAY)
+					.setNullable(arrayType.isNullable());
+
+			FlinkFnApi.Schema.FieldType elementFieldType = arrayType.getElementType().accept(this);
+			builder.setCollectionElementType(elementFieldType);
+			return builder.build();
 		}
 
 		@Override

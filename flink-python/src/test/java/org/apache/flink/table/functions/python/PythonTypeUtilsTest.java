@@ -23,7 +23,9 @@ import org.apache.flink.api.java.typeutils.runtime.RowSerializer;
 import org.apache.flink.fnexecution.v1.FlinkFnApi;
 import org.apache.flink.table.runtime.typeutils.BaseRowSerializer;
 import org.apache.flink.table.runtime.typeutils.PythonTypeUtils;
+import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.BigIntType;
+import org.apache.flink.table.types.logical.DateType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.UnresolvedUserDefinedType;
@@ -31,6 +33,7 @@ import org.apache.flink.util.ExceptionUtils;
 
 import org.junit.Test;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,5 +88,14 @@ public class PythonTypeUtilsTest {
 		} catch (Exception e) {
 			assertTrue(ExceptionUtils.findThrowableWithMessage(e, expectedTestException).isPresent());
 		}
+	}
+
+	@Test
+	public void testLogicalTypeToConversionClassConverter() {
+		PythonTypeUtils.LogicalTypeToConversionClassConverter converter =
+			PythonTypeUtils.LogicalTypeToConversionClassConverter.INSTANCE;
+		ArrayType arrayType = new ArrayType(new ArrayType(new DateType()));
+		Class<?> conversionClass = converter.visit(arrayType);
+		assertEquals(Date[][].class, conversionClass);
 	}
 }
