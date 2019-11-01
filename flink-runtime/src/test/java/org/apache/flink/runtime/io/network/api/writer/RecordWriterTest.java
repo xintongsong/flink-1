@@ -605,7 +605,7 @@ public class RecordWriterTest {
 		}
 	}
 
-	private static BufferOrEvent parseBuffer(BufferConsumer bufferConsumer, int targetChannel) throws IOException {
+	static BufferOrEvent parseBuffer(BufferConsumer bufferConsumer, int targetChannel) throws IOException {
 		Buffer buffer = buildSingleBuffer(bufferConsumer);
 		if (buffer.isBuffer()) {
 			return new BufferOrEvent(buffer, targetChannel);
