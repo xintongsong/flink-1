@@ -35,6 +35,7 @@ import org.apache.flink.runtime.checkpoint.OperatorSubtaskState;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.functions.source.ContinuousFileMonitoringFunction;
 import org.apache.flink.streaming.api.functions.source.ContinuousFileReaderOperator;
+import org.apache.flink.streaming.api.functions.source.FileMissingSplitsMode;
 import org.apache.flink.streaming.api.functions.source.FileProcessingMode;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.functions.source.TimestampedFileInputSplit;
@@ -898,6 +899,69 @@ public class ContinuousFileProcessingTest {
 		for (org.apache.hadoop.fs.Path path: filesCreated) {
 			hdfs.delete(path, false);
 		}
+	}
+
+	@Test
+	public void testSkipMissingSplits() throws Exception {
+		String testBasePath = hdfsURI + "/" + UUID.randomUUID() + "/";
+
+		Path toBeDeletePath = new Path("test/test3");
+
+		TimestampedFileInputSplit splitRegular =
+			new TimestampedFileInputSplit(0, 3, new Path("test/test1"), 0, 100, null);
+
+		TimestampedFileInputSplit splitSkipped =
+			new TimestampedFileInputSplit(11, 0, toBeDeletePath, 0, 100, null);
+
+		final OneShotLatch latch = new OneShotLatch();
+
+		BlockingFileInputFormat format = new BlockingFileInputFormat(latch, new Path(testBasePath));
+		TypeInformation<FileInputSplit> typeInfo = TypeExtractor.getInputFormatTypes(format);
+
+		ContinuousFileReaderOperator<FileInputSplit> initReader = new ContinuousFileReaderOperator<>(format);
+		initReader.setOutputType(typeInfo, new ExecutionConfig());
+
+		OneInputStreamOperatorTestHarness<TimestampedFileInputSplit, FileInputSplit> initTestInstance =
+			new OneInputStreamOperatorTestHarness<>(initReader);
+		initTestInstance.setTimeCharacteristic(TimeCharacteristic.EventTime);
+		initTestInstance.open();
+
+		// create some state in the reader
+		initTestInstance.processElement(new StreamRecord<>(splitRegular));
+		initTestInstance.processElement(new StreamRecord<>(splitSkipped));
+
+		final OperatorSubtaskState snapshot;
+		synchronized (initTestInstance.getCheckpointLock()) {
+			snapshot = initTestInstance.snapshot(0L, 0L);
+		}
+
+		ContinuousFileReaderOperator<FileInputSplit> restoredReader = new ContinuousFileReaderOperator<>(
+			new BlockingFileInputFormat(latch, new Path(testBasePath)), FileMissingSplitsMode.SKIP_MISSING_SPLITS);
+		restoredReader.setOutputType(typeInfo, new ExecutionConfig());
+
+		OneInputStreamOperatorTestHarness<TimestampedFileInputSplit, FileInputSplit> restoredTestInstance  =
+			new OneInputStreamOperatorTestHarness<>(restoredReader);
+		restoredTestInstance.setTimeCharacteristic(TimeCharacteristic.EventTime);
+
+		//Remove a path and the job should continue
+		toBeDeletePath.getFileSystem().delete(toBeDeletePath, true);
+
+		restoredTestInstance.initializeState(snapshot);
+		restoredTestInstance.open();
+
+		synchronized (initTestInstance.getCheckpointLock()) {
+			initTestInstance.close();
+		}
+
+		synchronized (restoredTestInstance.getCheckpointLock()) {
+			restoredTestInstance.close();
+		}
+
+		FileInputSplit fsSplit1 = createSplitFromTimestampedSplit(splitRegular);
+		FileInputSplit fsSplit2= createSplitFromTimestampedSplit(splitSkipped);
+
+		Assert.assertTrue(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit1)));
+		Assert.assertTrue(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit2)));
 	}
 
 	///////////				Source Contexts Used by the tests				/////////////////
