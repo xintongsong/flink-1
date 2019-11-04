@@ -258,8 +258,7 @@ public class ResourceProfile implements Serializable {
 				managedMemoryInMB >= required.getManagedMemoryInMB()) {
 			for (Map.Entry<String, Resource> resource : required.extendedResources.entrySet()) {
 				if (!extendedResources.containsKey(resource.getKey()) ||
-						!extendedResources.get(resource.getKey()).getResourceAggregateType().equals(resource.getValue().getResourceAggregateType()) ||
-						extendedResources.get(resource.getKey()).getValue() < resource.getValue().getValue()) {
+					extendedResources.get(resource.getKey()).getValue().compareTo(resource.getValue().getValue()) < 0) {
 					return false;
 				}
 			}
@@ -356,7 +355,7 @@ public class ResourceProfile implements Serializable {
 		other.extendedResources.forEach((String name, Resource resource) -> {
 			resultExtendedResource.compute(name, (ignored, oldResource) -> {
 				Resource resultResource = oldResource.subtract(resource);
-				return resultResource.getValue() == 0 ? null : resultResource;
+				return resultResource.getValue().isZero() ? null : resultResource;
 			});
 		});
 

@@ -20,6 +20,7 @@ package org.apache.flink.runtime.clusterframework.types;
 
 import org.apache.flink.api.common.operators.ResourceSpec;
 import org.apache.flink.api.common.resources.GPUResource;
+import org.apache.flink.api.common.resources.ResourceValue;
 import org.apache.flink.core.testutils.CommonTestUtils;
 
 import org.junit.Test;
@@ -138,7 +139,9 @@ public class ResourceProfileTest {
 		assertEquals(1.0, rp.getCpuCores(), 0.000001);
 		assertEquals(150, rp.getMemoryInMB());
 		assertEquals(100, rp.getOperatorsMemoryInMB());
-		assertEquals(1.6, rp.getExtendedResources().get(ResourceSpec.GPU_NAME).getValue(), 0.000001);
+
+		final ResourceValue gpuValue = rp.getExtendedResources().get(ResourceSpec.GPU_NAME).getValue();
+		assertEquals(1.6, gpuValue.getValue(), gpuValue.getPrecision());
 	}
 
 	@Test
