@@ -82,7 +82,7 @@ public class PartitionWriterTest {
 	private final DefaultFileCommitter committer = new DefaultFileCommitter(
 			true, new Path(basePath), null, new HashMap<>(), 0);
 
-	private PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(0, 1);
+	private PathGenerator pathGenerator = committer.createGeneratorAndCleanDir(0, 1);
 
 	private PartitionComputer<Row> computer = new PartitionComputer<Row>() {
 
@@ -114,7 +114,7 @@ public class PartitionWriterTest {
 		writer.close();
 		Assert.assertEquals("{cp-1=[p1,1, p1,2, p2,2]}", records.toString());
 
-		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
+		pathGenerator = committer.createGeneratorAndCleanDir(0, 2);
 		writer = new NonPartitionWriter<>(context, pathGenerator, computer);
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p5", 5));
@@ -134,7 +134,7 @@ public class PartitionWriterTest {
 		writer.close();
 		Assert.assertEquals("{cp-1/p1=[p1,1, p1,2], cp-1/p2=[p2,2]}", records.toString());
 
-		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
+		pathGenerator = committer.createGeneratorAndCleanDir(0, 2);
 		writer = new GroupedPartitionWriter<>(context, pathGenerator, computer, maker);
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p4", 5));
@@ -156,7 +156,7 @@ public class PartitionWriterTest {
 		writer.close();
 		Assert.assertEquals("{cp-1/p1=[p1,1, p1,2], cp-1/p2=[p2,2]}", records.toString());
 
-		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
+		pathGenerator = committer.createGeneratorAndCleanDir(0, 2);
 		writer = new DynamicPartitionWriter<>(context, pathGenerator, computer, maker);
 		writer.write(Row.of("p4", 5));
 		writer.write(Row.of("p3", 3));

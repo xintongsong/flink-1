@@ -169,7 +169,7 @@ public class DefaultFileCommitter implements FileCommitter {
 	}
 
 	@Override
-	public PathGenerator newGeneratorAndCleanDirector(
+	public PathGenerator createGeneratorAndCleanDir(
 			int taskNumber, long checkpointId) throws Exception {
 		DefaultPathGenerator pathGenerator = new DefaultPathGenerator(
 				tmpPath, taskNumber, checkpointId);

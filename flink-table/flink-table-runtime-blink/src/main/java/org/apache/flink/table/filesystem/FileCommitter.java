@@ -41,5 +41,5 @@ public interface FileCommitter extends Serializable {
 	 * Create a new path generator from task and checkpoint id.
 	 * And clean the temporary directory for task.
 	 */
-	PathGenerator newGeneratorAndCleanDirector(int taskNumber, long checkpointId) throws Exception;
+	PathGenerator createGeneratorAndCleanDir(int taskNumber, long checkpointId) throws Exception;
 }
