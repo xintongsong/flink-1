@@ -22,14 +22,13 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.resources.GPUResource;
 import org.apache.flink.api.common.resources.Resource;
 
-import javax.annotation.Nonnull;
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 import static org.apache.flink.util.Preconditions.checkArgument;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Describe the different resource factors of the operator with UDF.
@@ -208,7 +207,15 @@ public final class ResourceSpec implements Serializable {
 	 * @param other The resource to compare
 	 * @return True if current resource is less than or equal with the other resource, otherwise return false.
 	 */
-	public boolean lessThanOrEqual(@Nonnull ResourceSpec other) {
+	public boolean lessThanOrEqual(final ResourceSpec other) {
+		checkNotNull(other);
+
+		if (this.isUnknown() && other.isUnknown()) {
+			return true;
+		} else if (this.isUnknown() || other.isUnknown()) {
+			throw new IllegalArgumentException("Cannot compare specified resources with UNKNOWN resources.");
+		}
+
 		int cmp1 = Double.compare(this.cpuCores, other.cpuCores);
 		int cmp2 = Integer.compare(this.heapMemoryInMB, other.heapMemoryInMB);
 		int cmp3 = Integer.compare(this.directMemoryInMB, other.directMemoryInMB);
@@ -226,6 +233,10 @@ public final class ResourceSpec implements Serializable {
 			return true;
 		}
 		return false;
+	}
+
+	public boolean isUnknown() {
+		return this.equals(UNKNOWN);
 	}
 
 	@Override
