@@ -428,7 +428,7 @@ public class ResourceProfile implements Serializable {
 	// ------------------------------------------------------------------------
 
 	public static ResourceProfile fromResourceSpec(ResourceSpec resourceSpec, int networkMemory) {
-		if (ResourceSpec.UNKNOWN.equals(resourceSpec)) {
+		if (resourceSpec.isUnknown()) {
 			return UNKNOWN;
 		}
 
