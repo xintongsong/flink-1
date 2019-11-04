@@ -27,7 +27,6 @@ import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 
@@ -47,7 +46,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  * </ol>
  * The extended resources are compared ordered by the resource names.
  */
-public class ResourceProfile implements Serializable, Comparable<ResourceProfile> {
+public class ResourceProfile implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -267,38 +266,6 @@ public class ResourceProfile implements Serializable, Comparable<ResourceProfile
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public int compareTo(@Nonnull ResourceProfile other) {
-		int cmp = Integer.compare(this.getMemoryInMB(), other.getMemoryInMB());
-		if (cmp == 0) {
-			cmp = Double.compare(this.cpuCores, other.cpuCores);
-		}
-		if (cmp == 0) {
-			Iterator<Map.Entry<String, Resource>> thisIterator = extendedResources.entrySet().iterator();
-			Iterator<Map.Entry<String, Resource>> otherIterator = other.extendedResources.entrySet().iterator();
-			while (thisIterator.hasNext() && otherIterator.hasNext()) {
-				Map.Entry<String, Resource> thisResource = thisIterator.next();
-				Map.Entry<String, Resource> otherResource = otherIterator.next();
-				if ((cmp = otherResource.getKey().compareTo(thisResource.getKey())) != 0) {
-					return cmp;
-				}
-				if (!otherResource.getValue().getResourceAggregateType().equals(thisResource.getValue().getResourceAggregateType())) {
-					return 1;
-				}
-				if ((cmp = Double.compare(thisResource.getValue().getValue(), otherResource.getValue().getValue())) != 0) {
-					return cmp;
-				}
-			}
-			if (thisIterator.hasNext()) {
-				return 1;
-			}
-			if (otherIterator.hasNext()) {
-				return -1;
-			}
-		}
-		return cmp;
 	}
 
 	// ------------------------------------------------------------------------
