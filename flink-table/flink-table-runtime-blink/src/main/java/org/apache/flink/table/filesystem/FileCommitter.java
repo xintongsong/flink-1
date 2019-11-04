@@ -19,7 +19,6 @@
 package org.apache.flink.table.filesystem;
 
 import org.apache.flink.annotation.Internal;
-import org.apache.flink.core.fs.Path;
 
 import java.io.Serializable;
 
@@ -30,11 +29,6 @@ import java.io.Serializable;
  */
 @Internal
 public interface FileCommitter extends Serializable {
-
-	/**
-	 * Delete path, it is a recursive deletion.
-	 */
-	void deletePath(Path taskTmpPath) throws Exception;
 
 	/**
 	 * For committing job's output after successful batch job completion or one checkpoint finish

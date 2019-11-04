@@ -68,8 +68,7 @@ public class DefaultFileCommitter implements FileCommitter {
 		this.partitionColumnSize = partitionColumnSize;
 	}
 
-	@Override
-	public void deletePath(Path taskTmpDir) throws Exception {
+	private void deletePath(Path taskTmpDir) throws Exception {
 		FileSystem.get(taskTmpDir.toUri()).delete(taskTmpDir, true);
 	}
 
