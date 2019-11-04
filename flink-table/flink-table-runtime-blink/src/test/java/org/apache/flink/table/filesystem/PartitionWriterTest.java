@@ -74,13 +74,12 @@ public class PartitionWriterTest {
 		}
 
 		@Override
-		public Path generatePath() throws Exception {
-			return new Path(basePath);
-		}
-
-		@Override
-		public Path generatePath(String partition) throws Exception {
-			return new Path(basePath, partition);
+		public Path generatePath(String... directories) throws Exception {
+			Path parentPath = new Path(basePath);
+			for (String dir : directories) {
+				parentPath = new Path(parentPath, dir);
+			}
+			return parentPath;
 		}
 
 		@Override

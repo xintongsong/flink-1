@@ -85,17 +85,14 @@ public abstract class FileCommitter implements Serializable {
 		}
 
 		/**
-		 * Generate a new path without partition.
+		 * Generate a new path with directories.
 		 */
-		Path generate() throws Exception {
-			return new Path(taskTmpDir, newFileName());
-		}
-
-		/**
-		 * Generate a new path with partition path.
-		 */
-		Path generate(String partition) throws Exception {
-			return new Path(new Path(taskTmpDir, partition), newFileName());
+		Path generate(String... directories) throws Exception {
+			Path parentPath = taskTmpDir;
+			for (String dir : directories) {
+				parentPath = new Path(parentPath, dir);
+			}
+			return new Path(parentPath, newFileName());
 		}
 
 		private String newFileName() {

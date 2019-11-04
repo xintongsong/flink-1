@@ -63,13 +63,8 @@ public class ContextImpl<T> implements Context<T> {
 	}
 
 	@Override
-	public Path generatePath() throws Exception {
-		return generator.generate();
-	}
-
-	@Override
-	public Path generatePath(String partition) throws Exception {
-		return generator.generate(partition);
+	public Path generatePath(String... directories) throws Exception {
+		return generator.generate(directories);
 	}
 
 	@Override

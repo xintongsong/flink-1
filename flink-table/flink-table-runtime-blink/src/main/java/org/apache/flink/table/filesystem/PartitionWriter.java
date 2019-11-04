@@ -62,18 +62,9 @@ public interface PartitionWriter<T> {
 		OutputFormat<T> createNewOutputFormat(Path path) throws IOException;
 
 		/**
-		 * Generate a new path without partition.
-		 *
-		 * <p>See {@link NonPartitionWriter}.
+		 * Generate a new path with directories.
 		 */
-		Path generatePath() throws Exception;
-
-		/**
-		 * Generate a new path with partition path.
-		 *
-		 * <p>See {@link DynamicPartitionWriter} and {@link GroupedPartitionWriter}.
-		 */
-		Path generatePath(String partition) throws Exception;
+		Path generatePath(String... directories) throws Exception;
 
 		/**
 		 * Compute partition path from record.
