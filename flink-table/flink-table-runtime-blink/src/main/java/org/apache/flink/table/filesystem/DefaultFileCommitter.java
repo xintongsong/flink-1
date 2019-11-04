@@ -287,6 +287,8 @@ public class DefaultFileCommitter implements FileCommitter {
 	 */
 	public static class DefaultPartitionPathMaker implements PartitionPathMaker {
 
+		private static final long serialVersionUID = 1L;
+
 		@Override
 		public String makePartitionPath(
 				LinkedHashMap<String, String> partitionValues) throws Exception {
