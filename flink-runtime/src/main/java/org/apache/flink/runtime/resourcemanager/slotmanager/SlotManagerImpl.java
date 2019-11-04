@@ -624,7 +624,7 @@ public class SlotManagerImpl implements SlotManager {
 	@Nullable
 	private PendingTaskManagerSlot findExactlyMatchingPendingTaskManagerSlot(ResourceProfile resourceProfile) {
 		for (PendingTaskManagerSlot pendingTaskManagerSlot : pendingSlots.values()) {
-			if (pendingTaskManagerSlot.getResourceProfile().equals(resourceProfile)) {
+			if (pendingTaskManagerSlot.getResourceProfile().hasSameResources(resourceProfile)) {
 				return pendingTaskManagerSlot;
 			}
 		}

@@ -284,9 +284,9 @@ public class ResourceProfile implements Serializable {
 	public boolean isMatching(ResourceProfile required) {
 		checkNotNull(required, "Cannot check matching with null resources");
 
-		if (required.equals(UNKNOWN)) {
+		if (required.isUnknown()) {
 			return true;
-		} else if (this.equals(UNKNOWN)) {
+		} else if (this.isUnknown()) {
 			return false;
 		}
 
@@ -306,6 +306,26 @@ public class ResourceProfile implements Serializable {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Check whether the other resource profile has the same resources as this one.
+	 *
+	 * @param other resource profile to check
+	 * @return true if the other resource profile has the same resources as this one
+	 */
+	public boolean hasSameResources(final ResourceProfile other) {
+		checkNotNull(other);
+
+		return isMatching(other) && other.isMatching(this);
+	}
+
+	public boolean isAny() {
+		return this.equals(ANY);
+	}
+
+	public boolean isUnknown() {
+		return this.equals(UNKNOWN);
 	}
 
 	// ------------------------------------------------------------------------
@@ -350,11 +370,11 @@ public class ResourceProfile implements Serializable {
 	public ResourceProfile merge(final ResourceProfile other) {
 		checkNotNull(other, "Cannot merge with null resources");
 
-		if (equals(ANY) || other.equals(ANY)) {
+		if (this.isAny() || other.isAny()) {
 			return ANY;
 		}
 
-		if (this.equals(UNKNOWN) || other.equals(UNKNOWN)) {
+		if (this.isUnknown() || other.isUnknown()) {
 			return UNKNOWN;
 		}
 
@@ -384,11 +404,11 @@ public class ResourceProfile implements Serializable {
 	public ResourceProfile subtract(final ResourceProfile other) {
 		checkNotNull(other, "Cannot subtract with null resources");
 
-		if (equals(ANY) || other.equals(ANY)) {
+		if (this.isAny() || other.isAny()) {
 			return ANY;
 		}
 
-		if (this.equals(UNKNOWN) || other.equals(UNKNOWN)) {
+		if (this.isUnknown() || other.isUnknown()) {
 			return UNKNOWN;
 		}
 
@@ -450,7 +470,7 @@ public class ResourceProfile implements Serializable {
 
 	private Object readResolve() {
 		// try to preserve the singleton property for UNKNOWN
-		return this.equals(UNKNOWN) ? UNKNOWN : this;
+		return this.isUnknown() ? UNKNOWN : this;
 	}
 
 	// ------------------------------------------------------------------------
