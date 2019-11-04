@@ -30,6 +30,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Tests for {@link LocationPreferenceSlotSelectionStrategy}.
+ */
 public class LocationPreferenceSlotSelectionStrategyTest extends SlotSelectionStrategyTestBase {
 
 	public LocationPreferenceSlotSelectionStrategyTest() {
@@ -49,7 +52,7 @@ public class LocationPreferenceSlotSelectionStrategyTest extends SlotSelectionSt
 		Assert.assertTrue(match.get().getSlotInfo().getResourceProfile().isMatching(slotProfile.getResourceProfile()));
 
 		ResourceProfile evenBiggerResourceProfile =
-			new ResourceProfile(biggerResourceProfile.getCpuCores() + 1, resourceProfile.getHeapMemoryInMB());
+			new ResourceProfile(biggerResourceProfile.getCpuCores().getValue() + 1, resourceProfile.getHeapMemoryInMB());
 		slotProfile = new SlotProfile(evenBiggerResourceProfile, Collections.emptyList(), Collections.emptySet());
 
 		match = runMatching(slotProfile);
