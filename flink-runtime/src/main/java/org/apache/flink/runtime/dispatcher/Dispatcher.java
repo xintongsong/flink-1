@@ -19,7 +19,6 @@
 package org.apache.flink.runtime.dispatcher;
 
 import org.apache.flink.api.common.JobID;
-import org.apache.flink.api.common.operators.ResourceSpec;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
@@ -308,7 +307,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		boolean hasVerticesWithConfiguredResource = false;
 
 		for (JobVertex jobVertex : jobGraph.getVertices()) {
-			if (jobVertex.getMinResources() == ResourceSpec.UNKNOWN) {
+			if (jobVertex.getMinResources().isUnknown()) {
 				hasVerticesWithUnknownResource = true;
 			} else {
 				hasVerticesWithConfiguredResource = true;
