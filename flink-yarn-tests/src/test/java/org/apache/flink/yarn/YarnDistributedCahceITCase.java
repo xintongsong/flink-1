@@ -24,8 +24,7 @@ import org.apache.flink.configuration.AkkaOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobmaster.JobResult;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
+import org.apache.flink.yarn.testjob.YarnTestCacheJob;
 import org.apache.flink.yarn.util.YarnTestUtils;
 
 import org.apache.hadoop.fs.Path;
@@ -44,9 +43,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 /**
- * Test cases for the deployment of Yarn Flink clusters.
+ * Test cases for the deployment of Yarn Flink with Distributed Cache.
  */
-public class YARNITCase extends YarnTestBase {
+public class YarnDistributedCahceITCase extends YarnTestBase {
 
 	private final Duration yarnAppTerminateTimeout = Duration.ofSeconds(10);
 
@@ -54,12 +53,12 @@ public class YARNITCase extends YarnTestBase {
 
 	@BeforeClass
 	public static void setup() {
-		YARN_CONFIGURATION.set(YarnTestBase.TEST_CLUSTER_NAME_KEY, "flink-yarn-tests-per-job");
+		YARN_CONFIGURATION.set(YarnTestBase.TEST_CLUSTER_NAME_KEY, "flink-yarn-tests-with-distributed-cache");
 		startYARNWithConfig(YARN_CONFIGURATION);
 	}
 
 	@Test
-	public void testPerJobMode() throws Exception {
+	public void testPerJobModeWithDistributedCache() throws Exception {
 		runTest(() -> {
 			Configuration configuration = new Configuration();
 			configuration.setString(AkkaOptions.ASK_TIMEOUT, "30 s");
@@ -82,14 +81,7 @@ public class YARNITCase extends YarnTestBase {
 					.setNumberTaskManagers(1)
 					.createClusterSpecification();
 
-				StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-				env.setParallelism(2);
-
-				env.addSource(new NoDataSource())
-					.shuffle()
-					.addSink(new DiscardingSink<>());
-
-				final JobGraph jobGraph = env.getStreamGraph().getJobGraph();
+				final JobGraph jobGraph = YarnTestCacheJob.getDistributedCacheJobGraph();
 
 				File testingJar = YarnTestBase.findFile("..", new YarnTestUtils.TestJarFinder("flink-yarn-tests"));
 
