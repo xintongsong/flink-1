@@ -146,8 +146,8 @@ public abstract class Operator<OUT, O extends Operator<OUT, O>> extends DataSet<
 		Preconditions.checkNotNull(minResources, "The min resources must be not null.");
 		Preconditions.checkNotNull(preferredResources, "The preferred resources must be not null.");
 
-		Preconditions.checkArgument(minResources.isValid() && preferredResources.isValid() && minResources.lessThanOrEqual(preferredResources),
-				"The values in resources must be not less than 0 and the preferred resources must be greater than the min resources.");
+		Preconditions.checkArgument(minResources.lessThanOrEqual(preferredResources),
+				"The preferred resources must be no less than the min resources.");
 
 		this.minResources = minResources;
 		this.preferredResources = preferredResources;
@@ -165,7 +165,6 @@ public abstract class Operator<OUT, O extends Operator<OUT, O>> extends DataSet<
 	 */
 	private O setResources(ResourceSpec resources) {
 		Preconditions.checkNotNull(resources, "The resources must be not null.");
-		Preconditions.checkArgument(resources.isValid(), "The values in resources must be not less than 0.");
 
 		this.minResources = resources;
 		this.preferredResources = resources;
