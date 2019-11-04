@@ -136,7 +136,7 @@ public class ResourceProfileTest {
 				build();
 		ResourceProfile rp = ResourceProfile.fromResourceSpec(rs, 50);
 
-		assertEquals(1.0, rp.getCpuCores(), 0.000001);
+		assertEquals(1.0, rp.getCpuCores().getValue(), rp.getCpuCores().getPrecision());
 		assertEquals(150, rp.getMemoryInMB());
 		assertEquals(100, rp.getOperatorsMemoryInMB());
 
