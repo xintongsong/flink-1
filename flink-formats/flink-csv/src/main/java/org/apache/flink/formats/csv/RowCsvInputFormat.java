@@ -57,7 +57,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * 1.New csv not support configure comment char. The comment char is "#".
  * 2.New csv not support configure multi chars field delimiter.
  * 3.New csv not support read first N, it will throw exception.
- * 4.New new csv not support line delimiter, it's line delimiter is "\r" or "\n" or "\r\n".
+ * 4.Only support configure line delimiter: "\r" or "\n" or "\r\n".
  */
 public class RowCsvInputFormat extends FileInputFormat<Row> {
 
