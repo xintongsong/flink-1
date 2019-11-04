@@ -19,6 +19,7 @@
 package org.apache.flink.api.common.operators;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.resources.AdditiveResourceValue;
 import org.apache.flink.api.common.resources.GPUResource;
 import org.apache.flink.api.common.resources.Resource;
@@ -151,7 +152,7 @@ public final class ResourceSpec implements Serializable {
 	public ResourceSpec merge(final ResourceSpec other) {
 		checkNotNull(other, "Cannot merge with null resources");
 
-		if (this.equals(UNKNOWN) || other.equals(UNKNOWN)) {
+		if (this.isUnknown() || other.isUnknown()) {
 			return UNKNOWN;
 		}
 
@@ -215,7 +216,7 @@ public final class ResourceSpec implements Serializable {
 	 * @return True if current resource is less than or equal with the other resource, otherwise return false.
 	 */
 	public boolean lessThanOrEqual(final ResourceSpec other) {
-		checkNotNull(other);
+		checkNotNull(other, "Cannot compare with null resources.");
 
 		if (this.isUnknown() && other.isUnknown()) {
 			return true;
@@ -242,10 +243,30 @@ public final class ResourceSpec implements Serializable {
 		return false;
 	}
 
+	@VisibleForTesting
+	public boolean hasSameResources(final ResourceSpec other) {
+		checkNotNull(other, "Cannot compare with null resources.");
+
+		return lessThanOrEqual(other) && other.lessThanOrEqual(this);
+	}
+
+	public boolean isDefault() {
+		return this.equals(DEFAULT);
+	}
+
 	public boolean isUnknown() {
 		return this.equals(UNKNOWN);
 	}
 
+	/**
+	 * Note: Avoid to use this method to compare resources,
+	 * unless a strict comparison is desired regarding the double values.
+	 * For matching resources in normal cases, use {@link #lessThanOrEqual(ResourceSpec)}
+	 * or {@link #hasSameResources(ResourceSpec)} instead.
+	 *
+	 * @param obj to compare
+	 * @return true if the given obj strictly matches this one
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) {
@@ -298,7 +319,7 @@ public final class ResourceSpec implements Serializable {
 
 	private Object readResolve() {
 		// try to preserve the singleton property for UNKNOWN
-		return this.equals(UNKNOWN) ? UNKNOWN : this;
+		return this.isUnknown() ? UNKNOWN : this;
 	}
 
 	// ------------------------------------------------------------------------

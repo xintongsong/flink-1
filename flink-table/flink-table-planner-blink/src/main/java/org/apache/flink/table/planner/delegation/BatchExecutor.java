@@ -80,7 +80,7 @@ public class BatchExecutor extends ExecutorBase {
 		// All transformations should set managed memory size.
 		ResourceSpec managedResourceSpec = NodeResourceUtil.fromManagedMem(0);
 		streamGraph.getStreamNodes().forEach(sn -> {
-			if (sn.getMinResources().equals(ResourceSpec.DEFAULT)) {
+			if (sn.getMinResources().isDefault()) {
 				sn.setResources(managedResourceSpec, managedResourceSpec);
 			}
 		});
