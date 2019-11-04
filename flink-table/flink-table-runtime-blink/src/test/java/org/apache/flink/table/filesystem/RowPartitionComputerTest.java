@@ -33,22 +33,19 @@ public class RowPartitionComputerTest {
 	public void testProjectColumnsToWrite() throws Exception {
 		Row projected1 = new RowPartitionComputer(
 				new String[]{"f1", "p1", "p2", "f2"},
-				new String[]{"p1", "p2"},
-				"myDefaultname"
+				new String[]{"p1", "p2"}
 		).projectColumnsToWrite(Row.of(1, 2, 3, 4));
 		Assert.assertEquals(Row.of(1, 4), projected1);
 
 		Row projected2 = new RowPartitionComputer(
 				new String[]{"f1", "f2", "p1", "p2"},
-				new String[]{"p1", "p2"},
-				"myDefaultname"
+				new String[]{"p1", "p2"}
 		).projectColumnsToWrite(Row.of(1, 2, 3, 4));
 		Assert.assertEquals(Row.of(1, 2), projected2);
 
 		Row projected3 = new RowPartitionComputer(
 				new String[]{"f1", "p1", "f2", "p2"},
-				new String[]{"p1", "p2"},
-				"myDefaultname"
+				new String[]{"p1", "p2"}
 		).projectColumnsToWrite(Row.of(1, 2, 3, 4));
 		Assert.assertEquals(Row.of(1, 3), projected3);
 	}
@@ -57,13 +54,12 @@ public class RowPartitionComputerTest {
 	public void testComputePartition() throws Exception {
 		RowPartitionComputer computer = new RowPartitionComputer(
 				new String[]{"f1", "p1", "p2", "f2"},
-				new String[]{"p1", "p2"},
-				"myDefaultname"
+				new String[]{"p1", "p2"}
 		);
-		Assert.assertEquals("p1=2/p2=3/", new DefaultPartitionPathMaker().makePartitionPath(
-				computer.makePartitionValues(Row.of(1, 2, 3, 4))));
+		Assert.assertEquals("p1=2/p2=3/", new DefaultPartitionPathMaker("myDefaultname")
+				.makePartitionPath(computer.makePartitionValues(Row.of(1, 2, 3, 4))));
 		Assert.assertEquals("p1=myDefaultname/p2=3/",
-				new DefaultPartitionPathMaker().makePartitionPath(
+				new DefaultPartitionPathMaker("myDefaultname").makePartitionPath(
 						computer.makePartitionValues(Row.of(1, null, 3, 4))));
 	}
 }

@@ -209,7 +209,7 @@ public class FileSystemOutputFormatTest {
 		String[] columnNames = new String[]{"a", "b", "c"};
 		String[] partitionColumns = partition ? new String[]{"c"} : new String[0];
 		RowPartitionComputer computer = new RowPartitionComputer(
-				columnNames, partitionColumns, "default");
+				columnNames, partitionColumns);
 
 		DefaultFileCommitter committer = new DefaultFileCommitter(
 				override,
@@ -220,7 +220,7 @@ public class FileSystemOutputFormatTest {
 
 		FileSystemOutputFormat<Row> sink = new FileSystemOutputFormat<>(
 				computer,
-				new DefaultFileCommitter.DefaultPartitionPathMaker(),
+				new DefaultFileCommitter.DefaultPartitionPathMaker("default"),
 				PartitionWriterFactory.get(dynamicPartition, grouped),
 				TextOutputFormat::new,
 				committer);

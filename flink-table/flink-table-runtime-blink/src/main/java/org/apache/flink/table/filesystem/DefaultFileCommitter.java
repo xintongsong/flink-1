@@ -264,18 +264,33 @@ public class DefaultFileCommitter implements FileCommitter {
 	 * <p>See {@link #makeSpecFromName(Path)}.
 	 */
 	public static String makePartitionName(LinkedHashMap<String, String> partitionSpec) {
+		return makePartitionName(partitionSpec, null);
+	}
+
+	/**
+	 * Make partition path from partition spec with default partition name.
+	 *
+	 * <p>See {@link #makeSpecFromName(Path)}.
+	 */
+	public static String makePartitionName(
+			LinkedHashMap<String, String> partitionSpec, String defaultPartName) {
 		StringBuilder suffixBuf = new StringBuilder();
 		int i = 0;
 		for (Map.Entry<String, String> e : partitionSpec.entrySet()) {
-			if (e.getValue() == null || e.getValue().length() == 0) {
-				throw new TableException("Partition spec is incorrect. " + partitionSpec);
+			String partValue = e.getValue();
+			if (partValue == null || partValue.length() == 0) {
+				if (defaultPartName == null) {
+					throw new TableException("Partition spec is incorrect. " + partitionSpec);
+				} else {
+					partValue = defaultPartName;
+				}
 			}
 			if (i > 0) {
 				suffixBuf.append(Path.SEPARATOR);
 			}
 			suffixBuf.append(e.getKey());
 			suffixBuf.append('=');
-			suffixBuf.append(e.getValue());
+			suffixBuf.append(partValue);
 			i++;
 		}
 		suffixBuf.append(Path.SEPARATOR);
@@ -289,10 +304,16 @@ public class DefaultFileCommitter implements FileCommitter {
 
 		private static final long serialVersionUID = 1L;
 
+		private final String defaultPartName;
+
+		public DefaultPartitionPathMaker(String defaultPartName) {
+			this.defaultPartName = defaultPartName;
+		}
+
 		@Override
 		public String makePartitionPath(
 				LinkedHashMap<String, String> partitionValues) throws Exception {
-			return makePartitionName(partitionValues);
+			return makePartitionName(partitionValues, defaultPartName);
 		}
 	}
 }

@@ -38,12 +38,8 @@ public class RowPartitionComputer implements PartitionComputer<Row> {
 	private final String[] partitionColumns;
 	private final int[] nonPartitionIndexes;
 	private final int[] partitionIndexes;
-	private final String defaultPartitionName;
 
-	public RowPartitionComputer(
-			String[] columnNames,
-			String[] partitionColumns,
-			String defaultPartitionName) {
+	public RowPartitionComputer(String[] columnNames, String[] partitionColumns) {
 		this.partitionColumns = partitionColumns;
 		List<String> columnList = Arrays.asList(columnNames);
 		this.partitionIndexes = Arrays.stream(partitionColumns).mapToInt(columnList::indexOf).toArray();
@@ -51,7 +47,6 @@ public class RowPartitionComputer implements PartitionComputer<Row> {
 		this.nonPartitionIndexes = IntStream.range(0, columnNames.length)
 				.filter(c -> !partitionIndexList.contains(c))
 				.toArray();
-		this.defaultPartitionName = defaultPartitionName;
 	}
 
 	@Override
@@ -62,9 +57,6 @@ public class RowPartitionComputer implements PartitionComputer<Row> {
 			int index = partitionIndexes[i];
 			Object field = in.getField(index);
 			String partitionValue = field != null ? field.toString() : null;
-			if (partitionValue == null || partitionValue.isEmpty()) {
-				partitionValue = defaultPartitionName;
-			}
 			partSpec.put(partitionColumns[i], partitionValue);
 		}
 		return partSpec;
