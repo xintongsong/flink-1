@@ -46,7 +46,7 @@ public abstract class FileCommitter implements Serializable {
 	/**
 	 * Delete path, it is a recursive deletion.
 	 */
-	public abstract void deletePath(Path taskTmpPath) throws Exception;
+	protected abstract void deletePath(Path taskTmpPath) throws Exception;
 
 	/**
 	 * For committing job's output after successful batch job completion or one checkpoint finish
@@ -56,57 +56,49 @@ public abstract class FileCommitter implements Serializable {
 	public abstract void commit(long checkpointId) throws Exception;
 
 	/**
-	 * Get path generator for task.
+	 * Create a new path generator from task and checkpoint id.
+	 * And clean the temporary directory for task.
 	 */
-	final PathGenerator pathGenerator(int taskNumber) {
-		return new PathGenerator(taskNumber);
+	final PathGenerator newGeneratorAndCleanDirector(
+			int taskNumber, long checkpointId) throws Exception {
+		PathGenerator pathGenerator = new PathGenerator(taskNumber, checkpointId);
+		deletePath(pathGenerator.taskTmpDir);
+		return pathGenerator;
 	}
 
 	/**
 	 * Path generator to generate new path to write and prepare task temporary directory.
 	 */
-	public final class PathGenerator {
+	final class PathGenerator {
 
 		private final int taskNumber;
+		private final long checkpointId;
+		private final Path taskTmpDir;
 
-		private transient long checkpointId = -1;
-		private transient Path taskTmpDir;
 		private transient int nameCounter = 0;
 
-		private PathGenerator(int taskNumber) {
+		private PathGenerator(int taskNumber, long checkpointId) {
+			checkArgument(checkpointId != -1, "checkpoint id start with 0.");
 			this.taskNumber = taskNumber;
-		}
-
-		/**
-		 * Start a transaction, remember the checkpoint id and delete task temporary directory to write.
-		 */
-		public void startTransaction(long checkpointId) throws Exception {
-			checkArgument(checkpointId != -1);
 			this.checkpointId = checkpointId;
 			this.taskTmpDir = new Path(new Path(temporaryPath, "cp-" + checkpointId), "task-" + taskNumber);
-			deletePath(taskTmpDir);
 		}
 
 		/**
 		 * Generate a new path without partition.
 		 */
-		public Path generate() throws Exception {
-			Path path = new Path(taskTmpDir, newFileName());
-			deletePath(path);
-			return path;
+		Path generate() throws Exception {
+			return new Path(taskTmpDir, newFileName());
 		}
 
 		/**
 		 * Generate a new path with partition path.
 		 */
-		public Path generate(String partition) throws Exception {
-			Path path = new Path(new Path(taskTmpDir, partition), newFileName());
-			deletePath(path);
-			return path;
+		Path generate(String partition) throws Exception {
+			return new Path(new Path(taskTmpDir, partition), newFileName());
 		}
 
 		private String newFileName() {
-			checkArgument(checkpointId != -1);
 			return String.format("cp-%d-task-%d-file-%d", checkpointId, taskNumber, nameCounter++);
 		}
 	}

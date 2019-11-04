@@ -21,56 +21,42 @@ package org.apache.flink.table.filesystem;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.io.OutputFormat;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * {@link PartitionWriter} for grouped dynamic partition inserting. It will create a new format
- * when partition changed.
- *
- * @param <T> The type of the consumed records.
+ * Dynamic partition writer to writing multiple partitions at the same time, it maybe consumes more memory.
  */
 @Internal
-public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
+public class DynamicPartitionWriter<T> implements PartitionWriter<T> {
 
-	private final OutputFormatFactory<T> factory;
-
-	private OutputFormat<T> currentFormat;
-	private String currentPartition;
+	private Map<String, OutputFormat<T>> formats;
 	private Context<T> context;
-
-	public GroupedPartitionWriter(OutputFormatFactory<T> factory) {
-		this.factory = factory;
-	}
 
 	@Override
 	public void open(Context<T> context) throws Exception {
 		this.context = context;
-	}
-
-	@Override
-	public void startTransaction() throws Exception {
-		this.currentFormat = null;
+		this.formats = new HashMap<>();
 	}
 
 	@Override
 	public void write(T in) throws Exception {
 		String partition = context.computePartition(in);
-		if (currentPartition == null || !partition.equals(currentPartition)) {
-			if (currentPartition != null) {
-				currentFormat.close();
-			}
+		OutputFormat<T> format = formats.get(partition);
 
-			currentFormat = factory.createOutputFormat(context.generatePath(partition));
-			context.prepareOutputFormat(currentFormat);
-			currentPartition = partition;
+		if (format == null) {
+			// create a new format to write new partition.
+			format = context.createNewOutputFormat(context.generatePath(partition));
+			formats.put(partition, format);
 		}
-		currentFormat.writeRecord(context.projectColumnsToWrite(in));
+		format.writeRecord(context.projectColumnsToWrite(in));
 	}
 
 	@Override
-	public void endTransaction() throws Exception {
-		if (currentFormat != null) {
-			currentFormat.close();
-			currentFormat = null;
+	public void close() throws Exception {
+		for (OutputFormat<?> format : formats.values()) {
+			format.close();
 		}
-		currentPartition = null;
+		formats.clear();
 	}
 }

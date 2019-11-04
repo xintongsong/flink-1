@@ -22,22 +22,17 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.io.OutputFormat;
 
 /**
- * {@link PartitionWriter} for non-partition-aware writer. It just use one format to write
- * in a transaction.
+ * {@link PartitionWriter} for grouped dynamic partition inserting. It will create a new format
+ * when partition changed.
  *
  * @param <T> The type of the consumed records.
  */
 @Internal
-public class NonPartitionWriter<T> implements PartitionWriter<T> {
+public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 
-	private final OutputFormatFactory<T> factory;
-
-	private OutputFormat<T> format;
+	private OutputFormat<T> currentFormat;
+	private String currentPartition;
 	private Context<T> context;
-
-	public NonPartitionWriter(OutputFormatFactory<T> factory) {
-		this.factory = factory;
-	}
 
 	@Override
 	public void open(Context<T> context) throws Exception {
@@ -45,23 +40,25 @@ public class NonPartitionWriter<T> implements PartitionWriter<T> {
 	}
 
 	@Override
-	public void startTransaction() throws Exception {
-		format = factory.createOutputFormat(context.generatePath());
-		context.prepareOutputFormat(format);
-	}
-
-	@Override
 	public void write(T in) throws Exception {
-		assert context != null : "Please open before writing records.";
-		assert format != null : "Please start transaction before writing records.";
-		format.writeRecord(context.projectColumnsToWrite(in));
+		String partition = context.computePartition(in);
+		if (currentPartition == null || !partition.equals(currentPartition)) {
+			if (currentPartition != null) {
+				currentFormat.close();
+			}
+
+			currentFormat = context.createNewOutputFormat(context.generatePath(partition));
+			currentPartition = partition;
+		}
+		currentFormat.writeRecord(context.projectColumnsToWrite(in));
 	}
 
 	@Override
-	public void endTransaction() throws Exception {
-		if (format != null) {
-			format.close();
-			format = null;
+	public void close() throws Exception {
+		if (currentFormat != null) {
+			currentFormat.close();
+			currentFormat = null;
 		}
+		currentPartition = null;
 	}
 }

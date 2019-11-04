@@ -19,29 +19,38 @@
 package org.apache.flink.table.filesystem;
 
 import org.apache.flink.annotation.Internal;
-
-import java.io.Serializable;
+import org.apache.flink.api.common.io.OutputFormat;
 
 /**
- * Factory of {@link PartitionWriter} to avoid virtual function calls.
+ * {@link PartitionWriter} for non-partition-aware writer. It just use one format to write
+ * in a transaction.
+ *
+ * @param <T> The type of the consumed records.
  */
 @Internal
-public interface PartitionWriterFactory<T> extends Serializable {
+public class NonPartitionWriter<T> implements PartitionWriter<T> {
 
-	/**
-	 * Create {@link PartitionWriter} from a {@link OutputFormatFactory}.
-	 */
-	PartitionWriter<T> create(OutputFormatFactory<T> writerFactory);
+	private OutputFormat<T> format;
+	private Context<T> context;
 
-	/**
-	 * Util for get a {@link PartitionWriterFactory}.
-	 */
-	static <T> PartitionWriterFactory<T> get(
-			boolean dynamicPartition, boolean grouped) {
-		if (dynamicPartition) {
-			return grouped ? GroupedPartitionWriter::new : DynamicPartitionWriter::new;
-		} else {
-			return NonPartitionWriter::new;
+	@Override
+	public void open(Context<T> context) throws Exception {
+		this.context = context;
+		this.format = this.context.createNewOutputFormat(context.generatePath());
+	}
+
+	@Override
+	public void write(T in) throws Exception {
+		assert context != null : "Please open before writing records.";
+		assert format != null : "Please start transaction before writing records.";
+		format.writeRecord(context.projectColumnsToWrite(in));
+	}
+
+	@Override
+	public void close() throws Exception {
+		if (format != null) {
+			format.close();
+			format = null;
 		}
 	}
 }

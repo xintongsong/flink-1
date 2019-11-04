@@ -67,8 +67,10 @@ public class PartitionWriterTest {
 	private String basePath = "cp1";
 
 	private Context<Row> context = new Context<Row>() {
+
 		@Override
-		public void prepareOutputFormat(OutputFormat format) throws IOException {
+		public OutputFormat<Row> createNewOutputFormat(Path path) throws IOException {
+			return factory.createOutputFormat(path);
 		}
 
 		@Override
@@ -94,43 +96,43 @@ public class PartitionWriterTest {
 
 	@Test
 	public void testNonPartitionWriter() throws Exception {
-		NonPartitionWriter<Row> writer = new NonPartitionWriter<>(factory);
+		NonPartitionWriter<Row> writer = new NonPartitionWriter<>();
 		writer.open(context);
 
-		writer.startTransaction();
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p1", 2));
 		writer.write(Row.of("p2", 2));
-		writer.endTransaction();
+		writer.close();
 		Assert.assertEquals("{cp1=[p1,1, p1,2, p2,2]}", records.toString());
 
 		basePath = "cp2";
-		writer.startTransaction();
+		writer = new NonPartitionWriter<>();
+		writer.open(context);
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p5", 5));
 		writer.write(Row.of("p2", 2));
-		writer.endTransaction();
+		writer.close();
 		Assert.assertEquals("{cp2=[p3,3, p5,5, p2,2], cp1=[p1,1, p1,2, p2,2]}", records.toString());
 	}
 
 	@Test
 	public void testGroupedPartitionWriter() throws Exception {
-		GroupedPartitionWriter<Row> writer = new GroupedPartitionWriter<>(factory);
+		GroupedPartitionWriter<Row> writer = new GroupedPartitionWriter<>();
 		writer.open(context);
 
-		writer.startTransaction();
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p1", 2));
 		writer.write(Row.of("p2", 2));
-		writer.endTransaction();
+		writer.close();
 		Assert.assertEquals("{cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2]}", records.toString());
 
 		basePath = "cp2";
-		writer.startTransaction();
+		writer = new GroupedPartitionWriter<>();
+		writer.open(context);
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p4", 5));
 		writer.write(Row.of("p5", 2));
-		writer.endTransaction();
+		writer.close();
 		Assert.assertEquals(
 				"{cp2/p3=[p3,3], cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2], cp2/p5=[p5,2], cp2/p4=[p4,5]}",
 				records.toString());
@@ -138,22 +140,22 @@ public class PartitionWriterTest {
 
 	@Test
 	public void testDynamicPartitionWriter() throws Exception {
-		DynamicPartitionWriter<Row> writer = new DynamicPartitionWriter<>(factory);
+		DynamicPartitionWriter<Row> writer = new DynamicPartitionWriter<>();
 		writer.open(context);
 
-		writer.startTransaction();
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p2", 2));
 		writer.write(Row.of("p1", 2));
-		writer.endTransaction();
+		writer.close();
 		Assert.assertEquals("{cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2]}", records.toString());
 
 		basePath = "cp2";
-		writer.startTransaction();
+		writer = new DynamicPartitionWriter<>();
+		writer.open(context);
 		writer.write(Row.of("p4", 5));
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p5", 2));
-		writer.endTransaction();
+		writer.close();
 		Assert.assertEquals(
 				"{cp2/p3=[p3,3], cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2], cp2/p5=[p5,2], cp2/p4=[p4,5]}",
 				records.toString());

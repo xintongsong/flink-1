@@ -42,13 +42,6 @@ public interface PartitionWriter<T> {
 	void open(Context<T> context) throws Exception;
 
 	/**
-	 * Start a transaction.
-	 * In batch mode, there is only one transaction.
-	 * In Streaming mode, every checkpoint should be one transaction.
-	 */
-	void startTransaction() throws Exception;
-
-	/**
 	 * Write a record.
 	 */
 	void write(T in) throws Exception;
@@ -56,7 +49,7 @@ public interface PartitionWriter<T> {
 	/**
 	 * End a transaction.
 	 */
-	void endTransaction() throws Exception;
+	void close() throws Exception;
 
 	/**
 	 * Context for partition writer, provide some information and generation utils.
@@ -64,9 +57,9 @@ public interface PartitionWriter<T> {
 	interface Context<T> {
 
 		/**
-		 * Prepare output format, configure it and open it.
+		 * Create a new output format with path, configure it and open it.
 		 */
-		void prepareOutputFormat(OutputFormat<T> format) throws IOException;
+		OutputFormat<T> createNewOutputFormat(Path path) throws IOException;
 
 		/**
 		 * Generate a new path without partition.

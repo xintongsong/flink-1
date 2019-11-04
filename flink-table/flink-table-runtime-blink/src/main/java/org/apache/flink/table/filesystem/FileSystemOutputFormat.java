@@ -75,11 +75,12 @@ public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMas
 	@Override
 	public void open(int taskNumber, int numTasks) throws IOException {
 		try {
-			FileCommitter.PathGenerator pathGenerator = committer.pathGenerator(taskNumber);
-			writer = partitionWriterFactory.create(outputFormatFactory);
-			writer.open(new ContextImpl<>(parameters, pathGenerator, computer));
-			pathGenerator.startTransaction(CHECKPOINT_ID);
-			writer.startTransaction();
+			FileCommitter.PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(
+					taskNumber, CHECKPOINT_ID);
+			writer = partitionWriterFactory.create();
+			ContextImpl<T> context = new ContextImpl<>(parameters, computer, outputFormatFactory);
+			context.setPathGenerator(pathGenerator);
+			writer.open(context);
 		} catch (Exception e) {
 			throw new TableException("Exception in open", e);
 		}
@@ -97,7 +98,7 @@ public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMas
 	@Override
 	public void close() throws IOException {
 		try {
-			writer.endTransaction();
+			writer.close();
 		} catch (Exception e) {
 			throw new TableException("Exception in close", e);
 		}
