@@ -31,7 +31,7 @@ import java.util.stream.IntStream;
  * {@link PartitionComputer} for {@link Row}.
  */
 @Internal
-public abstract class RowPartitionComputer implements PartitionComputer<Row> {
+public class RowPartitionComputer implements PartitionComputer<Row> {
 
 	private static final long serialVersionUID = 1L;
 

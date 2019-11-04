@@ -69,7 +69,7 @@ public abstract class FileCommitter implements Serializable {
 	/**
 	 * Path generator to generate new path to write and prepare task temporary directory.
 	 */
-	final class PathGenerator {
+	public final class PathGenerator {
 
 		private final int taskNumber;
 		private final long checkpointId;

@@ -32,7 +32,8 @@ public interface PartitionWriterFactory<T> extends Serializable {
 	PartitionWriter<T> create(
 			Context<T> context,
 			FileCommitter.PathGenerator pathGenerator,
-			PartitionComputer<T> computer) throws Exception;
+			PartitionComputer<T> computer,
+			PartitionPathMaker maker) throws Exception;
 
 	/**
 	 * Util for get a {@link PartitionWriterFactory}.
@@ -42,7 +43,8 @@ public interface PartitionWriterFactory<T> extends Serializable {
 		if (dynamicPartition) {
 			return grouped ? GroupedPartitionWriter::new : DynamicPartitionWriter::new;
 		} else {
-			return NonPartitionWriter::new;
+			return (PartitionWriterFactory<T>) (context, pathGenerator, computer, maker) ->
+					new NonPartitionWriter<>(context, pathGenerator, computer);
 		}
 	}
 }

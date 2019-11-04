@@ -33,21 +33,24 @@ public class DynamicPartitionWriter<T> implements PartitionWriter<T> {
 	private final Context<T> context;
 	private final FileCommitter.PathGenerator pathGenerator;
 	private final PartitionComputer<T> computer;
+	private final PartitionPathMaker maker;
 	private final Map<String, OutputFormat<T>> formats;
 
 	public DynamicPartitionWriter(
 			Context<T> context,
 			FileCommitter.PathGenerator pathGenerator,
-			PartitionComputer<T> computer) {
+			PartitionComputer<T> computer,
+			PartitionPathMaker maker) {
 		this.context = context;
 		this.pathGenerator = pathGenerator;
 		this.computer = computer;
+		this.maker = maker;
 		this.formats = new HashMap<>();
 	}
 
 	@Override
 	public void write(T in) throws Exception {
-		String partition = computer.makePartitionPath(computer.makePartitionValues(in));
+		String partition = maker.makePartitionPath(computer.makePartitionValues(in));
 		OutputFormat<T> format = formats.get(partition);
 
 		if (format == null) {

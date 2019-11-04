@@ -40,6 +40,7 @@ public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMas
 	private static final long CHECKPOINT_ID = 0;
 
 	private final PartitionComputer<T> computer;
+	private final PartitionPathMaker maker;
 	private final PartitionWriterFactory<T> partitionWriterFactory;
 	private final OutputFormatFactory<T> outputFormatFactory;
 	private final FileCommitter committer;
@@ -49,10 +50,12 @@ public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMas
 
 	public FileSystemOutputFormat(
 			PartitionComputer<T> computer,
+			PartitionPathMaker maker,
 			PartitionWriterFactory<T> partitionWriterFactory,
 			OutputFormatFactory<T> outputFormatFactory,
 			FileCommitter committer) {
 		this.computer = computer;
+		this.maker = maker;
 		this.partitionWriterFactory = partitionWriterFactory;
 		this.outputFormatFactory = outputFormatFactory;
 		this.committer = committer;
@@ -78,7 +81,7 @@ public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMas
 			FileCommitter.PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(
 					taskNumber, CHECKPOINT_ID);
 			ContextImpl<T> context = new ContextImpl<>(parameters, outputFormatFactory);
-			writer = partitionWriterFactory.create(context, pathGenerator, computer);
+			writer = partitionWriterFactory.create(context, pathGenerator, computer, maker);
 		} catch (Exception e) {
 			throw new TableException("Exception in open", e);
 		}

@@ -270,5 +270,17 @@ public class DefaultFileCommitter extends FileCommitter {
 		suffixBuf.append(Path.SEPARATOR);
 		return suffixBuf.toString();
 	}
+
+	/**
+	 * Default {@link PartitionPathMaker} to be consistent with {@link DefaultFileCommitter}.
+	 */
+	public static class DefaultPartitionPathMaker implements PartitionPathMaker {
+
+		@Override
+		public String makePartitionPath(
+				LinkedHashMap<String, String> partitionValues) throws Exception {
+			return makePartitionName(partitionValues);
+		}
+	}
 }
 

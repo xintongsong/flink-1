@@ -18,6 +18,7 @@
 
 package org.apache.flink.table.filesystem;
 
+import org.apache.flink.table.filesystem.DefaultFileCommitter.DefaultPartitionPathMaker;
 import org.apache.flink.types.Row;
 
 import org.junit.Assert;
@@ -30,21 +31,21 @@ public class RowPartitionComputerTest {
 
 	@Test
 	public void testProjectColumnsToWrite() throws Exception {
-		Row projected1 = new DefaultRowPartitionComputer(
+		Row projected1 = new RowPartitionComputer(
 				new String[]{"f1", "p1", "p2", "f2"},
 				new String[]{"p1", "p2"},
 				"myDefaultname"
 		).projectColumnsToWrite(Row.of(1, 2, 3, 4));
 		Assert.assertEquals(Row.of(1, 4), projected1);
 
-		Row projected2 = new DefaultRowPartitionComputer(
+		Row projected2 = new RowPartitionComputer(
 				new String[]{"f1", "f2", "p1", "p2"},
 				new String[]{"p1", "p2"},
 				"myDefaultname"
 		).projectColumnsToWrite(Row.of(1, 2, 3, 4));
 		Assert.assertEquals(Row.of(1, 2), projected2);
 
-		Row projected3 = new DefaultRowPartitionComputer(
+		Row projected3 = new RowPartitionComputer(
 				new String[]{"f1", "p1", "f2", "p2"},
 				new String[]{"p1", "p2"},
 				"myDefaultname"
@@ -54,14 +55,15 @@ public class RowPartitionComputerTest {
 
 	@Test
 	public void testComputePartition() throws Exception {
-		RowPartitionComputer computer = new DefaultRowPartitionComputer(
+		RowPartitionComputer computer = new RowPartitionComputer(
 				new String[]{"f1", "p1", "p2", "f2"},
 				new String[]{"p1", "p2"},
 				"myDefaultname"
 		);
-		Assert.assertEquals("p1=2/p2=3/", computer.makePartitionPath(
+		Assert.assertEquals("p1=2/p2=3/", new DefaultPartitionPathMaker().makePartitionPath(
 				computer.makePartitionValues(Row.of(1, 2, 3, 4))));
-		Assert.assertEquals("p1=myDefaultname/p2=3/", computer.makePartitionPath(
-				computer.makePartitionValues(Row.of(1, null, 3, 4))));
+		Assert.assertEquals("p1=myDefaultname/p2=3/",
+				new DefaultPartitionPathMaker().makePartitionPath(
+						computer.makePartitionValues(Row.of(1, null, 3, 4))));
 	}
 }

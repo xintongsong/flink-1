@@ -33,6 +33,7 @@ public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 	private final Context<T> context;
 	private final FileCommitter.PathGenerator pathGenerator;
 	private final PartitionComputer<T> computer;
+	private final PartitionPathMaker maker;
 
 	private OutputFormat<T> currentFormat;
 	private String currentPartition;
@@ -40,15 +41,17 @@ public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 	public GroupedPartitionWriter(
 			Context<T> context,
 			FileCommitter.PathGenerator pathGenerator,
-			PartitionComputer<T> computer) {
+			PartitionComputer<T> computer,
+			PartitionPathMaker maker) {
 		this.context = context;
 		this.pathGenerator = pathGenerator;
 		this.computer = computer;
+		this.maker = maker;
 	}
 
 	@Override
 	public void write(T in) throws Exception {
-		String partition = computer.makePartitionPath(computer.makePartitionValues(in));
+		String partition = maker.makePartitionPath(computer.makePartitionValues(in));
 		if (currentPartition == null || !partition.equals(currentPartition)) {
 			if (currentPartition != null) {
 				currentFormat.close();

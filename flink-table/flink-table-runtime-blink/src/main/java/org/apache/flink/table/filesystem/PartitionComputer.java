@@ -42,14 +42,6 @@ public interface PartitionComputer<T> extends Serializable {
 	LinkedHashMap<String, String> makePartitionValues(T in) throws Exception;
 
 	/**
-	 * Compute partition path from partition values.
-	 *
-	 * @param partitionValues partition values.
-	 * @return partition path.
-	 */
-	String makePartitionPath(LinkedHashMap<String, String> partitionValues) throws Exception;
-
-	/**
 	 * Project non-partition columns for output writer.
 	 *
 	 * @param in input record.

@@ -94,16 +94,12 @@ public class PartitionWriterTest {
 		}
 
 		@Override
-		public String makePartitionPath(
-				LinkedHashMap<String, String> partitionValues) throws Exception {
-			return partitionValues.values().iterator().next();
-		}
-
-		@Override
 		public Row projectColumnsToWrite(Row in) throws Exception {
 			return in;
 		}
 	};
+
+	private PartitionPathMaker maker = (PartitionPathMaker) v -> v.values().iterator().next();
 
 	public PartitionWriterTest() throws Exception {
 	}
@@ -129,7 +125,8 @@ public class PartitionWriterTest {
 
 	@Test
 	public void testGroupedPartitionWriter() throws Exception {
-		GroupedPartitionWriter<Row> writer = new GroupedPartitionWriter<>(context, pathGenerator, computer);
+		GroupedPartitionWriter<Row> writer = new GroupedPartitionWriter<>(
+				context, pathGenerator, computer, maker);
 
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p1", 2));
@@ -138,7 +135,7 @@ public class PartitionWriterTest {
 		Assert.assertEquals("{cp-1/p1=[p1,1, p1,2], cp-1/p2=[p2,2]}", records.toString());
 
 		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
-		writer = new GroupedPartitionWriter<>(context, pathGenerator, computer);
+		writer = new GroupedPartitionWriter<>(context, pathGenerator, computer, maker);
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p4", 5));
 		writer.write(Row.of("p5", 2));
@@ -150,7 +147,8 @@ public class PartitionWriterTest {
 
 	@Test
 	public void testDynamicPartitionWriter() throws Exception {
-		DynamicPartitionWriter<Row> writer = new DynamicPartitionWriter<>(context, pathGenerator, computer);
+		DynamicPartitionWriter<Row> writer = new DynamicPartitionWriter<>(
+				context, pathGenerator, computer, maker);
 
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p2", 2));
@@ -159,7 +157,7 @@ public class PartitionWriterTest {
 		Assert.assertEquals("{cp-1/p1=[p1,1, p1,2], cp-1/p2=[p2,2]}", records.toString());
 
 		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
-		writer = new DynamicPartitionWriter<>(context, pathGenerator, computer);
+		writer = new DynamicPartitionWriter<>(context, pathGenerator, computer, maker);
 		writer.write(Row.of("p4", 5));
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p5", 2));

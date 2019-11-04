@@ -18,30 +18,20 @@
 
 package org.apache.flink.table.filesystem;
 
-import org.apache.flink.annotation.Internal;
-import org.apache.flink.types.Row;
-
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 
-import static org.apache.flink.table.filesystem.DefaultFileCommitter.makePartitionName;
-
 /**
- * Default {@link PartitionComputer} for {@link Row}, use {@link DefaultFileCommitter} to
- * make partition path.
+ * Interface to make partition path. May need handle escape chars and default partition name
+ * for null values.
  */
-@Internal
-public class DefaultRowPartitionComputer extends RowPartitionComputer {
+public interface PartitionPathMaker extends Serializable {
 
-	public DefaultRowPartitionComputer(
-			String[] columnNames,
-			String[] partitionColumns,
-			String defaultPartitionName) {
-		super(columnNames, partitionColumns, defaultPartitionName);
-	}
-
-	@Override
-	public String makePartitionPath(
-			LinkedHashMap<String, String> partitionValues) throws Exception {
-		return makePartitionName(partitionValues);
-	}
+	/**
+	 * Compute partition path from partition values.
+	 *
+	 * @param partitionValues partition values.
+	 * @return partition path.
+	 */
+	String makePartitionPath(LinkedHashMap<String, String> partitionValues) throws Exception;
 }
