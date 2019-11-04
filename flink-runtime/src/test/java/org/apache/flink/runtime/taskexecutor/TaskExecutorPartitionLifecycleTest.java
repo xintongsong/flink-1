@@ -54,6 +54,8 @@ import org.apache.flink.runtime.jobmaster.utils.TestingJobMasterGateway;
 import org.apache.flink.runtime.jobmaster.utils.TestingJobMasterGatewayBuilder;
 import org.apache.flink.runtime.leaderretrieval.SettableLeaderRetrievalService;
 import org.apache.flink.runtime.messages.Acknowledge;
+import org.apache.flink.runtime.metrics.MetricRegistryConfiguration;
+import org.apache.flink.runtime.metrics.MetricRegistryImpl;
 import org.apache.flink.runtime.metrics.groups.UnregisteredMetricGroups;
 import org.apache.flink.runtime.resourcemanager.utils.TestingResourceManagerGateway;
 import org.apache.flink.runtime.rpc.RpcUtils;
@@ -153,7 +155,11 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 		final PartitionTable<JobID> partitionTable = new PartitionTable<>();
 		final ResultPartitionID resultPartitionId = new ResultPartitionID();
 
-		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable);
+		final MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
+		metricRegistry.startQueryService(new TestingRpcService(), new ResourceID("mqs"));
+		final String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
+
+		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable, metricQueryServiceAddress);
 
 		try {
 			taskExecutor.start();
@@ -304,7 +310,11 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 
 		final PartitionTable<JobID> partitionTable = new PartitionTable<>();
 
-		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable);
+		final MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
+		metricRegistry.startQueryService(new TestingRpcService(), new ResourceID("mqs"));
+		String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
+
+		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable, metricQueryServiceAddress);
 
 		final CompletableFuture<SlotReport> initialSlotReportFuture = new CompletableFuture<>();
 
@@ -424,7 +434,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 		}
 	}
 
-	private TestingTaskExecutor createTestingTaskExecutor(TaskManagerServices taskManagerServices, PartitionTable<JobID> partitionTable) throws IOException {
+	private TestingTaskExecutor createTestingTaskExecutor(TaskManagerServices taskManagerServices, PartitionTable<JobID> partitionTable, String metricQueryServiceAddress) throws IOException {
 		return new TestingTaskExecutor(
 			RPC,
 			TaskManagerConfiguration.fromConfiguration(new Configuration()),
@@ -432,7 +442,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 			taskManagerServices,
 			new HeartbeatServices(10_000L, 30_000L),
 			UnregisteredMetricGroups.createUnregisteredTaskManagerMetricGroup(),
-			null,
+			metricQueryServiceAddress,
 			new BlobCacheService(
 				new Configuration(),
 				new VoidBlobStore(),

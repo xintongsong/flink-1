@@ -112,6 +112,7 @@ import org.apache.flink.util.ExceptionUtils;
 import org.apache.flink.util.FlinkException;
 
 import org.apache.flink.shaded.guava18.com.google.common.collect.Sets;
+import org.apache.flink.util.Preconditions;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -163,7 +164,6 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 	private final BlobCacheService blobCacheService;
 
 	/** The address to metric query service on this Task Manager. */
-	@Nullable
 	private final String metricQueryServiceAddress;
 
 	// --------- TaskManager services --------
@@ -237,13 +237,14 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			TaskManagerServices taskExecutorServices,
 			HeartbeatServices heartbeatServices,
 			TaskManagerMetricGroup taskManagerMetricGroup,
-			@Nullable String metricQueryServiceAddress,
+			String metricQueryServiceAddress,
 			BlobCacheService blobCacheService,
 			FatalErrorHandler fatalErrorHandler,
 			PartitionTable<JobID> partitionTable) {
 
 		super(rpcService, AkkaRpcServiceUtils.createRandomName(TASK_MANAGER_NAME));
 
+		Preconditions.checkNotNull(metricQueryServiceAddress);
 		checkArgument(taskManagerConfiguration.getNumberSlots() > 0, "The number of slots has to be larger than 0.");
 
 		this.taskManagerConfiguration = checkNotNull(taskManagerConfiguration);
