@@ -127,36 +127,6 @@ public class ResourceProfileTest {
 	}
 
 	@Test
-	public void testCompareTo() throws Exception {
-		ResourceSpec rs1 = ResourceSpec.newBuilder().setCpuCores(1.0).setHeapMemoryInMB(100).build();
-		ResourceSpec rs2 = ResourceSpec.newBuilder().setCpuCores(1.0).setHeapMemoryInMB(100).build();
-		assertEquals(0, ResourceProfile.fromResourceSpec(rs1, 0).compareTo(ResourceProfile.fromResourceSpec(rs2, 0)));
-
-		ResourceSpec rs3 = ResourceSpec.newBuilder().
-				setCpuCores(1.0).
-				setHeapMemoryInMB(100).
-				setGPUResource(2.2).
-				build();
-		assertEquals(-1, ResourceProfile.fromResourceSpec(rs1,  0).compareTo(ResourceProfile.fromResourceSpec(rs3, 0)));
-		assertEquals(1, ResourceProfile.fromResourceSpec(rs3, 0).compareTo(ResourceProfile.fromResourceSpec(rs1, 0)));
-
-		ResourceSpec rs4 = ResourceSpec.newBuilder().
-				setCpuCores(1.0).
-				setHeapMemoryInMB(100).
-				setGPUResource(1.1).
-				build();
-		assertEquals(1, ResourceProfile.fromResourceSpec(rs3, 0).compareTo(ResourceProfile.fromResourceSpec(rs4, 0)));
-		assertEquals(-1, ResourceProfile.fromResourceSpec(rs4, 0).compareTo(ResourceProfile.fromResourceSpec(rs3, 0)));
-
-		ResourceSpec rs5 = ResourceSpec.newBuilder().
-				setCpuCores(1.0).
-				setHeapMemoryInMB(100).
-				setGPUResource(2.2).
-				build();
-		assertEquals(0, ResourceProfile.fromResourceSpec(rs3, 0).compareTo(ResourceProfile.fromResourceSpec(rs5, 0)));
-	}
-
-	@Test
 	public void testGet() throws Exception {
 		ResourceSpec rs = ResourceSpec.newBuilder().
 				setCpuCores(1.0).
