@@ -31,7 +31,8 @@ FLINK_SCHEMA_CODER_URN = "flink:coder:schema:v1"
 
 __all__ = ['RowCoder', 'BigIntCoder', 'TinyIntCoder', 'BooleanCoder',
            'SmallIntCoder', 'IntCoder', 'FloatCoder', 'DoubleCoder',
-           'BinaryCoder', 'CharCoder', 'DateCoder', 'ArrayCoder']
+           'BinaryCoder', 'CharCoder', 'DateCoder', 'ArrayCoder',
+           'MapCoder']
 
 
 class RowCoder(FastCoder):
@@ -112,6 +113,39 @@ class ArrayCoder(CollectionCoder):
 
     def _impl_coder(self):
         return coder_impl.ArrayCoderImpl
+
+
+class MapCoder(FastCoder):
+    """
+    Coder for Map.
+    """
+
+    def __init__(self, key_coder, value_coder):
+        self._key_coder = key_coder
+        self._value_coder = value_coder
+
+    def _create_impl(self):
+        return coder_impl.MapCoderImpl(self._key_coder.get_impl(), self._value_coder.get_impl())
+
+    def is_deterministic(self):
+        return self._key_coder.is_deterministic() and self._value_coder.is_deterministic()
+
+    def to_type_hint(self):
+        return {}
+
+    def __repr__(self):
+        return 'MapCoder[%s]' % ','.join([str(self._key_coder), str(self._value_coder)])
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__
+                and self._key_coder == other._key_coder
+                and self._value_coder == other._value_coder)
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash([self._key_coder, self._value_coder])
 
 
 class DeterministicCoder(FastCoder, ABC):
@@ -279,5 +313,8 @@ def from_proto(field_type):
         return RowCoder([from_proto(f.type) for f in field_type.row_schema.fields])
     elif field_type_name == type_name.ARRAY:
         return ArrayCoder(from_proto(field_type.collection_element_type))
+    elif field_type_name == type_name.MAP:
+        return MapCoder(from_proto(field_type.map_type.key_type),
+                        from_proto(field_type.map_type.value_type))
     else:
         raise ValueError("field_type %s is not supported." % field_type)
