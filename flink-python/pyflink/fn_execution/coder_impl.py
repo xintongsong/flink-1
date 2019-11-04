@@ -137,6 +137,43 @@ class MapCoderImpl(StreamCoderImpl):
         return 'MapCoderImpl[%s]' % ' : '.join([str(self._key_coder), str(self._value_coder)])
 
 
+class MultisetCoderImpl(StreamCoderImpl):
+
+    def __init__(self, element_coder):
+        self._element_coder = element_coder
+
+    def encode_to_stream(self, value, out_stream, nested):
+        dict_value = self.multiset_to_dict(value)
+        out_stream.write_bigendian_int32(len(dict_value))
+        for key in dict_value:
+            self._element_coder.encode_to_stream(key, out_stream, nested)
+            out_stream.write_byte(False)
+            out_stream.write_bigendian_int32(dict_value[key])
+
+    def decode_from_stream(self, in_stream, nested):
+        size = in_stream.read_bigendian_int32()
+        multiset_value = []
+        for _ in range(size):
+            element = self._element_coder.decode_from_stream(in_stream, nested)
+            in_stream.read_byte()
+            count = in_stream.read_bigendian_int32()
+            for i in range(count):
+                multiset_value.append(element)
+        return multiset_value
+
+    def multiset_to_dict(self, multiset):
+        dict_value = {}
+        for ele in multiset:
+            if ele in dict_value:
+                dict_value[ele] += 1
+            else:
+                dict_value[ele] = 1
+        return dict_value
+
+    def __repr__(self):
+        return 'MultisetCoderImpl[%s]' % str(self._element_coder)
+
+
 class BigIntCoderImpl(StreamCoderImpl):
     def encode_to_stream(self, value, out_stream, nested):
         out_stream.write_bigendian_int64(value)

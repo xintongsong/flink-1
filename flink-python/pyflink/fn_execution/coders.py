@@ -32,7 +32,7 @@ FLINK_SCHEMA_CODER_URN = "flink:coder:schema:v1"
 __all__ = ['RowCoder', 'BigIntCoder', 'TinyIntCoder', 'BooleanCoder',
            'SmallIntCoder', 'IntCoder', 'FloatCoder', 'DoubleCoder',
            'BinaryCoder', 'CharCoder', 'DateCoder', 'ArrayCoder',
-           'MapCoder']
+           'MapCoder', 'MultisetCoder']
 
 
 class RowCoder(FastCoder):
@@ -146,6 +146,19 @@ class MapCoder(FastCoder):
 
     def __hash__(self):
         return hash([self._key_coder, self._value_coder])
+
+
+class MultisetCoder(CollectionCoder):
+    """
+    Coder for Multiset.
+    """
+
+    def __init__(self, elem_coder):
+        self._elem_coder = elem_coder
+        super(MultisetCoder, self).__init__(elem_coder)
+
+    def _impl_coder(self):
+        return coder_impl.MultisetCoderImpl
 
 
 class DeterministicCoder(FastCoder, ABC):
@@ -316,5 +329,7 @@ def from_proto(field_type):
     elif field_type_name == type_name.MAP:
         return MapCoder(from_proto(field_type.map_type.key_type),
                         from_proto(field_type.map_type.value_type))
+    elif field_type_name == type_name.MULTISET:
+        return MultisetCoder(from_proto(field_type.collection_element_type))
     else:
         raise ValueError("field_type %s is not supported." % field_type)

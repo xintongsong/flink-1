@@ -329,6 +329,14 @@ class UserDefinedFunctionTests(object):
                 'map_param is wrong value %s !' % map_param
             return map_param
 
+        def multiset_func(multiset_param):
+            assert multiset_param == [1, 1, 2], \
+                'multiset_param is wrong value %s !' % multiset_param
+            return multiset_param
+
+        def create_multiset_func():
+            return [1, 1, 2]
+
         self.t_env.register_function(
             "boolean_func", udf(boolean_func, [DataTypes.BOOLEAN()], DataTypes.BOOLEAN()))
 
@@ -370,13 +378,22 @@ class UserDefinedFunctionTests(object):
             "map_func", udf(map_func, [DataTypes.MAP(DataTypes.BIGINT(), DataTypes.STRING())],
                             DataTypes.MAP(DataTypes.BIGINT(), DataTypes.STRING())))
 
+        self.t_env.register_function(
+            "create_multiset_func", udf(
+                create_multiset_func, [], DataTypes.MULTISET(DataTypes.BIGINT())))
+
+        self.t_env.register_function(
+            "multiset_func", udf(multiset_func, [DataTypes.MULTISET(DataTypes.BIGINT())],
+                                 DataTypes.MULTISET(DataTypes.BIGINT())))
+
         table_sink = source_sink_utils.TestAppendSink(
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'],
+            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'],
             [DataTypes.BIGINT(), DataTypes.BIGINT(), DataTypes.TINYINT(),
              DataTypes.BOOLEAN(), DataTypes.SMALLINT(), DataTypes.INT(),
              DataTypes.FLOAT(), DataTypes.DOUBLE(), DataTypes.BYTES(),
              DataTypes.STRING(), DataTypes.DATE(), DataTypes.ARRAY(DataTypes.BIGINT()),
-             DataTypes.MAP(DataTypes.BIGINT(), DataTypes.STRING())])
+             DataTypes.MAP(DataTypes.BIGINT(), DataTypes.STRING()),
+             DataTypes.MULTISET(DataTypes.BIGINT())])
         self.t_env.register_table_sink("Results", table_sink)
 
         import datetime
@@ -405,14 +422,14 @@ class UserDefinedFunctionTests(object):
                  "float_func(g),double_func(h),"
                  "bytes_func(i),str_func(j),"
                  "date_func(k),array_func(l),"
-                 "map_func(m)") \
+                 "map_func(m),multiset_func(create_multiset_func())") \
             .insert_into("Results")
         self.t_env.execute("test")
         actual = source_sink_utils.results()
         self.assert_equals(actual,
                            ["1,null,1,true,32767,-2147483648,1.23,1.98932,"
                             "[102, 108, 105, 110, 107],pyflink,2014-09-13,"
-                            "[1, 2, 3],{1=flink, 2=pyflink}"])
+                            "[1, 2, 3],{1=flink, 2=pyflink},{1=2, 2=1}"])
 
 
 # decide whether two floats are equal

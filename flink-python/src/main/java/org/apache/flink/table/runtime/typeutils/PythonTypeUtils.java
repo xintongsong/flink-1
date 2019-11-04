@@ -48,6 +48,7 @@ import org.apache.flink.table.types.logical.FloatType;
 import org.apache.flink.table.types.logical.IntType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.MapType;
+import org.apache.flink.table.types.logical.MultisetType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.SmallIntType;
 import org.apache.flink.table.types.logical.TimeType;
@@ -198,6 +199,13 @@ public final class PythonTypeUtils {
 		}
 
 		@Override
+		public TypeSerializer visit(MultisetType multisetType) {
+			LogicalType elementType = multisetType.getElementType();
+			TypeSerializer<?> elementTypeSerializer = elementType.accept(this);
+			return new MapSerializer<>(elementTypeSerializer, IntSerializer.INSTANCE);
+		}
+
+		@Override
 		public TypeSerializer visit(RowType rowType) {
 			final TypeSerializer[] fieldTypeSerializers = rowType.getFields()
 				.stream()
@@ -253,6 +261,13 @@ public final class PythonTypeUtils {
 			TypeSerializer<?> keyTypeSerializer = keyType.accept(this);
 			TypeSerializer<?> valueTypeSerializer = valueType.accept(this);
 			return new BinaryMapSerializer<>(keyType, valueType, keyTypeSerializer, valueTypeSerializer);
+		}
+
+		@Override
+		public TypeSerializer visit(MultisetType multisetType) {
+			LogicalType elementType = multisetType.getElementType();
+			TypeSerializer<?> elementTypeSerializer = elementType.accept(this);
+			return new BinaryMapSerializer<>(elementType, new IntType(), elementTypeSerializer, IntSerializer.INSTANCE);
 		}
 	}
 
@@ -377,6 +392,18 @@ public final class PythonTypeUtils {
 					.setKeyType(mapType.getKeyType().accept(this))
 					.setValueType(mapType.getValueType().accept(this));
 			builder.setMapType(mapBuilder.build());
+			return builder.build();
+		}
+
+		@Override
+		public FlinkFnApi.Schema.FieldType visit(MultisetType multisetType) {
+			FlinkFnApi.Schema.FieldType.Builder builder =
+				FlinkFnApi.Schema.FieldType.newBuilder()
+					.setTypeName(FlinkFnApi.Schema.TypeName.MULTISET)
+					.setNullable(multisetType.isNullable());
+
+			FlinkFnApi.Schema.FieldType elementFieldType = multisetType.getElementType().accept(this);
+			builder.setCollectionElementType(elementFieldType);
 			return builder.build();
 		}
 
