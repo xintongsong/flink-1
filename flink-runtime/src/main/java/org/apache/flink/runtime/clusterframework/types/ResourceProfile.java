@@ -19,10 +19,13 @@
 package org.apache.flink.runtime.clusterframework.types;
 
 import org.apache.flink.api.common.operators.ResourceSpec;
+import org.apache.flink.api.common.resources.AdditiveResourceValue;
 import org.apache.flink.api.common.resources.Resource;
+import org.apache.flink.api.common.resources.ResourceValue;
 import org.apache.flink.util.Preconditions;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -31,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.apache.flink.util.Preconditions.checkArgument;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Describe the immutable resource profile of the slot, either when requiring or offering it. The profile can be
@@ -62,7 +66,8 @@ public class ResourceProfile implements Serializable {
 	// ------------------------------------------------------------------------
 
 	/** How many cpu cores are needed, use double so we can specify cpu like 0.1. */
-	private final double cpuCores;
+	@Nullable // can be null only for UNKNOWN
+	private final ResourceValue cpuCores;
 
 	/** How many heap memory in mb are needed. */
 	private final int heapMemoryInMB;
@@ -103,13 +108,44 @@ public class ResourceProfile implements Serializable {
 			int networkMemoryInMB,
 			int managedMemoryInMB,
 			Map<String, Resource> extendedResources) {
-		Preconditions.checkArgument(cpuCores >= 0);
+
+		this(
+			new AdditiveResourceValue(cpuCores),
+			heapMemoryInMB,
+			directMemoryInMB,
+			nativeMemoryInMB,
+			networkMemoryInMB,
+			managedMemoryInMB,
+			extendedResources);
+	}
+
+	/**
+	 * Creates a new ResourceProfile.
+	 *
+	 * @param cpuCores The ResourceValue of CPU cores
+	 * @param heapMemoryInMB The size of the heap memory, in megabytes.
+	 * @param directMemoryInMB The size of the direct memory, in megabytes.
+	 * @param nativeMemoryInMB The size of the native memory, in megabytes.
+	 * @param networkMemoryInMB The size of the memory for input and output, in megabytes.
+	 * @param managedMemoryInMB The size of managed memory, in megabytes.
+	 * @param extendedResources The extended resources such as GPU and FPGA
+	 */
+	public ResourceProfile(
+			final ResourceValue cpuCores,
+			final int heapMemoryInMB,
+			final int directMemoryInMB,
+			final int nativeMemoryInMB,
+			final int networkMemoryInMB,
+			final int managedMemoryInMB,
+			final Map<String, Resource> extendedResources) {
+
 		Preconditions.checkArgument(heapMemoryInMB >= 0);
 		Preconditions.checkArgument(directMemoryInMB >= 0);
 		Preconditions.checkArgument(nativeMemoryInMB >= 0);
 		Preconditions.checkArgument(networkMemoryInMB >= 0);
 		Preconditions.checkArgument(managedMemoryInMB >= 0);
-		this.cpuCores = cpuCores;
+
+		this.cpuCores = checkNotNull(cpuCores);
 		this.heapMemoryInMB = heapMemoryInMB;
 		this.directMemoryInMB = directMemoryInMB;
 		this.nativeMemoryInMB = nativeMemoryInMB;
@@ -134,7 +170,7 @@ public class ResourceProfile implements Serializable {
 	 * Creates a special ResourceProfile with negative values, indicating resources are unspecified.
 	 */
 	private ResourceProfile() {
-		this.cpuCores = -1.0;
+		this.cpuCores = null;
 		this.heapMemoryInMB = -1;
 		this.directMemoryInMB = -1;
 		this.nativeMemoryInMB = -1;
@@ -164,7 +200,8 @@ public class ResourceProfile implements Serializable {
 	 *
 	 * @return The cpu cores, 1.0 means a full cpu thread
 	 */
-	public double getCpuCores() {
+	@Nullable
+	public ResourceValue getCpuCores() {
 		return cpuCores;
 	}
 
@@ -245,17 +282,21 @@ public class ResourceProfile implements Serializable {
 	 * @return true if the requirement is matched, otherwise false
 	 */
 	public boolean isMatching(ResourceProfile required) {
+		checkNotNull(required, "Cannot check matching with null resources");
 
-		if (required == UNKNOWN) {
+		if (required.equals(UNKNOWN)) {
 			return true;
+		} else if (this.equals(UNKNOWN)) {
+			return false;
 		}
 
-		if (cpuCores >= required.getCpuCores() &&
-				heapMemoryInMB >= required.getHeapMemoryInMB() &&
-				directMemoryInMB >= required.getDirectMemoryInMB() &&
-				nativeMemoryInMB >= required.getNativeMemoryInMB() &&
-				networkMemoryInMB >= required.getNetworkMemoryInMB() &&
-				managedMemoryInMB >= required.getManagedMemoryInMB()) {
+		if (cpuCores.compareTo(required.getCpuCores()) >= 0 &&
+			heapMemoryInMB >= required.getHeapMemoryInMB() &&
+			directMemoryInMB >= required.getDirectMemoryInMB() &&
+			nativeMemoryInMB >= required.getNativeMemoryInMB() &&
+			networkMemoryInMB >= required.getNetworkMemoryInMB() &&
+			managedMemoryInMB >= required.getManagedMemoryInMB()) {
+
 			for (Map.Entry<String, Resource> resource : required.extendedResources.entrySet()) {
 				if (!extendedResources.containsKey(resource.getKey()) ||
 					extendedResources.get(resource.getKey()).getValue().compareTo(resource.getValue().getValue()) < 0) {
@@ -271,8 +312,7 @@ public class ResourceProfile implements Serializable {
 
 	@Override
 	public int hashCode() {
-		final long cpuBits =  Double.doubleToLongBits(cpuCores);
-		int result = (int) (cpuBits ^ (cpuBits >>> 32));
+		int result = cpuCores == null ? 0 : cpuCores.hashCode();
 		result = 31 * result + heapMemoryInMB;
 		result = 31 * result + directMemoryInMB;
 		result = 31 * result + nativeMemoryInMB;
@@ -289,13 +329,13 @@ public class ResourceProfile implements Serializable {
 		}
 		else if (obj != null && obj.getClass() == ResourceProfile.class) {
 			ResourceProfile that = (ResourceProfile) obj;
-			return this.cpuCores == that.cpuCores &&
-					this.heapMemoryInMB == that.heapMemoryInMB &&
-					this.directMemoryInMB == that.directMemoryInMB &&
-					this.nativeMemoryInMB == that.nativeMemoryInMB &&
-					this.networkMemoryInMB == that.networkMemoryInMB &&
-					this.managedMemoryInMB == that.managedMemoryInMB &&
-					Objects.equals(extendedResources, that.extendedResources);
+			return Objects.equals(this.cpuCores, that.cpuCores) &&
+				this.heapMemoryInMB == that.heapMemoryInMB &&
+				this.directMemoryInMB == that.directMemoryInMB &&
+				this.nativeMemoryInMB == that.nativeMemoryInMB &&
+				this.networkMemoryInMB == that.networkMemoryInMB &&
+				this.managedMemoryInMB == that.managedMemoryInMB &&
+				Objects.equals(extendedResources, that.extendedResources);
 		}
 		return false;
 	}
@@ -307,7 +347,9 @@ public class ResourceProfile implements Serializable {
 	 * @return The merged resource profile.
 	 */
 	@Nonnull
-	public ResourceProfile merge(@Nonnull ResourceProfile other) {
+	public ResourceProfile merge(final ResourceProfile other) {
+		checkNotNull(other, "Cannot merge with null resources");
+
 		if (equals(ANY) || other.equals(ANY)) {
 			return ANY;
 		}
@@ -324,7 +366,7 @@ public class ResourceProfile implements Serializable {
 		});
 
 		return new ResourceProfile(
-			addNonNegativeDoublesConsideringOverflow(cpuCores, other.cpuCores),
+			cpuCores.merge(other.cpuCores),
 			addNonNegativeIntegersConsideringOverflow(heapMemoryInMB, other.heapMemoryInMB),
 			addNonNegativeIntegersConsideringOverflow(directMemoryInMB, other.directMemoryInMB),
 			addNonNegativeIntegersConsideringOverflow(nativeMemoryInMB, other.nativeMemoryInMB),
@@ -339,7 +381,9 @@ public class ResourceProfile implements Serializable {
 	 * @param other The other resource profile to subtract.
 	 * @return The subtracted resource profile.
 	 */
-	public ResourceProfile subtract(ResourceProfile other) {
+	public ResourceProfile subtract(final ResourceProfile other) {
+		checkNotNull(other, "Cannot subtract with null resources");
+
 		if (equals(ANY) || other.equals(ANY)) {
 			return ANY;
 		}
@@ -360,7 +404,7 @@ public class ResourceProfile implements Serializable {
 		});
 
 		return new ResourceProfile(
-			subtractDoublesConsideringInf(cpuCores, other.cpuCores),
+			cpuCores.subtract(other.cpuCores),
 			subtractIntegersConsideringInf(heapMemoryInMB, other.heapMemoryInMB),
 			subtractIntegersConsideringInf(directMemoryInMB, other.directMemoryInMB),
 			subtractIntegersConsideringInf(nativeMemoryInMB, other.nativeMemoryInMB),
@@ -368,16 +412,6 @@ public class ResourceProfile implements Serializable {
 			subtractIntegersConsideringInf(managedMemoryInMB, other.managedMemoryInMB),
 			resultExtendedResource
 		);
-	}
-
-	private double addNonNegativeDoublesConsideringOverflow(double first, double second) {
-		double result = first + second;
-
-		if (result == Double.POSITIVE_INFINITY) {
-			return Double.MAX_VALUE;
-		}
-
-		return result;
 	}
 
 	private int addNonNegativeIntegersConsideringOverflow(int first, int second) {
@@ -388,10 +422,6 @@ public class ResourceProfile implements Serializable {
 		}
 
 		return result;
-	}
-
-	private double subtractDoublesConsideringInf(double first, double second) {
-		return first == Double.MAX_VALUE ? Double.MAX_VALUE : first - second;
 	}
 
 	private int subtractIntegersConsideringInf(int first, int second) {
