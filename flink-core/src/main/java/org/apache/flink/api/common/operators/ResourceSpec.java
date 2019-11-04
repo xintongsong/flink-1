@@ -19,9 +19,12 @@
 package org.apache.flink.api.common.operators;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.api.common.resources.AdditiveResourceValue;
 import org.apache.flink.api.common.resources.GPUResource;
 import org.apache.flink.api.common.resources.Resource;
 import org.apache.flink.api.common.resources.ResourceValue;
+
+import javax.annotation.Nullable;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -68,7 +71,8 @@ public final class ResourceSpec implements Serializable {
 	public static final String GPU_NAME = "GPU";
 
 	/** How many cpu cores are needed, use double so we can specify cpu like 0.1. */
-	private final double cpuCores;
+	@Nullable // can be null only for UNKNOWN
+	private final ResourceValue cpuCores;
 
 	/** How many java heap memory in mb are needed. */
 	private final int heapMemoryInMB;
@@ -106,14 +110,13 @@ public final class ResourceSpec implements Serializable {
 			int stateSizeInMB,
 			int managedMemoryInMB,
 			Resource... extendedResources) {
-		checkArgument(cpuCores >= 0, "The cpu cores of the resource spec should not be negative.");
 		checkArgument(heapMemoryInMB >= 0, "The heap memory of the resource spec should not be negative");
 		checkArgument(directMemoryInMB >= 0, "The direct memory of the resource spec should not be negative");
 		checkArgument(nativeMemoryInMB >= 0, "The native memory of the resource spec should not be negative");
 		checkArgument(stateSizeInMB >= 0, "The state size of the resource spec should not be negative");
 		checkArgument(managedMemoryInMB >= 0, "The managed memory of the resource spec should not be negative");
 
-		this.cpuCores = cpuCores;
+		this.cpuCores = new AdditiveResourceValue(cpuCores);
 		this.heapMemoryInMB = heapMemoryInMB;
 		this.directMemoryInMB = directMemoryInMB;
 		this.nativeMemoryInMB = nativeMemoryInMB;
@@ -130,7 +133,7 @@ public final class ResourceSpec implements Serializable {
 	 * Creates a new ResourceSpec with all fields unknown.
 	 */
 	private ResourceSpec() {
-		this.cpuCores = -1;
+		this.cpuCores = null;
 		this.heapMemoryInMB = -1;
 		this.directMemoryInMB = -1;
 		this.nativeMemoryInMB = -1;
@@ -145,13 +148,15 @@ public final class ResourceSpec implements Serializable {
 	 * @param other Reference to resource to merge in.
 	 * @return The new resource with merged values.
 	 */
-	public ResourceSpec merge(ResourceSpec other) {
+	public ResourceSpec merge(final ResourceSpec other) {
+		checkNotNull(other, "Cannot merge with null resources");
+
 		if (this.equals(UNKNOWN) || other.equals(UNKNOWN)) {
 			return UNKNOWN;
 		}
 
 		ResourceSpec target = new ResourceSpec(
-				this.cpuCores + other.cpuCores,
+				this.cpuCores.merge(other.cpuCores).getValue(),
 				this.heapMemoryInMB + other.heapMemoryInMB,
 				this.directMemoryInMB + other.directMemoryInMB,
 				this.nativeMemoryInMB + other.nativeMemoryInMB,
@@ -164,7 +169,8 @@ public final class ResourceSpec implements Serializable {
 		return target;
 	}
 
-	public double getCpuCores() {
+	@Nullable
+	public ResourceValue getCpuCores() {
 		return this.cpuCores;
 	}
 
@@ -217,7 +223,7 @@ public final class ResourceSpec implements Serializable {
 			throw new IllegalArgumentException("Cannot compare specified resources with UNKNOWN resources.");
 		}
 
-		int cmp1 = Double.compare(this.cpuCores, other.cpuCores);
+		int cmp1 = this.cpuCores.compareTo(other.cpuCores);
 		int cmp2 = Integer.compare(this.heapMemoryInMB, other.heapMemoryInMB);
 		int cmp3 = Integer.compare(this.directMemoryInMB, other.directMemoryInMB);
 		int cmp4 = Integer.compare(this.nativeMemoryInMB, other.nativeMemoryInMB);
@@ -246,7 +252,7 @@ public final class ResourceSpec implements Serializable {
 			return true;
 		} else if (obj != null && obj.getClass() == ResourceSpec.class) {
 			ResourceSpec that = (ResourceSpec) obj;
-			return this.cpuCores == that.cpuCores &&
+			return Objects.equals(this.cpuCores, that.cpuCores) &&
 					this.heapMemoryInMB == that.heapMemoryInMB &&
 					this.directMemoryInMB == that.directMemoryInMB &&
 					this.nativeMemoryInMB == that.nativeMemoryInMB &&
@@ -260,8 +266,7 @@ public final class ResourceSpec implements Serializable {
 
 	@Override
 	public int hashCode() {
-		final long cpuBits =  Double.doubleToLongBits(cpuCores);
-		int result = (int) (cpuBits ^ (cpuBits >>> 32));
+		int result = cpuCores == null ? 0 : cpuCores.hashCode();
 		result = 31 * result + heapMemoryInMB;
 		result = 31 * result + directMemoryInMB;
 		result = 31 * result + nativeMemoryInMB;
