@@ -31,7 +31,7 @@ import org.apache.flink.api.common.io.OutputFormat;
 public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 
 	private final Context<T> context;
-	private final FileCommitter.PathGenerator pathGenerator;
+	private final PathGenerator pathGenerator;
 	private final PartitionComputer<T> computer;
 	private final PartitionPathMaker maker;
 
@@ -40,7 +40,7 @@ public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 
 	public GroupedPartitionWriter(
 			Context<T> context,
-			FileCommitter.PathGenerator pathGenerator,
+			PathGenerator pathGenerator,
 			PartitionComputer<T> computer,
 			PartitionPathMaker maker) {
 		this.context = context;

@@ -31,14 +31,14 @@ import java.util.Map;
 public class DynamicPartitionWriter<T> implements PartitionWriter<T> {
 
 	private final Context<T> context;
-	private final FileCommitter.PathGenerator pathGenerator;
+	private final PathGenerator pathGenerator;
 	private final PartitionComputer<T> computer;
 	private final PartitionPathMaker maker;
 	private final Map<String, OutputFormat<T>> formats;
 
 	public DynamicPartitionWriter(
 			Context<T> context,
-			FileCommitter.PathGenerator pathGenerator,
+			PathGenerator pathGenerator,
 			PartitionComputer<T> computer,
 			PartitionPathMaker maker) {
 		this.context = context;

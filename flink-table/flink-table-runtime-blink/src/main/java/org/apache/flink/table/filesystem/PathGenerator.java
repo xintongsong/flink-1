@@ -18,34 +18,20 @@
 
 package org.apache.flink.table.filesystem;
 
-import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.fs.Path;
 
-import java.io.Serializable;
-
 /**
- * FileCommitter describes the commit of task output for file system sink.
- *
- * <p>See {@link DefaultFileCommitter}.
+ * Path generator to generate temporary path for task to write.
  */
-@Internal
-public interface FileCommitter extends Serializable {
+public interface PathGenerator {
 
 	/**
-	 * Delete path, it is a recursive deletion.
+	 * Get temporary path for task.
 	 */
-	void deletePath(Path taskTmpPath) throws Exception;
+	Path getTaskTemporaryPath();
 
 	/**
-	 * For committing job's output after successful batch job completion or one checkpoint finish
-	 * for streaming job. Should move all files to final output paths. And should commit all
-	 * checkpoint ids that less than current checkpoint id.
+	 * Generate a new path with directories.
 	 */
-	void commit(long checkpointId) throws Exception;
-
-	/**
-	 * Create a new path generator from task and checkpoint id.
-	 * And clean the temporary directory for task.
-	 */
-	PathGenerator newGeneratorAndCleanDirector(int taskNumber, long checkpointId) throws Exception;
+	Path generate(String... directories) throws Exception;
 }

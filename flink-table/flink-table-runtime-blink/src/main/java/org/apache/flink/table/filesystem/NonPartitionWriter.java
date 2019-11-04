@@ -36,7 +36,7 @@ public class NonPartitionWriter<T> implements PartitionWriter<T> {
 
 	public NonPartitionWriter(
 			Context<T> context,
-			FileCommitter.PathGenerator pathGenerator,
+			PathGenerator pathGenerator,
 			PartitionComputer<T> computer) throws Exception {
 		this.context = context;
 		this.computer = computer;

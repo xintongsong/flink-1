@@ -82,7 +82,7 @@ public class PartitionWriterTest {
 	private final DefaultFileCommitter committer = new DefaultFileCommitter(
 			true, new Path(basePath), null, new HashMap<>(), 0);
 
-	private FileCommitter.PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(0, 1);
+	private PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(0, 1);
 
 	private PartitionComputer<Row> computer = new PartitionComputer<Row>() {
 

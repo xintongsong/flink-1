@@ -31,7 +31,7 @@ public interface PartitionWriterFactory<T> extends Serializable {
 
 	PartitionWriter<T> create(
 			Context<T> context,
-			FileCommitter.PathGenerator pathGenerator,
+			PathGenerator pathGenerator,
 			PartitionComputer<T> computer,
 			PartitionPathMaker maker) throws Exception;
 

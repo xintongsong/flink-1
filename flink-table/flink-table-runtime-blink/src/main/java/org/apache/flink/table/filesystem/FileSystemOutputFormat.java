@@ -78,7 +78,7 @@ public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMas
 	@Override
 	public void open(int taskNumber, int numTasks) throws IOException {
 		try {
-			FileCommitter.PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(
+			PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(
 					taskNumber, CHECKPOINT_ID);
 			ContextImpl<T> context = new ContextImpl<>(parameters, outputFormatFactory);
 			writer = partitionWriterFactory.create(context, pathGenerator, computer, maker);

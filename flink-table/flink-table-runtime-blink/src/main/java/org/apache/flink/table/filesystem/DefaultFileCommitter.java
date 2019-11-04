@@ -43,12 +43,14 @@ import java.util.regex.Pattern;
  * <p>NOTE: Here, we have no way to update catalog.
  */
 @Internal
-public class DefaultFileCommitter extends FileCommitter {
+public class DefaultFileCommitter implements FileCommitter {
 
 	private static final long serialVersionUID = 1L;
 
 	private static final Pattern PARTITION_NAME_PATTERN = Pattern.compile("([^/]+)=([^/]+)");
 
+	private final boolean overwrite;
+	private final Path tmpPath;
 	private final Path outputPath;
 	private final Map<String, String> staticPartitions;
 	private final int partitionColumnSize;
@@ -59,7 +61,8 @@ public class DefaultFileCommitter extends FileCommitter {
 			Path outputPath,
 			Map<String, String> staticPartitions,
 			int partitionColumnSize) {
-		super(tmpPath, overwrite);
+		this.overwrite = overwrite;
+		this.tmpPath = tmpPath;
 		this.outputPath = outputPath;
 		this.staticPartitions = staticPartitions;
 		this.partitionColumnSize = partitionColumnSize;
@@ -72,9 +75,9 @@ public class DefaultFileCommitter extends FileCommitter {
 
 	@Override
 	public void commit(long checkpointId) throws Exception {
-		FileSystem fs = FileSystem.get(temporaryPath.toUri());
+		FileSystem fs = FileSystem.get(tmpPath.toUri());
 		Set<Path> overwritten = new HashSet<>();
-		for (FileStatus taskStatus : fs.listStatus(temporaryPath)) {
+		for (FileStatus taskStatus : fs.listStatus(tmpPath)) {
 			String name = taskStatus.getPath().getName();
 			if (name.startsWith("cp-")) {
 				long cpId = Long.parseLong(name.substring(3, name.length()));
@@ -164,6 +167,15 @@ public class DefaultFileCommitter extends FileCommitter {
 				}
 			}
 		}
+	}
+
+	@Override
+	public PathGenerator newGeneratorAndCleanDirector(
+			int taskNumber, long checkpointId) throws Exception {
+		DefaultPathGenerator pathGenerator = new DefaultPathGenerator(
+				tmpPath, taskNumber, checkpointId);
+		deletePath(pathGenerator.getTaskTemporaryPath());
+		return pathGenerator;
 	}
 
 	/**
