@@ -30,27 +30,30 @@ import org.apache.flink.api.common.io.OutputFormat;
 @Internal
 public class NonPartitionWriter<T> implements PartitionWriter<T> {
 
-	private OutputFormat<T> format;
-	private Context<T> context;
+	private final Context<T> context;
+	private final PartitionComputer<T> computer;
+	private final OutputFormat<T> format;
 
-	@Override
-	public void open(Context<T> context) throws Exception {
+	public NonPartitionWriter(
+			Context<T> context,
+			FileCommitter.PathGenerator pathGenerator,
+			PartitionComputer<T> computer) throws Exception {
 		this.context = context;
-		this.format = this.context.createNewOutputFormat(context.generatePath());
+		this.computer = computer;
+		this.format = this.context.createNewOutputFormat(pathGenerator.generate());
 	}
 
 	@Override
 	public void write(T in) throws Exception {
 		assert context != null : "Please open before writing records.";
 		assert format != null : "Please start transaction before writing records.";
-		format.writeRecord(context.projectColumnsToWrite(in));
+		format.writeRecord(computer.projectColumnsToWrite(in));
 	}
 
 	@Override
 	public void close() throws Exception {
 		if (format != null) {
 			format.close();
-			format = null;
 		}
 	}
 }

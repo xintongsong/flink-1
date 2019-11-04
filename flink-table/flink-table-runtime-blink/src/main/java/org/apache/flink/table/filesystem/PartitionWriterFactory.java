@@ -19,6 +19,7 @@
 package org.apache.flink.table.filesystem;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.table.filesystem.PartitionWriter.Context;
 
 import java.io.Serializable;
 
@@ -28,7 +29,10 @@ import java.io.Serializable;
 @Internal
 public interface PartitionWriterFactory<T> extends Serializable {
 
-	PartitionWriter<T> create();
+	PartitionWriter<T> create(
+			Context<T> context,
+			FileCommitter.PathGenerator pathGenerator,
+			PartitionComputer<T> computer) throws Exception;
 
 	/**
 	 * Util for get a {@link PartitionWriterFactory}.

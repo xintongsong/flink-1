@@ -25,7 +25,9 @@ import org.apache.flink.table.filesystem.PartitionWriter.Context;
 import org.apache.flink.types.Row;
 
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +39,9 @@ import java.util.Map;
  * Test for {@link PartitionWriter}s.
  */
 public class PartitionWriterTest {
+
+	@ClassRule
+	public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
 	private Map<String, List<Row>> records = new HashMap<>();
 
@@ -52,7 +57,12 @@ public class PartitionWriterTest {
 
 		@Override
 		public void writeRecord(Row record) throws IOException {
-			records.compute(path.toString(), (path1, rows) -> {
+			Path parent = path.getParent();
+			String key = parent.getName().startsWith("task-") ?
+					parent.getParent().getName() :
+					parent.getParent().getParent().getName() + Path.SEPARATOR + parent.getName();
+
+			records.compute(key, (path1, rows) -> {
 				rows = rows == null ? new ArrayList<>() : rows;
 				rows.add(record);
 				return rows;
@@ -64,24 +74,16 @@ public class PartitionWriterTest {
 		}
 	};
 
-	private String basePath = "cp1";
+	private final String basePath = TEMP_FOLDER.newFolder().getPath();
 
-	private Context<Row> context = new Context<Row>() {
+	private final Context<Row> context = path -> factory.createOutputFormat(path);
 
-		@Override
-		public OutputFormat<Row> createNewOutputFormat(Path path) throws IOException {
-			return factory.createOutputFormat(path);
-		}
+	private final FileSystemFileCommitter committer = new FileSystemFileCommitter(
+			true, new Path(basePath), null, new HashMap<>(), 0);
 
-		@Override
-		public Path generatePath(String... directories) throws Exception {
-			Path parentPath = new Path(basePath);
-			for (String dir : directories) {
-				parentPath = new Path(parentPath, dir);
-			}
-			return parentPath;
-		}
+	private FileCommitter.PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(0, 1);
 
+	private PartitionComputer<Row> computer = new PartitionComputer<Row>() {
 		@Override
 		public String computePartition(Row in) throws Exception {
 			return (String) in.getField(0);
@@ -93,70 +95,67 @@ public class PartitionWriterTest {
 		}
 	};
 
+	public PartitionWriterTest() throws Exception {
+	}
+
 	@Test
 	public void testNonPartitionWriter() throws Exception {
-		NonPartitionWriter<Row> writer = new NonPartitionWriter<>();
-		writer.open(context);
+		NonPartitionWriter<Row> writer = new NonPartitionWriter<>(context, pathGenerator, computer);
 
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p1", 2));
 		writer.write(Row.of("p2", 2));
 		writer.close();
-		Assert.assertEquals("{cp1=[p1,1, p1,2, p2,2]}", records.toString());
+		Assert.assertEquals("{cp-1=[p1,1, p1,2, p2,2]}", records.toString());
 
-		basePath = "cp2";
-		writer = new NonPartitionWriter<>();
-		writer.open(context);
+		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
+		writer = new NonPartitionWriter<>(context, pathGenerator, computer);
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p5", 5));
 		writer.write(Row.of("p2", 2));
 		writer.close();
-		Assert.assertEquals("{cp2=[p3,3, p5,5, p2,2], cp1=[p1,1, p1,2, p2,2]}", records.toString());
+		Assert.assertEquals("{cp-2=[p3,3, p5,5, p2,2], cp-1=[p1,1, p1,2, p2,2]}", records.toString());
 	}
 
 	@Test
 	public void testGroupedPartitionWriter() throws Exception {
-		GroupedPartitionWriter<Row> writer = new GroupedPartitionWriter<>();
-		writer.open(context);
+		GroupedPartitionWriter<Row> writer = new GroupedPartitionWriter<>(context, pathGenerator, computer);
 
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p1", 2));
 		writer.write(Row.of("p2", 2));
 		writer.close();
-		Assert.assertEquals("{cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2]}", records.toString());
+		Assert.assertEquals("{cp-1/p1=[p1,1, p1,2], cp-1/p2=[p2,2]}", records.toString());
 
-		basePath = "cp2";
-		writer = new GroupedPartitionWriter<>();
-		writer.open(context);
+		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
+		writer = new GroupedPartitionWriter<>(context, pathGenerator, computer);
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p4", 5));
 		writer.write(Row.of("p5", 2));
 		writer.close();
 		Assert.assertEquals(
-				"{cp2/p3=[p3,3], cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2], cp2/p5=[p5,2], cp2/p4=[p4,5]}",
+				"{cp-1/p1=[p1,1, p1,2], cp-2/p4=[p4,5], cp-1/p2=[p2,2], cp-2/p3=[p3,3], cp-2/p5=[p5,2]}",
 				records.toString());
 	}
 
 	@Test
 	public void testDynamicPartitionWriter() throws Exception {
-		DynamicPartitionWriter<Row> writer = new DynamicPartitionWriter<>();
-		writer.open(context);
+		DynamicPartitionWriter<Row> writer = new DynamicPartitionWriter<>(context, pathGenerator, computer);
 
 		writer.write(Row.of("p1", 1));
 		writer.write(Row.of("p2", 2));
 		writer.write(Row.of("p1", 2));
 		writer.close();
-		Assert.assertEquals("{cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2]}", records.toString());
+		Assert.assertEquals("{cp-1/p1=[p1,1, p1,2], cp-1/p2=[p2,2]}", records.toString());
 
-		basePath = "cp2";
-		writer = new DynamicPartitionWriter<>();
-		writer.open(context);
+		pathGenerator = committer.newGeneratorAndCleanDirector(0, 2);
+		writer = new DynamicPartitionWriter<>(context, pathGenerator, computer);
 		writer.write(Row.of("p4", 5));
 		writer.write(Row.of("p3", 3));
 		writer.write(Row.of("p5", 2));
 		writer.close();
 		Assert.assertEquals(
-				"{cp2/p3=[p3,3], cp1/p2=[p2,2], cp1/p1=[p1,1, p1,2], cp2/p5=[p5,2], cp2/p4=[p4,5]}",
+				"{cp-1/p1=[p1,1, p1,2], cp-2/p4=[p4,5], cp-1/p2=[p2,2], cp-2/p3=[p3,3], cp-2/p5=[p5,2]}",
 				records.toString());
 	}
 }

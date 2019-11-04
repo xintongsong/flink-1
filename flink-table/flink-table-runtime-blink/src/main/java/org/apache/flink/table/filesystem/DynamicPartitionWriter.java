@@ -30,26 +30,32 @@ import java.util.Map;
 @Internal
 public class DynamicPartitionWriter<T> implements PartitionWriter<T> {
 
-	private Map<String, OutputFormat<T>> formats;
-	private Context<T> context;
+	private final Context<T> context;
+	private final FileCommitter.PathGenerator pathGenerator;
+	private final PartitionComputer<T> computer;
+	private final Map<String, OutputFormat<T>> formats;
 
-	@Override
-	public void open(Context<T> context) throws Exception {
+	public DynamicPartitionWriter(
+			Context<T> context,
+			FileCommitter.PathGenerator pathGenerator,
+			PartitionComputer<T> computer) {
 		this.context = context;
+		this.pathGenerator = pathGenerator;
+		this.computer = computer;
 		this.formats = new HashMap<>();
 	}
 
 	@Override
 	public void write(T in) throws Exception {
-		String partition = context.computePartition(in);
+		String partition = computer.computePartition(in);
 		OutputFormat<T> format = formats.get(partition);
 
 		if (format == null) {
 			// create a new format to write new partition.
-			format = context.createNewOutputFormat(context.generatePath(partition));
+			format = context.createNewOutputFormat(pathGenerator.generate(partition));
 			formats.put(partition, format);
 		}
-		format.writeRecord(context.projectColumnsToWrite(in));
+		format.writeRecord(computer.projectColumnsToWrite(in));
 	}
 
 	@Override

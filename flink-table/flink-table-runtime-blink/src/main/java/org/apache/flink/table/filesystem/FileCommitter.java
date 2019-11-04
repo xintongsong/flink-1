@@ -87,7 +87,7 @@ public abstract class FileCommitter implements Serializable {
 		/**
 		 * Generate a new path with directories.
 		 */
-		Path generate(String... directories) throws Exception {
+		public Path generate(String... directories) throws Exception {
 			Path parentPath = taskTmpDir;
 			for (String dir : directories) {
 				parentPath = new Path(parentPath, dir);

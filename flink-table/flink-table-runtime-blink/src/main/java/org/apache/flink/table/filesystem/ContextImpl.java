@@ -35,22 +35,11 @@ import java.io.IOException;
 public class ContextImpl<T> implements Context<T> {
 
 	private final Configuration conf;
-	private final PartitionComputer<T> computer;
 	private final OutputFormatFactory<T> factory;
 
-	private FileCommitter.PathGenerator generator;
-
-	public ContextImpl(
-			Configuration conf,
-			PartitionComputer<T> computer,
-			OutputFormatFactory<T> factory) {
+	public ContextImpl(Configuration conf, OutputFormatFactory<T> factory) {
 		this.conf = conf;
-		this.computer = computer;
 		this.factory = factory;
-	}
-
-	public void setPathGenerator(FileCommitter.PathGenerator generator) {
-		this.generator = generator;
 	}
 
 	@Override
@@ -60,20 +49,5 @@ public class ContextImpl<T> implements Context<T> {
 		// Here we just think of it as a single file format, so there can only be a single task.
 		format.open(0, 1);
 		return format;
-	}
-
-	@Override
-	public Path generatePath(String... directories) throws Exception {
-		return generator.generate(directories);
-	}
-
-	@Override
-	public String computePartition(T in) throws Exception {
-		return computer.computePartition(in);
-	}
-
-	@Override
-	public T projectColumnsToWrite(T in) throws Exception {
-		return computer.projectColumnsToWrite(in);
 	}
 }

@@ -30,27 +30,34 @@ import org.apache.flink.api.common.io.OutputFormat;
 @Internal
 public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 
+	private final Context<T> context;
+	private final FileCommitter.PathGenerator pathGenerator;
+	private final PartitionComputer<T> computer;
+
 	private OutputFormat<T> currentFormat;
 	private String currentPartition;
-	private Context<T> context;
 
-	@Override
-	public void open(Context<T> context) throws Exception {
+	public GroupedPartitionWriter(
+			Context<T> context,
+			FileCommitter.PathGenerator pathGenerator,
+			PartitionComputer<T> computer) {
 		this.context = context;
+		this.pathGenerator = pathGenerator;
+		this.computer = computer;
 	}
 
 	@Override
 	public void write(T in) throws Exception {
-		String partition = context.computePartition(in);
+		String partition = computer.computePartition(in);
 		if (currentPartition == null || !partition.equals(currentPartition)) {
 			if (currentPartition != null) {
 				currentFormat.close();
 			}
 
-			currentFormat = context.createNewOutputFormat(context.generatePath(partition));
+			currentFormat = context.createNewOutputFormat(pathGenerator.generate(partition));
 			currentPartition = partition;
 		}
-		currentFormat.writeRecord(context.projectColumnsToWrite(in));
+		currentFormat.writeRecord(computer.projectColumnsToWrite(in));
 	}
 
 	@Override

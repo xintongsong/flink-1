@@ -77,10 +77,8 @@ public class FileSystemOutputFormat<T> implements OutputFormat<T>, FinalizeOnMas
 		try {
 			FileCommitter.PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(
 					taskNumber, CHECKPOINT_ID);
-			writer = partitionWriterFactory.create();
-			ContextImpl<T> context = new ContextImpl<>(parameters, computer, outputFormatFactory);
-			context.setPathGenerator(pathGenerator);
-			writer.open(context);
+			ContextImpl<T> context = new ContextImpl<>(parameters, outputFormatFactory);
+			writer = partitionWriterFactory.create(context, pathGenerator, computer);
 		} catch (Exception e) {
 			throw new TableException("Exception in open", e);
 		}

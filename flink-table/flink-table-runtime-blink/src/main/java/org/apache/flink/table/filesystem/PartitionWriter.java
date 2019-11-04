@@ -37,11 +37,6 @@ import java.io.IOException;
 public interface PartitionWriter<T> {
 
 	/**
-	 * Open writer with {@link Context}.
-	 */
-	void open(Context<T> context) throws Exception;
-
-	/**
 	 * Write a record.
 	 */
 	void write(T in) throws Exception;
@@ -60,20 +55,5 @@ public interface PartitionWriter<T> {
 		 * Create a new output format with path, configure it and open it.
 		 */
 		OutputFormat<T> createNewOutputFormat(Path path) throws IOException;
-
-		/**
-		 * Generate a new path with directories.
-		 */
-		Path generatePath(String... directories) throws Exception;
-
-		/**
-		 * Compute partition path from record.
-		 */
-		String computePartition(T in) throws Exception;
-
-		/**
-		 * Project non-partition columns for output writer.
-		 */
-		T projectColumnsToWrite(T in) throws Exception;
 	}
 }
