@@ -18,29 +18,29 @@
 
 package org.apache.flink.orc;
 
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
-import org.apache.flink.types.Row;
+import org.apache.flink.core.fs.FileInputSplit;
+import org.apache.flink.orc.vector.AbstractOrcColumnVector;
+import org.apache.flink.table.dataformat.ColumnarRow;
+import org.apache.flink.table.dataformat.vector.VectorizedColumnBatch;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.orc.TypeDescription;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
- * InputFormat to read ORC files into {@link Row}.
+ * InputFormat to read ORC files into {@link ColumnarRow}.
  */
-public class OrcRowInputFormat extends OrcInputFormat<Row> implements ResultTypeQueryable<Row> {
+public class OrcColumnarRowInputFormat extends OrcInputFormat<ColumnarRow> {
 
 	// the number of rows read in a batch
-	private static final int DEFAULT_BATCH_SIZE = 1000;
-
-	// the type information of the Rows returned by this InputFormat.
-	private transient RowTypeInfo rowType;
+	private static final int DEFAULT_BATCH_SIZE = 2048;
 
 	// the vector of rows that is read in a batch
-	private transient Row[] rows;
+	private transient VectorizedColumnBatch columnarBatch;
+
+	private transient ColumnarRow row;
 
 	/**
 	 * Creates an OrcRowInputFormat.
@@ -49,7 +49,7 @@ public class OrcRowInputFormat extends OrcInputFormat<Row> implements ResultType
 	 * @param schemaString The schema of the ORC files as String.
 	 * @param orcConfig The configuration to read the ORC files with.
 	 */
-	public OrcRowInputFormat(String path, String schemaString, Configuration orcConfig) {
+	public OrcColumnarRowInputFormat(String path, String schemaString, Configuration orcConfig) {
 		this(path, TypeDescription.fromString(schemaString), orcConfig, DEFAULT_BATCH_SIZE);
 	}
 
@@ -61,7 +61,7 @@ public class OrcRowInputFormat extends OrcInputFormat<Row> implements ResultType
 	 * @param orcConfig The configuration to read the ORC files with.
 	 * @param batchSize The number of Row objects to read in a batch.
 	 */
-	public OrcRowInputFormat(String path, String schemaString, Configuration orcConfig, int batchSize) {
+	public OrcColumnarRowInputFormat(String path, String schemaString, Configuration orcConfig, int batchSize) {
 		this(path, TypeDescription.fromString(schemaString), orcConfig, batchSize);
 	}
 
@@ -73,47 +73,39 @@ public class OrcRowInputFormat extends OrcInputFormat<Row> implements ResultType
 	 * @param orcConfig The configuration to read the ORC files with.
 	 * @param batchSize The number of Row objects to read in a batch.
 	 */
-	public OrcRowInputFormat(String path, TypeDescription orcSchema, Configuration orcConfig, int batchSize) {
+	public OrcColumnarRowInputFormat(String path, TypeDescription orcSchema, Configuration orcConfig, int batchSize) {
 		super(path, orcSchema, orcConfig, batchSize);
-		this.rowType = (RowTypeInfo) OrcBatchReader.schemaToTypeInfo(orcSchema);
 	}
 
 	@Override
-	public void selectFields(int... selectedFields) {
-		super.selectFields(selectedFields);
-		// adapt result type
-		this.rowType = RowTypeInfo.projectFields(this.rowType, selectedFields);
-	}
-
-	@Override
-	public void openInputFormat() throws IOException {
-		super.openInputFormat();
+	public void open(FileInputSplit fileSplit) throws IOException {
+		super.open(fileSplit);
 		// create and initialize the row batch
-		this.rows = new Row[batchSize];
-		for (int i = 0; i < batchSize; i++) {
-			rows[i] = new Row(selectedFields.length);
-		}
+		AbstractOrcColumnVector[] vectors = Arrays.stream(selectedFields)
+				.mapToObj(i -> rowBatch.cols[i])
+				.map(AbstractOrcColumnVector::createVector)
+				.toArray(AbstractOrcColumnVector[]::new);
+		this.columnarBatch = new VectorizedColumnBatch(vectors);
+		this.row = new ColumnarRow(columnarBatch);
 	}
 
 	@Override
 	public void closeInputFormat() throws IOException {
-		this.rows = null;
+		this.columnarBatch = null;
 		super.closeInputFormat();
 	}
 
 	@Override
 	public int fillRows() {
-		return OrcBatchReader.fillRows(rows, schema, rowBatch, selectedFields);
+		int size = rowBatch.size;
+		columnarBatch.setNumRows(size);
+		return size;
 	}
 
 	@Override
-	public Row nextRecord(Row reuse) throws IOException {
+	public ColumnarRow nextRecord(ColumnarRow reuse) throws IOException {
 		// return the next row
-		return rows[this.nextRow++];
-	}
-
-	@Override
-	public TypeInformation<Row> getProducedType() {
-		return rowType;
+		row.setRowId(this.nextRow++);
+		return row;
 	}
 }
