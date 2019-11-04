@@ -202,25 +202,6 @@ public final class ResourceSpec implements Serializable {
 	}
 
 	/**
-	 * Check whether all the field values are valid.
-	 *
-	 * @return True if all the values are equal or greater than 0, otherwise false.
-	 */
-	public boolean isValid() {
-		if (this.cpuCores >= 0 && this.heapMemoryInMB >= 0 && this.directMemoryInMB >= 0 &&
-				this.nativeMemoryInMB >= 0 && this.stateSizeInMB >= 0 && managedMemoryInMB >= 0) {
-			for (Resource resource : extendedResources.values()) {
-				if (resource.getValue() < 0) {
-					return false;
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	/**
 	 * Checks the current resource less than or equal with the other resource by comparing
 	 * all the fields in the resource.
 	 *

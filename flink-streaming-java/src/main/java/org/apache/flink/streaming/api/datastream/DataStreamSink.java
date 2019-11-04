@@ -129,8 +129,8 @@ public class DataStreamSink<T> {
 	private DataStreamSink<T> setResources(ResourceSpec minResources, ResourceSpec preferredResources) {
 		Preconditions.checkNotNull(minResources, "The min resources must be not null.");
 		Preconditions.checkNotNull(preferredResources, "The preferred resources must be not null.");
-		Preconditions.checkArgument(minResources.isValid() && preferredResources.isValid() && minResources.lessThanOrEqual(preferredResources),
-				"The values in resources must be not less than 0 and the preferred resources must be greater than the min resources.");
+		Preconditions.checkArgument(minResources.lessThanOrEqual(preferredResources),
+				"The preferred resources must be no less than the min resources.");
 
 		transformation.setResources(minResources, preferredResources);
 
@@ -145,7 +145,6 @@ public class DataStreamSink<T> {
 	 */
 	private DataStreamSink<T> setResources(ResourceSpec resources) {
 		Preconditions.checkNotNull(resources, "The resources must be not null.");
-		Preconditions.checkArgument(resources.isValid(), "The values in resources must be not less than 0.");
 
 		transformation.setResources(resources, resources);
 
