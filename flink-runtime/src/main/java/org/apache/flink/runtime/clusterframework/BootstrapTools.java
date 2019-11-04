@@ -578,7 +578,7 @@ public class BootstrapTools {
 		  String heapdumpDir = conf.getString(CoreOptions.FLINK_JVM_HEAPDUMP_DIRECTORY);
       commonOpts += " " + getHeapdumpOpts(appId, ident, logDirectory, heapdumpDir);
     }
-    if (conf.getString(CoreOptions.FLINK_JVM_OPTIONS).length() > 0) {
+    if (!conf.getString(CoreOptions.FLINK_JVM_OPTIONS).isEmpty()) {
 		  commonOpts += " " + conf.getString(CoreOptions.FLINK_JVM_OPTIONS);
     }
     return commonOpts;
