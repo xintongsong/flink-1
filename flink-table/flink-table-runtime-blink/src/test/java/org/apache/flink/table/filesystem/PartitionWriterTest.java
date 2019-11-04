@@ -32,6 +32,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,15 +79,24 @@ public class PartitionWriterTest {
 
 	private final Context<Row> context = path -> factory.createOutputFormat(path);
 
-	private final FileSystemFileCommitter committer = new FileSystemFileCommitter(
+	private final DefaultFileCommitter committer = new DefaultFileCommitter(
 			true, new Path(basePath), null, new HashMap<>(), 0);
 
 	private FileCommitter.PathGenerator pathGenerator = committer.newGeneratorAndCleanDirector(0, 1);
 
 	private PartitionComputer<Row> computer = new PartitionComputer<Row>() {
+
 		@Override
-		public String computePartition(Row in) throws Exception {
-			return (String) in.getField(0);
+		public LinkedHashMap<String, String> makePartitionValues(Row in) throws Exception {
+			LinkedHashMap<String, String> ret = new LinkedHashMap<>(1);
+			ret.put("", in.getField(0).toString());
+			return ret;
+		}
+
+		@Override
+		public String makePartitionPath(
+				LinkedHashMap<String, String> partitionValues) throws Exception {
+			return partitionValues.values().iterator().next();
 		}
 
 		@Override

@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -208,9 +209,10 @@ public class FileSystemOutputFormatTest {
 			AtomicReference<FileSystemOutputFormat<Row>> sinkRef) throws Exception {
 		String[] columnNames = new String[]{"a", "b", "c"};
 		String[] partitionColumns = partition ? new String[]{"c"} : new String[0];
-		RowPartitionComputer computer = new RowPartitionComputer(columnNames, partitionColumns, "default");
+		DefaultRowPartitionComputer computer = new DefaultRowPartitionComputer(
+				columnNames, partitionColumns, "default");
 
-		FileSystemFileCommitter committer = new FileSystemFileCommitter(
+		DefaultFileCommitter committer = new DefaultFileCommitter(
 				override,
 				new Path(tmpFile.getPath()),
 				new Path(outputFile.getPath()),

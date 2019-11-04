@@ -27,13 +27,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.apache.flink.table.filesystem.FileSystemFileCommitter.makePartitionName;
-
 /**
  * {@link PartitionComputer} for {@link Row}.
  */
 @Internal
-public class RowPartitionComputer implements PartitionComputer<Row> {
+public abstract class RowPartitionComputer implements PartitionComputer<Row> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -57,16 +55,12 @@ public class RowPartitionComputer implements PartitionComputer<Row> {
 	}
 
 	@Override
-	public String computePartition(Row row) throws Exception {
-		return makePartitionName(computePartitions(row));
-	}
-
-	private LinkedHashMap<String, String> computePartitions(Row row) throws Exception {
+	public LinkedHashMap<String, String> makePartitionValues(Row in) throws Exception {
 		LinkedHashMap<String, String> partSpec = new LinkedHashMap<>();
 
 		for (int i = 0; i < partitionIndexes.length; i++) {
 			int index = partitionIndexes[i];
-			Object field = row.getField(index);
+			Object field = in.getField(index);
 			String partitionValue = field != null ? field.toString() : null;
 			if (partitionValue == null || partitionValue.isEmpty()) {
 				partitionValue = defaultPartitionName;

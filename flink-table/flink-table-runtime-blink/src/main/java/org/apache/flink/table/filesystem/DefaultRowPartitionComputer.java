@@ -19,41 +19,29 @@
 package org.apache.flink.table.filesystem;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.types.Row;
 
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 
+import static org.apache.flink.table.filesystem.DefaultFileCommitter.makePartitionName;
+
 /**
- * Compute partition path from record and project non-partition columns for output writer.
- *
- * <p>See {@link RowPartitionComputer}.
- *
- * @param <T> The type of the consumed records.
+ * Default {@link PartitionComputer} for {@link Row}, use {@link DefaultFileCommitter} to
+ * make partition path.
  */
 @Internal
-public interface PartitionComputer<T> extends Serializable {
+public class DefaultRowPartitionComputer extends RowPartitionComputer {
 
-	/**
-	 * Compute partition values from record.
-	 *
-	 * @param in input record.
-	 * @return partition values.
-	 */
-	LinkedHashMap<String, String> makePartitionValues(T in) throws Exception;
+	public DefaultRowPartitionComputer(
+			String[] columnNames,
+			String[] partitionColumns,
+			String defaultPartitionName) {
+		super(columnNames, partitionColumns, defaultPartitionName);
+	}
 
-	/**
-	 * Compute partition path from partition values.
-	 *
-	 * @param partitionValues partition values.
-	 * @return partition path.
-	 */
-	String makePartitionPath(LinkedHashMap<String, String> partitionValues) throws Exception;
-
-	/**
-	 * Project non-partition columns for output writer.
-	 *
-	 * @param in input record.
-	 * @return projected record.
-	 */
-	T projectColumnsToWrite(T in) throws Exception;
+	@Override
+	public String makePartitionPath(
+			LinkedHashMap<String, String> partitionValues) throws Exception {
+		return makePartitionName(partitionValues);
+	}
 }

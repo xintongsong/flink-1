@@ -48,7 +48,7 @@ public class GroupedPartitionWriter<T> implements PartitionWriter<T> {
 
 	@Override
 	public void write(T in) throws Exception {
-		String partition = computer.computePartition(in);
+		String partition = computer.makePartitionPath(computer.makePartitionValues(in));
 		if (currentPartition == null || !partition.equals(currentPartition)) {
 			if (currentPartition != null) {
 				currentFormat.close();

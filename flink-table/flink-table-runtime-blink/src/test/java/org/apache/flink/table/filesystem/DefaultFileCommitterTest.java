@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * Test for {@link RowPartitionComputer}.
  */
-public class FileSystemFileCommitterTest {
+public class DefaultFileCommitterTest {
 
 	@ClassRule
 	public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -65,7 +65,7 @@ public class FileSystemFileCommitterTest {
 
 	@Test
 	public void testDynamicPartition() throws Exception {
-		FileSystemFileCommitter committer = new FileSystemFileCommitter(
+		DefaultFileCommitter committer = new DefaultFileCommitter(
 				true, tmpPath, outputPath, new HashMap<>(), 2);
 
 		createFile("cp-1/task-1/p1=0/p2=0/", "f1", "f2");
@@ -84,7 +84,7 @@ public class FileSystemFileCommitterTest {
 		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f3").exists());
 		Assert.assertTrue(new File(outputFile, "p1=0/p2=1/f5").exists());
 
-		committer = new FileSystemFileCommitter(false, tmpPath, outputPath, new HashMap<>(), 2);
+		committer = new DefaultFileCommitter(false, tmpPath, outputPath, new HashMap<>(), 2);
 		createFile("cp-1/task-2/p1=0/p2=1/", "f6");
 		committer.commit(1);
 		Assert.assertTrue(new File(outputFile, "p1=0/p2=1/f5").exists());
@@ -93,7 +93,7 @@ public class FileSystemFileCommitterTest {
 
 	@Test
 	public void testNotPartition() throws Exception {
-		FileSystemFileCommitter committer = new FileSystemFileCommitter(
+		DefaultFileCommitter committer = new DefaultFileCommitter(
 				true, tmpPath, outputPath, new HashMap<>(), 0);
 
 		createFile("cp-1/task-1/", "f1", "f2");
@@ -107,7 +107,7 @@ public class FileSystemFileCommitterTest {
 		committer.commit(1);
 		Assert.assertTrue(new File(outputFile, "f4").exists());
 
-		committer = new FileSystemFileCommitter(false, tmpPath, outputPath, new HashMap<>(), 0);
+		committer = new DefaultFileCommitter(false, tmpPath, outputPath, new HashMap<>(), 0);
 		createFile("cp-1/task-2/", "f5");
 		committer.commit(1);
 		Assert.assertTrue(new File(outputFile, "f4").exists());
@@ -119,7 +119,7 @@ public class FileSystemFileCommitterTest {
 		Map<String, String> partitions = new HashMap<>();
 		partitions.put("p1", "0");
 		partitions.put("p2", "0");
-		FileSystemFileCommitter committer = new FileSystemFileCommitter(
+		DefaultFileCommitter committer = new DefaultFileCommitter(
 				true, tmpPath, outputPath, partitions, 2);
 
 		createFile("cp-1/task-1/", "f1", "f2");
@@ -133,7 +133,7 @@ public class FileSystemFileCommitterTest {
 		committer.commit(1);
 		Assert.assertTrue(new File(outputFile, "p1=0/p2=0/f4").exists());
 
-		committer = new FileSystemFileCommitter(
+		committer = new DefaultFileCommitter(
 				false, tmpPath, outputPath, partitions, 2);
 		createFile("cp-1/task-2/", "f5");
 		committer.commit(1);

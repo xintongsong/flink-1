@@ -28,7 +28,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 /**
  * FileCommitter describes the commit of task output for file system sink.
  *
- * <p>See {@link FileSystemFileCommitter}.
+ * <p>See {@link DefaultFileCommitter}.
  */
 @Internal
 public abstract class FileCommitter implements Serializable {

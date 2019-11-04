@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
  * <p>NOTE: Here, we have no way to update catalog.
  */
 @Internal
-public class FileSystemFileCommitter extends FileCommitter {
+public class DefaultFileCommitter extends FileCommitter {
 
 	private static final long serialVersionUID = 1L;
 
@@ -53,7 +53,7 @@ public class FileSystemFileCommitter extends FileCommitter {
 	private final Map<String, String> staticPartitions;
 	private final int partitionColumnSize;
 
-	public FileSystemFileCommitter(
+	public DefaultFileCommitter(
 			boolean overwrite,
 			Path tmpPath,
 			Path outputPath,
