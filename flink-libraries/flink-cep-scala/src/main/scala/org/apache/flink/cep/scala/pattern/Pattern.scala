@@ -504,8 +504,6 @@ class Pattern[T , F <: T](jPattern: JPattern[T, F]) {
   def wait(name: String): Pattern[T, T] = {
     Pattern[T, T](jPattern.wait(name))
   }
-
-
 }
 
 object Pattern {
