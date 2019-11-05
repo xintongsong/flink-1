@@ -949,6 +949,8 @@ public class ContinuousFileProcessingTest {
 		restoredTestInstance.initializeState(snapshot);
 		restoredTestInstance.open();
 
+		latch.trigger();
+
 		synchronized (initTestInstance.getCheckpointLock()) {
 			initTestInstance.close();
 		}
