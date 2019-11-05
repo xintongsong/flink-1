@@ -944,7 +944,7 @@ public class ContinuousFileProcessingTest {
 		restoredTestInstance.setTimeCharacteristic(TimeCharacteristic.EventTime);
 
 		//Remove a path and the job should continue
-//		toBeDeletePath.getFileSystem().delete(toBeDeletePath, true);
+		//toBeDeletePath.getFileSystem().delete(toBeDeletePath, true);
 
 		restoredTestInstance.initializeState(snapshot);
 		restoredTestInstance.open();
