@@ -17,9 +17,30 @@
 # limitations under the License.
 ################################################################################
 
-function dummy_fs_setup() {
-    mkdir -p "$FLINK_DIR/plugins/dummy-fs"
-    mkdir -p "$FLINK_DIR/plugins/another-dummy-fs"
-    cp "${END_TO_END_DIR}/flink-plugins-test/dummy-fs/target/flink-dummy-fs.jar" "${FLINK_DIR}/plugins/dummy-fs/"
-    cp "${END_TO_END_DIR}/flink-plugins-test/another-dummy-fs/target/flink-another-dummy-fs.jar" "${FLINK_DIR}/plugins/another-dummy-fs/"
-}
+source "$(dirname "$0")"/common.sh
+source "$(dirname "$0")"/common_dummy_fs.sh
+
+dummy_fs_setup
+
+OUTPUT_LOCATION="${TEST_DATA_DIR}/out/wc_out-$RANDOM"
+
+mkdir -p "${TEST_DATA_DIR}"
+
+start_cluster
+
+# Class isolation will be checked in the program jar.
+TEST_PROGRAM_JAR=${END_TO_END_DIR}/flink-plugins-test/wordcount/target/flink-plugins-test-WordCount.jar
+PROGRAM_ARGS="--input1 dummy://localhost/words --input2 anotherDummy://localhost/words --output $OUTPUT_LOCATION"
+$FLINK_DIR/bin/flink run -p 1 $TEST_PROGRAM_JAR $PROGRAM_ARGS
+
+OUTPUT=`cat $OUTPUT_LOCATION`
+
+# Two same inputs, so the count of words is double.
+EXPECTED_RESULTS=("hello,2" "world,4" "how,2" "are,2" "you,2" "my,2" "dear,4")
+
+for expected_result in ${EXPECTED_RESULTS[@]}; do
+    if [[ ! "$OUTPUT" =~ $expected_result ]]; then
+        echo "Output does not contain '$expected_result' as required"
+        exit 1
+    fi
+done
