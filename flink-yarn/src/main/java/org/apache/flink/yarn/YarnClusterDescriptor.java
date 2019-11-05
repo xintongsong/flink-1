@@ -1599,8 +1599,8 @@ public class YarnClusterDescriptor implements ClusterDescriptor<ApplicationId> {
 			int jobManagerMemoryMb) {
 		// ------------------ Prepare Application Master Container  ------------------------------
 
-		String javaOpts = BootstrapTools.getCommonJvmOpts(
-        appId, "jobmanager", ApplicationConstants.LOG_DIR_EXPANSION_VAR, flinkConfiguration);
+		String javaOpts = BootstrapTools.getJvmOpts(
+			appId, "jobmanager", ApplicationConstants.LOG_DIR_EXPANSION_VAR, flinkConfiguration);
 		if (flinkConfiguration.getString(CoreOptions.FLINK_JM_JVM_OPTIONS).length() > 0) {
 			javaOpts += " " + flinkConfiguration.getString(CoreOptions.FLINK_JM_JVM_OPTIONS);
 		}

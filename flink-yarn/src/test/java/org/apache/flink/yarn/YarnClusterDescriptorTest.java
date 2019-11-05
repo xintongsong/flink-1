@@ -26,7 +26,7 @@ import org.apache.flink.configuration.CoreOptions;
 import org.apache.flink.configuration.IllegalConfigurationException;
 import org.apache.flink.configuration.ResourceManagerOptions;
 import org.apache.flink.core.testutils.CommonTestUtils;
-import org.apache.flink.runtime.clusterframework.BootstrapToolsTest;
+import org.apache.flink.runtime.clusterframework.BootstrapTools;
 import org.apache.flink.util.TestLogger;
 import org.apache.flink.yarn.cli.FlinkYarnSessionCli;
 import org.apache.flink.yarn.configuration.YarnConfigOptions;
@@ -181,9 +181,9 @@ public class YarnClusterDescriptorTest extends TestLogger {
 		final String java = "$JAVA_HOME/bin/java";
 		final String jvmmem = "-Xms424m -Xmx424m";
 		final String defaultGCLoggingOpts =
-      BootstrapToolsTest.getGCLoggingOpts(ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+			BootstrapTools.getGCLoggingOpts(ApplicationConstants.LOG_DIR_EXPANSION_VAR);
 		final String heapdumpOpts =
-      BootstrapToolsTest.getHeapdumpOpts("test", "jobmanager", ApplicationConstants.LOG_DIR_EXPANSION_VAR, "/tmp");
+			BootstrapTools.getHeapdumpOpts("test", "jobmanager", ApplicationConstants.LOG_DIR_EXPANSION_VAR, "/tmp");
 		final String jvmOpts = "-Djvm"; // if set
 		final String jmJvmOpts = "-DjmJvm"; // if set
 		final String krb5 = "-Djava.security.krb5.conf=krb5.conf";

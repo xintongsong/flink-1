@@ -35,8 +35,8 @@ gclog="${FLINK_LOG_DIR}/flink-${FLINK_IDENT_STRING}-mesos-appmaster-${HOSTNAME}.
 
 FLINK_HEAPDUMP_NAME="flink-${FLINK_IDENT_STRING}-mesos-appmaster-${HOSTNAME}.hprof"
 rm -rf ${FLINK_JVM_HEAPDUMP_DIRECTORY}/${FLINK_HEAPDUMP_NAME}
-FLINK_JVM_GC_LOGGING_OPTS=`getGCLoggingOpts $gclog`
-FLINK_JVM_HEAPDUMP_OPTS=`getHeapdumpOpts $FLINK_HEAPDUMP_NAME $log`
+FLINK_JVM_GC_LOGGING_OPTS=$(getGCLoggingOpts $gclog)
+FLINK_JVM_HEAPDUMP_OPTS=$(getHeapdumpOpts $FLINK_HEAPDUMP_NAME $log)
 JVM_ARGS="$FLINK_JVM_GC_LOGGING_OPTS $FLINK_JVM_HEAPDUMP_OPTS $JVM_ARGS"
 
 ENTRY_POINT=org.apache.flink.mesos.entrypoint.MesosSessionClusterEntrypoint
