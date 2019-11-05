@@ -27,7 +27,6 @@ import org.apache.flink.runtime.rpc.FatalErrorHandler;
 import org.apache.flink.runtime.rpc.RpcService;
 import org.apache.flink.runtime.taskexecutor.partition.PartitionTable;
 
-import javax.annotation.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 
