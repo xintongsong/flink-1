@@ -944,7 +944,7 @@ public class ContinuousFileProcessingTest {
 		restoredTestInstance.setTimeCharacteristic(TimeCharacteristic.EventTime);
 
 		//Remove a path and the job should continue
-		//toBeDeletePath.getFileSystem().delete(toBeDeletePath, true);
+		hdfs.delete(new org.apache.hadoop.fs.Path(toBeDeletePath.getPath()), false);
 
 		restoredTestInstance.initializeState(snapshot);
 		restoredTestInstance.open();
@@ -963,7 +963,7 @@ public class ContinuousFileProcessingTest {
 		FileInputSplit fsSplit2 = createSplitFromTimestampedSplit(splitSkipped);
 
 		Assert.assertTrue(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit1)));
-		Assert.assertTrue(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit2)));
+		Assert.assertFalse(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit2)));
 	}
 
 	///////////				Source Contexts Used by the tests				/////////////////
