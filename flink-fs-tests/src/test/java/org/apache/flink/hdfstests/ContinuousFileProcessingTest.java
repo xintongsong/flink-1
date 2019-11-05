@@ -961,7 +961,7 @@ public class ContinuousFileProcessingTest {
 		FileInputSplit fsSplit2 = createSplitFromTimestampedSplit(splitSkipped);
 
 		Assert.assertTrue(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit1)));
-		Assert.assertTrue(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit2)));
+		Assert.assertFalse(initTestInstance.getOutput().contains(new StreamRecord<>(fsSplit2)));
 	}
 
 	///////////				Source Contexts Used by the tests				/////////////////
