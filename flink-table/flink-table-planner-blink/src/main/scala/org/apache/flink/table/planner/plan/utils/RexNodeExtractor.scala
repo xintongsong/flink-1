@@ -38,6 +38,7 @@ import org.apache.calcite.sql.{SqlFunction, SqlPostfixOperator}
 import org.apache.calcite.util.Util
 import java.util.{TimeZone, List => JList}
 
+import org.apache.flink.table.dataformat.SqlTimestamp
 import org.apache.flink.table.functions.FunctionIdentifier
 
 import scala.collection.JavaConversions._
@@ -335,7 +336,7 @@ class RexNodeToExpressionConverter(
 
       case TIMESTAMP_WITHOUT_TIME_ZONE =>
         val v = literal.getValueAs(classOf[java.lang.Long])
-        LocalDateTimeConverter.INSTANCE.toExternal(v)
+        LocalDateTimeConverter.INSTANCE.toExternal(SqlTimestamp.fromEpochMillis(v))
 
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE =>
         val v = literal.getValueAs(classOf[java.lang.Long])
