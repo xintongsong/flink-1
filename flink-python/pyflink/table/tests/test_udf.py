@@ -337,6 +337,12 @@ class UserDefinedFunctionTests(object):
         def create_multiset_func():
             return [1, 1, 2]
 
+        def decimal_func(decimal_param):
+            from decimal import Decimal
+            assert decimal_param == Decimal('1.050000000000000000'), \
+                'decimal_param is wrong value %s !' % decimal_param
+            return decimal_param
+
         self.t_env.register_function(
             "boolean_func", udf(boolean_func, [DataTypes.BOOLEAN()], DataTypes.BOOLEAN()))
 
@@ -386,21 +392,26 @@ class UserDefinedFunctionTests(object):
             "multiset_func", udf(multiset_func, [DataTypes.MULTISET(DataTypes.BIGINT())],
                                  DataTypes.MULTISET(DataTypes.BIGINT())))
 
+        self.t_env.register_function(
+            "decimal_func", udf(decimal_func, [DataTypes.DECIMAL(20, 10)],
+                                DataTypes.DECIMAL(20, 10)))
+
         table_sink = source_sink_utils.TestAppendSink(
-            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'],
+            ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'],
             [DataTypes.BIGINT(), DataTypes.BIGINT(), DataTypes.TINYINT(),
              DataTypes.BOOLEAN(), DataTypes.SMALLINT(), DataTypes.INT(),
              DataTypes.FLOAT(), DataTypes.DOUBLE(), DataTypes.BYTES(),
              DataTypes.STRING(), DataTypes.DATE(), DataTypes.ARRAY(DataTypes.BIGINT()),
              DataTypes.MAP(DataTypes.BIGINT(), DataTypes.STRING()),
-             DataTypes.MULTISET(DataTypes.BIGINT())])
+             DataTypes.MULTISET(DataTypes.BIGINT()), DataTypes.DECIMAL(20, 10)])
         self.t_env.register_table_sink("Results", table_sink)
 
         import datetime
+        import decimal
         t = self.t_env.from_elements(
             [(1, None, 1, True, 32767, -2147483648, 1.23, 1.98932,
               bytearray(b'flink'), 'pyflink', datetime.date(2014, 9, 13),
-              [1, 2, 3], {1: 'flink', 2: 'pyflink'})],
+              [1, 2, 3], {1: 'flink', 2: 'pyflink'}, decimal.Decimal('1.050000000000000000'))],
             DataTypes.ROW(
                 [DataTypes.FIELD("a", DataTypes.BIGINT()),
                  DataTypes.FIELD("b", DataTypes.BIGINT()),
@@ -414,7 +425,8 @@ class UserDefinedFunctionTests(object):
                  DataTypes.FIELD("j", DataTypes.STRING()),
                  DataTypes.FIELD("k", DataTypes.DATE()),
                  DataTypes.FIELD("l", DataTypes.ARRAY(DataTypes.BIGINT())),
-                 DataTypes.FIELD("m", DataTypes.MAP(DataTypes.BIGINT(), DataTypes.STRING()))]))
+                 DataTypes.FIELD("m", DataTypes.MAP(DataTypes.BIGINT(), DataTypes.STRING())),
+                 DataTypes.FIELD("n", DataTypes.DECIMAL(20, 10))]))
 
         t.select("bigint_func(a), bigint_func_none(b),"
                  "tinyint_func(c), boolean_func(d),"
@@ -422,14 +434,16 @@ class UserDefinedFunctionTests(object):
                  "float_func(g),double_func(h),"
                  "bytes_func(i),str_func(j),"
                  "date_func(k),array_func(l),"
-                 "map_func(m),multiset_func(create_multiset_func())") \
+                 "map_func(m),multiset_func(create_multiset_func()),"
+                 "decimal_func(n)") \
             .insert_into("Results")
         self.t_env.execute("test")
         actual = source_sink_utils.results()
         self.assert_equals(actual,
                            ["1,null,1,true,32767,-2147483648,1.23,1.98932,"
                             "[102, 108, 105, 110, 107],pyflink,2014-09-13,"
-                            "[1, 2, 3],{1=flink, 2=pyflink},{1=2, 2=1}"])
+                            "[1, 2, 3],{1=flink, 2=pyflink},{1=2, 2=1},"
+                            "1.050000000000000000"])
 
 
 # decide whether two floats are equal

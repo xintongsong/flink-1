@@ -20,6 +20,7 @@ from abc import ABC
 
 
 import datetime
+import decimal
 from apache_beam.coders import Coder
 from apache_beam.coders.coders import FastCoder
 
@@ -32,7 +33,7 @@ FLINK_SCHEMA_CODER_URN = "flink:coder:schema:v1"
 __all__ = ['RowCoder', 'BigIntCoder', 'TinyIntCoder', 'BooleanCoder',
            'SmallIntCoder', 'IntCoder', 'FloatCoder', 'DoubleCoder',
            'BinaryCoder', 'CharCoder', 'DateCoder', 'ArrayCoder',
-           'MapCoder', 'MultisetCoder']
+           'MapCoder', 'MultisetCoder', 'DecimalCoder']
 
 
 class RowCoder(FastCoder):
@@ -254,6 +255,18 @@ class DoubleCoder(DeterministicCoder):
         return float
 
 
+class DecimalCoder(DeterministicCoder):
+    """
+    Coder for Decimal.
+    """
+
+    def _create_impl(self):
+        return coder_impl.DecimalCoderImpl()
+
+    def to_type_hint(self):
+        return decimal.Decimal
+
+
 class BinaryCoder(DeterministicCoder):
     """
     Coder for Byte Array.
@@ -303,6 +316,7 @@ _type_name_mappings = {
     type_name.BOOLEAN: BooleanCoder(),
     type_name.FLOAT: FloatCoder(),
     type_name.DOUBLE: DoubleCoder(),
+    type_name.DECIMAL: DecimalCoder(),
     type_name.BINARY: BinaryCoder(),
     type_name.VARBINARY: BinaryCoder(),
     type_name.CHAR: CharCoder(),

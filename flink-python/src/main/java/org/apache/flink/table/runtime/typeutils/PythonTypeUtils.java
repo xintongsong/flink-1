@@ -33,9 +33,11 @@ import org.apache.flink.api.common.typeutils.base.array.BytePrimitiveArraySerial
 import org.apache.flink.api.java.typeutils.runtime.RowSerializer;
 import org.apache.flink.fnexecution.v1.FlinkFnApi;
 import org.apache.flink.table.runtime.typeutils.serializers.python.BaseRowSerializer;
+import org.apache.flink.table.runtime.typeutils.serializers.python.BigDecSerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.BinaryArraySerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.BinaryMapSerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.DateSerializer;
+import org.apache.flink.table.runtime.typeutils.serializers.python.DecimalSerializer;
 import org.apache.flink.table.runtime.typeutils.serializers.python.StringSerializer;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.BigIntType;
@@ -43,9 +45,11 @@ import org.apache.flink.table.types.logical.BinaryType;
 import org.apache.flink.table.types.logical.BooleanType;
 import org.apache.flink.table.types.logical.CharType;
 import org.apache.flink.table.types.logical.DateType;
+import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.DoubleType;
 import org.apache.flink.table.types.logical.FloatType;
 import org.apache.flink.table.types.logical.IntType;
+import org.apache.flink.table.types.logical.LegacyTypeInformationType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.MapType;
 import org.apache.flink.table.types.logical.MultisetType;
@@ -59,6 +63,7 @@ import org.apache.flink.table.types.logical.VarCharType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeDefaultVisitor;
 
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -216,6 +221,12 @@ public final class PythonTypeUtils {
 
 		@Override
 		protected TypeSerializer defaultMethod(LogicalType logicalType) {
+			if (logicalType instanceof LegacyTypeInformationType) {
+				Class<?> typeClass = ((LegacyTypeInformationType) logicalType).getTypeInformation().getTypeClass();
+				if (typeClass == BigDecimal.class) {
+					return BigDecSerializer.INSTANCE;
+				}
+			}
 			throw new UnsupportedOperationException(String.format(
 				"Python UDF doesn't support logical type %s currently.", logicalType.asSummaryString()));
 		}
@@ -268,6 +279,11 @@ public final class PythonTypeUtils {
 			LogicalType elementType = multisetType.getElementType();
 			TypeSerializer<?> elementTypeSerializer = elementType.accept(this);
 			return new BinaryMapSerializer<>(elementType, new IntType(), elementTypeSerializer, IntSerializer.INSTANCE);
+		}
+
+		@Override
+		public TypeSerializer visit(DecimalType decimalType) {
+			return new DecimalSerializer(decimalType.getPrecision(), decimalType.getScale());
 		}
 	}
 
@@ -369,6 +385,14 @@ public final class PythonTypeUtils {
 		}
 
 		@Override
+		public FlinkFnApi.Schema.FieldType visit(DecimalType decimalType) {
+			return FlinkFnApi.Schema.FieldType.newBuilder()
+				.setTypeName(FlinkFnApi.Schema.TypeName.DECIMAL)
+				.setNullable(decimalType.isNullable())
+				.build();
+		}
+
+		@Override
 		public FlinkFnApi.Schema.FieldType visit(ArrayType arrayType) {
 			FlinkFnApi.Schema.FieldType.Builder builder =
 				FlinkFnApi.Schema.FieldType.newBuilder()
@@ -429,6 +453,15 @@ public final class PythonTypeUtils {
 
 		@Override
 		protected FlinkFnApi.Schema.FieldType defaultMethod(LogicalType logicalType) {
+			if (logicalType instanceof LegacyTypeInformationType) {
+				Class<?> typeClass = ((LegacyTypeInformationType) logicalType).getTypeInformation().getTypeClass();
+				if (typeClass == BigDecimal.class) {
+					return FlinkFnApi.Schema.FieldType.newBuilder()
+						.setTypeName(FlinkFnApi.Schema.TypeName.DECIMAL)
+						.setNullable(logicalType.isNullable())
+						.build();
+				}
+			}
 			throw new UnsupportedOperationException(String.format(
 				"Python UDF doesn't support logical type %s currently.", logicalType.asSummaryString()));
 		}

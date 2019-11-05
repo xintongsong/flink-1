@@ -22,7 +22,7 @@ import unittest
 
 from pyflink.fn_execution.coders import BigIntCoder, TinyIntCoder, BooleanCoder, \
     SmallIntCoder, IntCoder, FloatCoder, DoubleCoder, BinaryCoder, CharCoder, DateCoder, \
-    ArrayCoder, MapCoder, MultisetCoder
+    ArrayCoder, MapCoder, MultisetCoder, DecimalCoder
 
 
 class CodersTest(unittest.TestCase):
@@ -96,6 +96,11 @@ class CodersTest(unittest.TestCase):
         element_coder = CharCoder()
         coder = MultisetCoder(element_coder)
         self.check_coder(coder, ['flink', 'flink', 'pyflink'])
+
+    def test_decimal_coder(self):
+        from decimal import Decimal
+        coder = DecimalCoder()
+        self.check_coder(coder, Decimal('1.001'), Decimal('0.00001'), Decimal('1.23E-8'))
 
 
 if __name__ == '__main__':

@@ -17,6 +17,7 @@
 ################################################################################
 
 import datetime
+import decimal
 import struct
 from apache_beam.coders.coder_impl import StreamCoderImpl
 
@@ -233,6 +234,18 @@ class DoubleCoderImpl(StreamCoderImpl):
 
     def decode_from_stream(self, in_stream, nested):
         return in_stream.read_bigendian_double()
+
+
+class DecimalCoderImpl(StreamCoderImpl):
+
+    def encode_to_stream(self, value, out_stream, nested):
+        bytes_value = str(value).encode("utf-8")
+        out_stream.write_bigendian_int32(len(bytes_value))
+        out_stream.write(bytes_value, False)
+
+    def decode_from_stream(self, in_stream, nested):
+        size = in_stream.read_bigendian_int32()
+        return decimal.Decimal(in_stream.read(size).decode("utf-8"))
 
 
 class BinaryCoderImpl(StreamCoderImpl):
