@@ -140,7 +140,8 @@ public class ClassLoaderITCase extends TestLogger {
 	@Test
 	public void testCustomSplitJobWithCustomClassLoaderJar() throws ProgramInvocationException {
 
-		PackagedProgram inputSplitTestProg = new PackagedProgram(new File(INPUT_SPLITS_PROG_JAR_FILE));
+		PackagedProgram inputSplitTestProg = new PackagedProgram(new File(INPUT_SPLITS_PROG_JAR_FILE),
+			new Configuration());
 
 		TestEnvironment.setAsContext(
 			miniClusterResource.getMiniCluster(),
@@ -153,7 +154,8 @@ public class ClassLoaderITCase extends TestLogger {
 
 	@Test
 	public void testStreamingCustomSplitJobWithCustomClassLoader() throws ProgramInvocationException {
-		PackagedProgram streamingInputSplitTestProg = new PackagedProgram(new File(STREAMING_INPUT_SPLITS_PROG_JAR_FILE));
+		PackagedProgram streamingInputSplitTestProg = new PackagedProgram(new File(STREAMING_INPUT_SPLITS_PROG_JAR_FILE),
+			new Configuration());
 
 		TestStreamEnvironment.setAsContext(
 			miniClusterResource.getMiniCluster(),
@@ -167,7 +169,8 @@ public class ClassLoaderITCase extends TestLogger {
 	@Test
 	public void testCustomSplitJobWithCustomClassLoaderPath() throws IOException, ProgramInvocationException {
 		URL classpath = new File(INPUT_SPLITS_PROG_JAR_FILE).toURI().toURL();
-		PackagedProgram inputSplitTestProg2 = new PackagedProgram(new File(INPUT_SPLITS_PROG_JAR_FILE));
+		PackagedProgram inputSplitTestProg2 = new PackagedProgram(new File(INPUT_SPLITS_PROG_JAR_FILE),
+			new Configuration());
 
 		TestEnvironment.setAsContext(
 			miniClusterResource.getMiniCluster(),
@@ -181,7 +184,8 @@ public class ClassLoaderITCase extends TestLogger {
 	@Test
 	public void testStreamingClassloaderJobWithCustomClassLoader() throws ProgramInvocationException {
 		// regular streaming job
-		PackagedProgram streamingProg = new PackagedProgram(new File(STREAMING_PROG_JAR_FILE));
+		PackagedProgram streamingProg = new PackagedProgram(new File(STREAMING_PROG_JAR_FILE),
+			new Configuration(), new String[0]);
 
 		TestStreamEnvironment.setAsContext(
 			miniClusterResource.getMiniCluster(),
@@ -196,7 +200,8 @@ public class ClassLoaderITCase extends TestLogger {
 	public void testCheckpointedStreamingClassloaderJobWithCustomClassLoader() throws ProgramInvocationException {
 		// checkpointed streaming job with custom classes for the checkpoint (FLINK-2543)
 		// the test also ensures that user specific exceptions are serializable between JobManager <--> JobClient.
-		PackagedProgram streamingCheckpointedProg = new PackagedProgram(new File(STREAMING_CHECKPOINTED_PROG_JAR_FILE));
+		PackagedProgram streamingCheckpointedProg = new PackagedProgram(new File(STREAMING_CHECKPOINTED_PROG_JAR_FILE),
+			new Configuration(), new String[0]);
 
 		TestStreamEnvironment.setAsContext(
 			miniClusterResource.getMiniCluster(),
@@ -232,6 +237,7 @@ public class ClassLoaderITCase extends TestLogger {
 	public void testKMeansJobWithCustomClassLoader() throws ProgramInvocationException {
 		PackagedProgram kMeansProg = new PackagedProgram(
 			new File(KMEANS_JAR_PATH),
+			new Configuration(),
 			new String[] {
 				KMeansData.DATAPOINTS,
 				KMeansData.INITIAL_CENTERS,
@@ -249,7 +255,7 @@ public class ClassLoaderITCase extends TestLogger {
 
 	@Test
 	public void testUserCodeTypeJobWithCustomClassLoader() throws ProgramInvocationException {
-		PackagedProgram userCodeTypeProg = new PackagedProgram(new File(USERCODETYPE_JAR_PATH));
+		PackagedProgram userCodeTypeProg = new PackagedProgram(new File(USERCODETYPE_JAR_PATH), new Configuration());
 
 		TestEnvironment.setAsContext(
 			miniClusterResource.getMiniCluster(),
@@ -267,6 +273,7 @@ public class ClassLoaderITCase extends TestLogger {
 
 		final PackagedProgram program = new PackagedProgram(
 			new File(CHECKPOINTING_CUSTOM_KV_STATE_JAR_PATH),
+			new Configuration(),
 			new String[] {
 				checkpointDir.toURI().toString(),
 				outputDir.toURI().toString()
@@ -300,6 +307,7 @@ public class ClassLoaderITCase extends TestLogger {
 
 		final PackagedProgram program = new PackagedProgram(
 				new File(CUSTOM_KV_STATE_JAR_PATH),
+				new Configuration(),
 				new String[] {
 						String.valueOf(parallelism),
 						checkpointDir.toURI().toString(),

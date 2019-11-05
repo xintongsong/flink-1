@@ -20,6 +20,7 @@ package org.apache.flink.formats.avro;
 
 import org.apache.flink.client.ClientUtils;
 import org.apache.flink.client.program.PackagedProgram;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.avro.testjar.AvroExternalJarProgram;
 import org.apache.flink.runtime.minicluster.MiniCluster;
@@ -81,7 +82,8 @@ public class AvroExternalJarProgramITCase extends TestLogger {
 
 		String testData = getClass().getResource(TEST_DATA_FILE).toString();
 
-		PackagedProgram program = new PackagedProgram(new File(jarFile), new String[]{testData});
+		PackagedProgram program = new PackagedProgram(new File(jarFile),
+			new Configuration(), new String[]{testData});
 
 		program.invokeInteractiveModeForExecution();
 	}
