@@ -18,6 +18,7 @@
 package org.apache.flink.runtime.io.network.partition;
 
 import org.apache.flink.runtime.taskexecutor.partition.PartitionTable;
+import org.apache.flink.util.OptionalUtils;
 import org.apache.flink.util.Preconditions;
 
 import java.util.Collection;
@@ -26,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Base partition tracker implementation, providing underlying data-structures for storing partitions, their associated
@@ -58,7 +58,7 @@ public abstract class AbstractPartitionTracker<K, M> implements PartitionTracker
 
 		return resultPartitionIds.stream()
 			.map(this::internalStopTrackingPartition)
-			.flatMap(AbstractPartitionTracker::asStream)
+			.flatMap(OptionalUtils::asStream)
 			.collect(Collectors.toList());
 	}
 
@@ -104,14 +104,6 @@ public abstract class AbstractPartitionTracker<K, M> implements PartitionTracker
 
 		public M getMetaInfo() {
 			return metaInfo;
-		}
-	}
-
-	private static <X> Stream<X> asStream(Optional<X> optional) {
-		if (optional.isPresent()) {
-			return Stream.of(optional.get());
-		} else {
-			return Stream.empty();
 		}
 	}
 }
