@@ -18,13 +18,13 @@
 
 package org.apache.flink.runtime.state.heap.space;
 
+import org.apache.flink.core.memory.MemorySegment;
 import org.apache.flink.util.Preconditions;
 import org.apache.flink.util.TestLogger;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -218,12 +218,12 @@ public class SpaceAllocatorTest extends TestLogger {
 		}
 
 		@Override
-		public ByteBuffer getByteBuffer(int chunkOffset) {
+		public MemorySegment getMemorySegment(int chunkOffset) {
 			return null;
 		}
 
 		@Override
-		public int getOffsetInByteBuffer(int offsetInChunk) {
+		public int getOffsetInSegment(int offsetInChunk) {
 			return 0;
 		}
 	}

@@ -18,7 +18,7 @@
 
 package org.apache.flink.runtime.state.heap.space;
 
-import java.nio.ByteBuffer;
+import org.apache.flink.core.memory.MemorySegment;
 
 import static org.apache.flink.runtime.state.heap.space.SpaceConstants.BUCKET_SIZE;
 
@@ -30,16 +30,16 @@ public class DefaultChunkImpl extends AbstractChunk {
 	/**
 	 * The backed byte buffer.
 	 */
-	private final ByteBuffer byteBuffer;
+	private final MemorySegment memorySegment;
 
 	/**
 	 * Bucket allocator used for this chunk.
 	 */
 	private final BucketAllocator bucketAllocator;
 
-	DefaultChunkImpl(int chunkId, ByteBuffer byteBuffer, AllocateStrategy allocateStrategy) {
-		super(chunkId, byteBuffer.capacity());
-		this.byteBuffer = byteBuffer;
+	DefaultChunkImpl(int chunkId, MemorySegment memorySegment, AllocateStrategy allocateStrategy) {
+		super(chunkId, memorySegment.size());
+		this.memorySegment = memorySegment;
 		switch (allocateStrategy) {
 			case SmallBucket:
 				this.bucketAllocator = new PowerTwoBucketAllocator(capacity, BUCKET_SIZE);
@@ -60,12 +60,12 @@ public class DefaultChunkImpl extends AbstractChunk {
 	}
 
 	@Override
-	public int getOffsetInByteBuffer(int offsetInChunk) {
+	public int getOffsetInSegment(int offsetInChunk) {
 		return offsetInChunk;
 	}
 
 	@Override
-	public ByteBuffer getByteBuffer(int chunkOffset) {
-		return byteBuffer;
+	public MemorySegment getMemorySegment(int chunkOffset) {
+		return memorySegment;
 	}
 }

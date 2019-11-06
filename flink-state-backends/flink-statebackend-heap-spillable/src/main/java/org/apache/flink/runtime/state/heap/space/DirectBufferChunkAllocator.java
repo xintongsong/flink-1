@@ -18,6 +18,8 @@
 
 package org.apache.flink.runtime.state.heap.space;
 
+import org.apache.flink.core.memory.MemorySegment;
+import org.apache.flink.core.memory.MemorySegmentFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,23 +31,13 @@ import java.nio.ByteBuffer;
  */
 class DirectBufferChunkAllocator extends AbstractChunkAllocator {
 
-	private static final Logger LOG = LoggerFactory.getLogger(DirectBufferChunkAllocator.class);
-
 	DirectBufferChunkAllocator(SpaceConfiguration spaceConfiguration) {
 		super(spaceConfiguration);
 	}
 
 	@Override
-	ByteBuffer allocate(int chunkSize) {
-		return ByteBuffer.allocateDirect(chunkSize);
-	}
-
-	@Override
-	void release(ByteBuffer buffer) {
-		try {
-			CleanerUtil.getCleaner().freeBuffer(buffer);
-		} catch (IOException e) {
-			LOG.warn("Failed to clean the buffer", e);
-		}
+	MemorySegment allocate(int chunkSize) {
+		ByteBuffer backingByteBuffer = ByteBuffer.allocateDirect(chunkSize);
+		return MemorySegmentFactory.wrapOffHeapMemory(backingByteBuffer);
 	}
 }

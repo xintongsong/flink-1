@@ -17,7 +17,8 @@
 
 package org.apache.flink.runtime.state.heap.space;
 
-import java.nio.ByteBuffer;
+import org.apache.flink.core.memory.MemorySegment;
+import org.apache.flink.core.memory.MemorySegmentFactory;
 
 /**
  * Manages chunks allocated from heap. This is mainly used for test.
@@ -29,12 +30,7 @@ class HeapBufferChunkAllocator extends AbstractChunkAllocator {
 	}
 
 	@Override
-	ByteBuffer allocate(int chunkSize) {
-		return ByteBuffer.allocate(chunkSize);
-	}
-
-	@Override
-	void release(ByteBuffer buffer) {
-		// nothing to release for heap allocator
+	MemorySegment allocate(int chunkSize) {
+		return MemorySegmentFactory.allocateUnpooledSegment(chunkSize);
 	}
 }

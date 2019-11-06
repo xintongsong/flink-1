@@ -18,6 +18,8 @@
 
 package org.apache.flink.runtime.state.heap.space;
 
+import org.apache.flink.core.memory.MemorySegment;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -56,18 +58,18 @@ public interface Chunk {
 	int getChunkCapacity();
 
 	/**
-	 * Returns the backed {@link ByteBuffer} for the space with the offset.
+	 * Returns the backed {@link MemorySegment} for the space with the offset.
 	 *
 	 * @param offsetInChunk offset of space in the chunk.
-	 * @return byte buffer backed the space.
+	 * @return memory segment backed the space.
 	 */
-	ByteBuffer getByteBuffer(int offsetInChunk);
+	MemorySegment getMemorySegment(int offsetInChunk);
 
 	/**
-	 * Returns the offset of the space in the backed {@link ByteBuffer}.
+	 * Returns the offset of the space in the backed {@link MemorySegment}.
 	 *
 	 * @param offsetInChunk offset of space in the chunk.
-	 * @return offset of space in the byte buffer..
+	 * @return offset of space in the memory segment.
 	 */
-	int getOffsetInByteBuffer(int offsetInChunk);
+	int getOffsetInSegment(int offsetInChunk);
 }

@@ -18,6 +18,7 @@
 
 package org.apache.flink.runtime.state.heap.space;
 
+import org.apache.flink.core.memory.MemorySegment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,28 +34,28 @@ public abstract class AbstractChunkAllocator implements ChunkAllocator {
 
 	private final int chunkSize;
 
-	private ArrayList<ByteBuffer> buffers;
+	private ArrayList<MemorySegment> segments;
 
 	private AtomicBoolean closed;
 
 	AbstractChunkAllocator(SpaceConfiguration spaceConfiguration) {
 		this.chunkSize = spaceConfiguration.getChunkSize();
-		this.buffers = new ArrayList<>();
+		this.segments = new ArrayList<>();
 		this.closed = new AtomicBoolean(false);
 	}
 
 	@Override
 	public Chunk createChunk(int chunkId, AllocateStrategy allocateStrategy) {
-		ByteBuffer buffer = allocate(chunkSize);
-		buffers.add(buffer);
-		return new DefaultChunkImpl(chunkId, buffer, allocateStrategy);
+		MemorySegment segment = allocate(chunkSize);
+		segments.add(segment);
+		return new DefaultChunkImpl(chunkId, segment, allocateStrategy);
 	}
 
 	@Override
 	public void close() {
 		if (closed.compareAndSet(false, true)) {
-			buffers.forEach(this::release);
-			buffers.clear();
+			segments.forEach(MemorySegment::free);
+			segments.clear();
 		} else {
 			LOG.warn("This chunk allocator {} has been already closed.", this);
 		}
@@ -66,12 +67,5 @@ public abstract class AbstractChunkAllocator implements ChunkAllocator {
 	 * @param chunkSize the size of the chunk to allocate.
 	 * @return the buffer for the chunk.
 	 */
-	abstract ByteBuffer allocate(int chunkSize);
-
-	/**
-	 * Release the given buffer, when necessary.
-	 *
-	 * @param buffer the buffer to release resource.
-	 */
-	abstract void release(ByteBuffer buffer);
+	abstract MemorySegment allocate(int chunkSize);
 }
