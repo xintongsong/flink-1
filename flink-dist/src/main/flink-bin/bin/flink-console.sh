@@ -63,8 +63,6 @@ fi
 FLINK_TM_CLASSPATH=`constructFlinkClassPath`
 
 FLINK_LOG_PREFIX="${FLINK_LOG_DIR}/flink-${FLINK_IDENT_STRING}-${SERVICE}"
-log="${FLINK_LOG_PREFIX}.log"
-out="${FLINK_LOG_PREFIX}.out"
 gclog="${FLINK_LOG_PREFIX}.gc_log"
 
 FLINK_HEAPDUMP_NAME="flink-${FLINK_IDENT_STRING}-${SERVICE}.hprof"

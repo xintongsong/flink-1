@@ -32,6 +32,7 @@ import akka.actor.ActorSystem;
 import com.typesafe.config.Config;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -542,12 +543,13 @@ public class BootstrapTools {
 	public static String getHeapdumpOpts(String appId, String ident, String logDirectory, String heapdumpDir) {
 		String dumpDestName = String.format("flink-%s-heapdump.hprof", ident);
 		String dumpFileDestPath = new File(heapdumpDir, appId + "-" + dumpDestName).getAbsolutePath();
+
 		String oomScript = String.format("echo -e 'OutOfMemoryError! Killing current process %%p...\n" +
 				"Check gc logs and heapdump file(%s) for details.' > " + logDirectory + "/%s.err; kill -9 %%p",
 			dumpFileDestPath, ident);
-		return String.format("-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=%s -XX:OnOutOfMemoryError=\"%s\"",
+		return String.format("-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=%s -XX:OnOutOfMemoryError=\\\"%s\\\"",
 			dumpFileDestPath,
-			oomScript);
+			StringEscapeUtils.escapeJava(oomScript));
 	}
 
 	/**
