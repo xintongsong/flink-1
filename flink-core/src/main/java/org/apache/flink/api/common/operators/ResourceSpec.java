@@ -95,7 +95,7 @@ public final class ResourceSpec implements Serializable {
 	/**
 	 * Creates a new ResourceSpec with full resources.
 	 *
-	 * @param cpuCores The number of CPU cores (possibly fractional, i.e., 0.2 cores)
+	 * @param cpuCores The ResourceValue of CPU cores (the underlying value can be fractional, i.e., 0.2 cores)
 	 * @param heapMemoryInMB The size of the java heap memory, in megabytes.
 	 * @param directMemoryInMB The size of the java nio direct memory, in megabytes.
 	 * @param nativeMemoryInMB The size of the native memory, in megabytes.
@@ -104,20 +104,21 @@ public final class ResourceSpec implements Serializable {
 	 * @param extendedResources The extended resources, associated with the resource manager used
 	 */
 	private ResourceSpec(
-			double cpuCores,
-			int heapMemoryInMB,
-			int directMemoryInMB,
-			int nativeMemoryInMB,
-			int stateSizeInMB,
-			int managedMemoryInMB,
-			Resource... extendedResources) {
+			final ResourceValue cpuCores,
+			final int heapMemoryInMB,
+			final int directMemoryInMB,
+			final int nativeMemoryInMB,
+			final int stateSizeInMB,
+			final int managedMemoryInMB,
+			final Resource... extendedResources) {
+
 		checkArgument(heapMemoryInMB >= 0, "The heap memory of the resource spec should not be negative");
 		checkArgument(directMemoryInMB >= 0, "The direct memory of the resource spec should not be negative");
 		checkArgument(nativeMemoryInMB >= 0, "The native memory of the resource spec should not be negative");
 		checkArgument(stateSizeInMB >= 0, "The state size of the resource spec should not be negative");
 		checkArgument(managedMemoryInMB >= 0, "The managed memory of the resource spec should not be negative");
 
-		this.cpuCores = new AdditiveResourceValue(cpuCores);
+		this.cpuCores = checkNotNull(cpuCores);
 		this.heapMemoryInMB = heapMemoryInMB;
 		this.directMemoryInMB = directMemoryInMB;
 		this.nativeMemoryInMB = nativeMemoryInMB;
@@ -159,7 +160,7 @@ public final class ResourceSpec implements Serializable {
 		checkNotNull(cpuCores, "BUG: cpuCores should not be null for non-UNKNOWN resources.");
 
 		ResourceSpec target = new ResourceSpec(
-				this.cpuCores.merge(other.getCpuCores()).getValue(),
+				this.cpuCores.merge(other.getCpuCores()),
 				this.heapMemoryInMB + other.heapMemoryInMB,
 				this.directMemoryInMB + other.directMemoryInMB,
 				this.nativeMemoryInMB + other.nativeMemoryInMB,
@@ -385,7 +386,7 @@ public final class ResourceSpec implements Serializable {
 
 		public ResourceSpec build() {
 			return new ResourceSpec(
-				cpuCores,
+				new AdditiveResourceValue(cpuCores),
 				heapMemoryInMB,
 				directMemoryInMB,
 				nativeMemoryInMB,
