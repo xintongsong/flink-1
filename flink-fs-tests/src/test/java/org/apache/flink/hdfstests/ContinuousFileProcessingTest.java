@@ -936,7 +936,7 @@ public class ContinuousFileProcessingTest {
 		}
 
 		ContinuousFileReaderOperator<FileInputSplit> restoredReader = new ContinuousFileReaderOperator<>(
-			new BlockingFileInputFormat(latch, new Path(testBasePath)), FileMissingSplitsMode.SKIP_MISSING_SPLITS);
+			new BlockingFileInputFormat(latch, new Path(testBasePath)), FileMissingSplitsMode.FAIL_ON_MISSING_SPLITS);
 		restoredReader.setOutputType(typeInfo, new ExecutionConfig());
 
 		OneInputStreamOperatorTestHarness<TimestampedFileInputSplit, FileInputSplit> restoredTestInstance  =
@@ -963,7 +963,7 @@ public class ContinuousFileProcessingTest {
 		FileInputSplit fsSplit2 = createSplitFromTimestampedSplit(splitSkipped);
 
 		Assert.assertTrue(restoredTestInstance.getOutput().contains(new StreamRecord<>(fsSplit1)));
-		Assert.assertFalse(restoredTestInstance.getOutput().contains(new StreamRecord<>(fsSplit2)));
+		Assert.assertTrue(restoredTestInstance.getOutput().contains(new StreamRecord<>(fsSplit2)));
 	}
 
 	///////////				Source Contexts Used by the tests				/////////////////
