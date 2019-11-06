@@ -156,8 +156,10 @@ public final class ResourceSpec implements Serializable {
 			return UNKNOWN;
 		}
 
+		checkNotNull(cpuCores, "BUG: cpuCores should not be null for non-UNKNOWN resources.");
+
 		ResourceSpec target = new ResourceSpec(
-				this.cpuCores.merge(other.cpuCores).getValue(),
+				this.cpuCores.merge(other.getCpuCores()).getValue(),
 				this.heapMemoryInMB + other.heapMemoryInMB,
 				this.directMemoryInMB + other.directMemoryInMB,
 				this.nativeMemoryInMB + other.nativeMemoryInMB,
@@ -170,8 +172,9 @@ public final class ResourceSpec implements Serializable {
 		return target;
 	}
 
-	@Nullable
 	public ResourceValue getCpuCores() {
+		checkNotNull(cpuCores, "BUG: Should not get cpuCores from UNKNOWN ResourceSpec.");
+
 		return this.cpuCores;
 	}
 
@@ -224,7 +227,9 @@ public final class ResourceSpec implements Serializable {
 			throw new IllegalArgumentException("Cannot compare specified resources with UNKNOWN resources.");
 		}
 
-		int cmp1 = this.cpuCores.compareTo(other.cpuCores);
+		checkNotNull(cpuCores, "BUG: cpuCores should not be null for non-UNKNOWN resources.");
+
+		int cmp1 = this.cpuCores.compareTo(other.getCpuCores());
 		int cmp2 = Integer.compare(this.heapMemoryInMB, other.heapMemoryInMB);
 		int cmp3 = Integer.compare(this.directMemoryInMB, other.directMemoryInMB);
 		int cmp4 = Integer.compare(this.nativeMemoryInMB, other.nativeMemoryInMB);
@@ -304,7 +309,7 @@ public final class ResourceSpec implements Serializable {
 			extend.append(", ").append(resource.getName()).append("=").append(resource.getValue());
 		}
 		return "ResourceSpec{" +
-				"cpuCores=" + cpuCores +
+				"cpuCores=" + cpuCores == null ? "UNKNOWN" : cpuCores +
 				", heapMemoryInMB=" + heapMemoryInMB +
 				", directMemoryInMB=" + directMemoryInMB +
 				", nativeMemoryInMB=" + nativeMemoryInMB +
