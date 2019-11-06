@@ -21,6 +21,7 @@ package org.apache.flink.table.sqlexec;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.SqlDialect;
+import org.apache.flink.table.api.TableColumn;
 import org.apache.flink.table.api.TableConfig;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.catalog.Catalog;
@@ -336,6 +337,41 @@ public class SqlToOperationConverterTest {
 		TableSchema schema = ((CreateTableOperation) operation).getCatalogTable().getSchema();
 		Object[] expectedDataTypes = testItems.stream().map(item -> item.expectedType).toArray();
 		assertArrayEquals(expectedDataTypes, schema.getFieldDataTypes());
+	}
+
+	@Test
+	public void testCreateTableWithComputedColumn() {
+		final String sql = "CREATE TABLE tbl1 (\n" +
+			"  a bigint,\n" +
+			"  b varchar, \n" +
+			"  c as a - 1, \n" +
+			"  d as b || '$$'" +
+			")\n" +
+			"  with (\n" +
+			"    'connector' = 'kafka', \n" +
+			"    'kafka.topic' = 'log.test'\n" +
+			")\n";
+		FlinkPlannerImpl planner = getPlannerBySqlDialect(SqlDialect.DEFAULT);
+		Operation operation = parse(sql, planner, getParserBySqlDialect(SqlDialect.DEFAULT));
+		assert operation instanceof CreateTableOperation;
+		CreateTableOperation op = (CreateTableOperation) operation;
+		CatalogTable catalogTable = op.getCatalogTable();
+		assertArrayEquals(
+			new String[] {"a", "b", "c", "d"},
+			catalogTable.getSchema().getFieldNames());
+		assertArrayEquals(
+			new DataType[]{
+				DataTypes.BIGINT(),
+				DataTypes.VARCHAR(Integer.MAX_VALUE),
+				DataTypes.BIGINT(),
+				DataTypes.VARCHAR(Integer.MAX_VALUE)},
+			catalogTable.getSchema().getFieldDataTypes());
+		String[] columnExpressions =
+			catalogTable.getSchema().getTableColumns().stream()
+				.filter(TableColumn::isGenerated)
+				.map(c -> c.getExpr().orElse(null))
+				.toArray(String[]::new);
+		assertArrayEquals(new String[] {"a - 1", "b || '$$'"}, columnExpressions);
 	}
 
 	//~ Tool Methods ----------------------------------------------------------
