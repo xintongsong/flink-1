@@ -184,13 +184,13 @@ public class ResourceProfile implements Serializable {
 	 * @param other The ResourceProfile to copy.
 	 */
 	public ResourceProfile(ResourceProfile other) {
-		this(other.cpuCores,
-				other.heapMemoryInMB,
-				other.directMemoryInMB,
-				other.nativeMemoryInMB,
-				other.networkMemoryInMB,
-				other.managedMemoryInMB,
-				other.extendedResources);
+		this(other.getCpuCores(),
+			other.heapMemoryInMB,
+			other.directMemoryInMB,
+			other.nativeMemoryInMB,
+			other.networkMemoryInMB,
+			other.managedMemoryInMB,
+			other.extendedResources);
 	}
 
 	// ------------------------------------------------------------------------
@@ -200,8 +200,9 @@ public class ResourceProfile implements Serializable {
 	 *
 	 * @return The cpu cores, 1.0 means a full cpu thread
 	 */
-	@Nullable
 	public ResourceValue getCpuCores() {
+		checkNotNull(cpuCores, "BUG: Should not get cpuCores from UNKNOWN ResourceProfile.");
+
 		return cpuCores;
 	}
 
@@ -289,6 +290,8 @@ public class ResourceProfile implements Serializable {
 		} else if (this.isUnknown()) {
 			return false;
 		}
+
+		checkNotNull(cpuCores, "BUG: cpuCores should not be null for non-UNKNOWN resources.");
 
 		if (cpuCores.compareTo(required.getCpuCores()) >= 0 &&
 			heapMemoryInMB >= required.getHeapMemoryInMB() &&
@@ -378,6 +381,8 @@ public class ResourceProfile implements Serializable {
 			return UNKNOWN;
 		}
 
+		checkNotNull(cpuCores, "BUG: cpuCores should not be null for non-UNKNOWN resources.");
+
 		Map<String, Resource> resultExtendedResource = new HashMap<>(extendedResources);
 
 		other.extendedResources.forEach((String name, Resource resource) -> {
@@ -386,7 +391,7 @@ public class ResourceProfile implements Serializable {
 		});
 
 		return new ResourceProfile(
-			cpuCores.merge(other.cpuCores),
+			cpuCores.merge(other.getCpuCores()),
 			addNonNegativeIntegersConsideringOverflow(heapMemoryInMB, other.heapMemoryInMB),
 			addNonNegativeIntegersConsideringOverflow(directMemoryInMB, other.directMemoryInMB),
 			addNonNegativeIntegersConsideringOverflow(nativeMemoryInMB, other.nativeMemoryInMB),
@@ -412,6 +417,8 @@ public class ResourceProfile implements Serializable {
 			return UNKNOWN;
 		}
 
+		checkNotNull(cpuCores, "BUG: cpuCores should not be null for non-UNKNOWN resources.");
+
 		checkArgument(isMatching(other), "Try to subtract an unmatched resource profile from this one.");
 
 		Map<String, Resource> resultExtendedResource = new HashMap<>(extendedResources);
@@ -424,7 +431,7 @@ public class ResourceProfile implements Serializable {
 		});
 
 		return new ResourceProfile(
-			cpuCores.subtract(other.cpuCores),
+			cpuCores.subtract(other.getCpuCores()),
 			subtractIntegersConsideringInf(heapMemoryInMB, other.heapMemoryInMB),
 			subtractIntegersConsideringInf(directMemoryInMB, other.directMemoryInMB),
 			subtractIntegersConsideringInf(nativeMemoryInMB, other.nativeMemoryInMB),
@@ -455,7 +462,7 @@ public class ResourceProfile implements Serializable {
 			resources.append(", ").append(resource.getKey()).append('=').append(resource.getValue());
 		}
 		return "ResourceProfile{" +
-			"cpuCores=" + cpuCores +
+			"cpuCores=" + cpuCores == null ? "UNKNOWN" : cpuCores +
 			", heapMemoryInMB=" + heapMemoryInMB +
 			", directMemoryInMB=" + directMemoryInMB +
 			", nativeMemoryInMB=" + nativeMemoryInMB +
@@ -485,7 +492,7 @@ public class ResourceProfile implements Serializable {
 		Map<String, Resource> copiedExtendedResources = new HashMap<>(resourceSpec.getExtendedResources());
 
 		return new ResourceProfile(
-				resourceSpec.getCpuCores().getValue(),
+				resourceSpec.getCpuCores(),
 				resourceSpec.getHeapMemory(),
 				resourceSpec.getDirectMemory(),
 				resourceSpec.getNativeMemory(),
