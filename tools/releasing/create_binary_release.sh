@@ -92,7 +92,10 @@ make_binary_release() {
 
 make_python_release() {
   cd flink-python/
+  dev/lint-python.sh -s basic
+  source dev/.conda/bin/activate
   python setup.py sdist
+  conda deactivate
   cd dist/
   pyflink_actual_name=`echo *.tar.gz`
   PYFLINK_VERSION=${RELEASE_VERSION/-SNAPSHOT/.dev0}

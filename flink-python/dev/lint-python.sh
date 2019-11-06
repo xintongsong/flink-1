@@ -105,6 +105,30 @@ function check_valid_stage() {
     return 1
 }
 
+function components_args_parse() {
+    local REAL_COMPONENTS=()
+    for (( i = 0; i < ${#INSTALL_COMPONENTS[@]}; i++)); do
+        local component=${INSTALL_COMPONENTS[i]}
+        # because all other components depends on conda, the install of conda is
+        # required component.
+        if [[ "$component" == "basic" ]] || [[ "$component" == "miniconda" ]]; then
+            continue
+        fi
+        if [[ "$component" == "all" ]]; then
+            component="environment"
+        fi
+        if echo "${SUPPORT_INSTALL_COMPONENTS[@]}" | grep -w "${component}" &>/dev/null; then
+            REAL_COMPONENTS+=($component)
+        else
+            echo "unknown install component ${INSTALL_COMPONENTS[i]}"
+            exit 1            
+        fi
+    done
+    if ! echo "${REAL_COMPONENTS[@]}" | grep -w "environment" &>/dev/null; then
+        SUPPORT_INSTALL_COMPONENTS=(${REAL_COMPONENTS[@]})
+    fi
+}
+
 # For convenient to index something binded to OS.
 # Now, the script only make a distinction between 'Mac' and 'Non-Mac'.
 function get_os_index() {
@@ -268,6 +292,14 @@ function install_sphinx() {
     fi
 }
 
+function need_install_component() {
+    if echo "${SUPPORT_INSTALL_COMPONENTS[@]}" | grep -w "$1" &>/dev/null; then
+        echo 1
+    else
+        echo 0
+    fi
+}
+
 
 # In this function, the script will prepare all kinds of python environments and checks.
 function install_environment() {
@@ -303,7 +335,7 @@ function install_environment() {
     # step-3 install python environment whcih includes
     # 3.5 3.6 3.7
     print_function "STEP" "installing python environment..."
-    if [ $STEP -lt 3 ]; then
+    if [ $STEP -lt 3 ] && [ `need_install_component "py_env"` -eq 1 ]; then
         install_py_env
         STEP=3
         checkpoint_stage $STAGE $STEP
@@ -312,7 +344,7 @@ function install_environment() {
 
     # step-4 install tox
     print_function "STEP" "installing tox..."
-    if [ $STEP -lt 4 ]; then
+    if [ $STEP -lt 4 ] && [ `need_install_component "tox"` -eq 1 ]; then
         install_tox
         STEP=4
         checkpoint_stage $STAGE $STEP
@@ -321,7 +353,7 @@ function install_environment() {
 
     # step-5 install  flake8
     print_function "STEP" "installing flake8..."
-    if [ $STEP -lt 5 ]; then
+    if [ $STEP -lt 5 ] && [ `need_install_component "flake8"` -eq 1 ]; then
         install_flake8
         STEP=5
         checkpoint_stage $STAGE $STEP
@@ -330,7 +362,7 @@ function install_environment() {
 
     # step-6 install sphinx
     print_function "STEP" "installing sphinx..."
-    if [ $STEP -lt 6 ]; then
+    if [ $STEP -lt 6 ] && [ `need_install_component "sphinx"` -eq 1 ]; then
         install_sphinx
         STEP=6
         checkpoint_stage $STAGE $STEP
@@ -433,6 +465,27 @@ function get_all_supported_checks() {
         fi
     done
     IFS=$_OLD_IFS
+}
+
+# get all supported install components functions
+function get_all_supported_install_components() {
+    _OLD_IFS=$IFS
+    IFS=$'\n'
+    for fun in $(declare -F); do
+        if echo "${fun:11}" | grep -e "^install_" &>/dev/null; then
+            SUPPORT_INSTALL_COMPONENTS+=("${fun:19}")
+        fi
+    done
+    IFS=$_OLD_IFS
+    # we don't need to expose "install_wget" to user.
+    local DELETE_COMPONENTS=("wget")
+    local REAL_COMPONENTS=()
+    for (( i = 0; i < ${#SUPPORT_INSTALL_COMPONENTS[@]}; i++)); do
+        if ! echo "${DELETE_COMPONENTS[@]}" | grep -w "${SUPPORT_INSTALL_COMPONENTS[i]}" &>/dev/null; then
+            REAL_COMPONENTS+=("${SUPPORT_INSTALL_COMPONENTS[i]}")
+        fi
+    done
+    SUPPORT_INSTALL_COMPONENTS=(${REAL_COMPONENTS[@]})
 }
 
 # exec all selected check stages
@@ -589,16 +642,34 @@ get_all_supported_checks
 EXCLUDE_CHECKS=""
 
 INCLUDE_CHECKS=""
+
+SUPPORT_INSTALL_COMPONENTS=()
+# search all supported install functions and put them into SUPPORT_INSTALL_COMPONENTS array
+get_all_supported_install_components
+
+INSTALL_COMPONENTS=""
 # parse_opts
 USAGE="
 usage: $0 [options]$
 -h          print this help message and exit
 -f          force to exec from the progress of installing environment
+-s          install environment with specified components which include basic,py_env,tox,flake8,sphinx,all
+            e.g. -s basic
+                then the env will only install basic component.
+            e.g. -s py_env
+                then the env will install basic component with python env(3.5,3.6,3.7).
+            e.g. -s tox,flake8
+                then the env will install basic component with tox,flake8.
+            e.g. -s all
+                then the env will install all components such as python env,tox,flake8,sphinx etc.
+            note:
+                this option is for installing environment components without checks, so don't use this option
+                with -e,-i simultaneously.
 -e          exclude checks which split by comma(,) e.g. -e tox,flake8
 -i          include checks which split by comma(,) to exec e.g. -i flake8.
 -l          list all checks supported.
 "
-while getopts "hfi:e:l" arg; do
+while getopts "hfs:i:e:l" arg; do
     case "$arg" in
         h)
             printf "%s\\n" "$USAGE"
@@ -606,6 +677,9 @@ while getopts "hfi:e:l" arg; do
             ;;
         f)
             FORCE_START=1
+            ;;
+        s)
+            INSTALL_COMPONENTS=($(echo $OPTARG | tr ',' ' ' ))
             ;;
         e)
             EXCLUDE_CHECKS=($(echo $OPTARG | tr ',' ' ' ))
@@ -626,6 +700,12 @@ while getopts "hfi:e:l" arg; do
             ;;
     esac
 done
+# decides whether to skip check stage
+skip_checks=0
+if [ ! -z "$INSTALL_COMPONENTS" ]; then
+    components_args_parse
+    skip_checks=1
+fi
 
 # collect checks according to the options
 collect_checks
@@ -643,4 +723,6 @@ fi
 install_environment
 
 # exec all selected checks
-check_stage
+if [ $skip_checks -eq 0 ]; then
+    check_stage
+fi
