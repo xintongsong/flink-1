@@ -438,7 +438,6 @@ public class BootstrapTools {
 		return startCommand;
 	}
 
-
 	// ------------------------------------------------------------------------
 
 	/** Private constructor to prevent instantiation. */
