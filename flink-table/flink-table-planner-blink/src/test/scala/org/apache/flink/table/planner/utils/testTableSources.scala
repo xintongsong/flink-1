@@ -297,6 +297,8 @@ class TestNestedProjectableTableSource(
 
   var readNestedFields: Seq[String] = tableSchema.getFieldNames.map(f => s"$f.*")
 
+  var newSchema: TableSchema = tableSchema
+
   override def projectNestedFields(
       fields: Array[Int],
       nestedFields: Array[Array[String]]): TableSource[Row] = {
