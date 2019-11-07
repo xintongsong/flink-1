@@ -76,7 +76,7 @@ public class OutputFileConfig implements Serializable {
 
 		private String partSuffix;
 
-		public OutputFileConfigBuilder() {
+		private OutputFileConfigBuilder() {
 			this.partPrefix = DEFAULT_PART_PREFIX;
 			this.partSuffix = DEFAULT_PART_SUFFIX;
 		}
