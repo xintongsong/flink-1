@@ -133,6 +133,13 @@ New buckets are created as dictated by the bucketing policy, and this doesn't af
 
 Old buckets can still receive new records as the bucketing policy is evaluated on a per-record basis.
 
+### Part file configuration
+
+The filenames of the part files could be defined using `OutputFileConfig`, this configuration contain a part prefix and part suffix, 
+that will be used with the parallel subtask index of the sink and a rolling counter. For example for a prefix "prefix" and a 
+suffix ".ext" the file create will have a name "prefix-1-17.ext" containing the data from subtask 1 of the sink 
+and is the 17th bucket created by that subtask.
+
 ## File Formats
 
 The `StreamingFileSink` supports both row-wise and bulk encoding formats, such as [Apache Parquet](http://parquet.apache.org).
