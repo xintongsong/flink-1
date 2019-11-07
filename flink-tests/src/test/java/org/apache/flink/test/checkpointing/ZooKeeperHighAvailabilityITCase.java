@@ -61,6 +61,7 @@ import org.apache.curator.test.TestingServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -177,6 +178,7 @@ public class ZooKeeperHighAvailabilityITCase extends TestLogger {
 	 * </ol>
 	 */
 	@Test
+	@Ignore
 	public void testRestoreBehaviourWithFaultyStateHandles() throws Exception {
 		CheckpointBlockingFunction.allowedInitializeCallsWithoutRestore.set(1);
 		CheckpointBlockingFunction.successfulRestores.set(0);
