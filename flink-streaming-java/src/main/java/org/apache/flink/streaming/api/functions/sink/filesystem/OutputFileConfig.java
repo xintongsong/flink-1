@@ -27,7 +27,7 @@ import java.io.Serializable;
  * Part file name configuration.
  * This allow to define a prefix and a suffix to the part file name.
  */
-public class PartFileConfig implements Serializable {
+public class OutputFileConfig implements Serializable {
 
 	private final String partPrefix;
 
@@ -39,7 +39,7 @@ public class PartFileConfig implements Serializable {
 	 * @param partPrefix - the beginning of part file name
 	 * @param partSuffix - the ending of part file name
 	 */
-	public PartFileConfig(final String partPrefix, final String partSuffix) {
+	public OutputFileConfig(final String partPrefix, final String partSuffix) {
 		this.partPrefix = Preconditions.checkNotNull(partPrefix);
 		this.partSuffix = Preconditions.checkNotNull(partSuffix);
 	}
@@ -58,15 +58,15 @@ public class PartFileConfig implements Serializable {
 		return partSuffix;
 	}
 
-	public static PartFileConfigBuilder builder() {
-		return new PartFileConfigBuilder();
+	public static OutputFileConfigBuilder builder() {
+		return new OutputFileConfigBuilder();
 	}
 
 	/**
 	 * A builder to create the part file configuration.
 	 */
 	@PublicEvolving
-	public static class PartFileConfigBuilder {
+	public static class OutputFileConfigBuilder {
 
 		private static final String DEFAULT_PART_PREFIX = "part";
 
@@ -76,23 +76,23 @@ public class PartFileConfig implements Serializable {
 
 		private String partSuffix;
 
-		public PartFileConfigBuilder() {
+		public OutputFileConfigBuilder() {
 			this.partPrefix = DEFAULT_PART_PREFIX;
 			this.partSuffix = DEFAULT_PART_SUFFIX;
 		}
 
-		public PartFileConfigBuilder withPartPrefix(String prefix) {
+		public OutputFileConfigBuilder withPartPrefix(String prefix) {
 			this.partPrefix = prefix;
 			return this;
 		}
 
-		public PartFileConfigBuilder withPartSuffix(String suffix) {
+		public OutputFileConfigBuilder withPartSuffix(String suffix) {
 			this.partSuffix = suffix;
 			return this;
 		}
 
-		public PartFileConfig build() {
-			return new PartFileConfig(partPrefix, partSuffix);
+		public OutputFileConfig build() {
+			return new OutputFileConfig(partPrefix, partSuffix);
 		}
 	}
 }
