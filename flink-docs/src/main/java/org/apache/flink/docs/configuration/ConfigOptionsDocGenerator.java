@@ -26,6 +26,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.description.Formatter;
 import org.apache.flink.configuration.description.HtmlFormatter;
+import org.apache.flink.util.TimeUtils;
 import org.apache.flink.util.function.ThrowingConsumer;
 
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -69,6 +71,8 @@ public class ConfigOptionsDocGenerator {
 	};
 
 	static final Set<String> EXCLUSIONS = new HashSet<>(Arrays.asList(
+		"org.apache.flink.configuration.ReadableConfig",
+		"org.apache.flink.configuration.WritableConfig",
 		"org.apache.flink.configuration.ConfigOptions",
 		"org.apache.flink.contrib.streaming.state.PredefinedOptions"));
 
@@ -239,7 +243,8 @@ public class ConfigOptionsDocGenerator {
 		htmlTable.append("        <tr>\n");
 		htmlTable.append("            <th class=\"text-left\" style=\"width: 20%\">Key</th>\n");
 		htmlTable.append("            <th class=\"text-left\" style=\"width: 15%\">Default</th>\n");
-		htmlTable.append("            <th class=\"text-left\" style=\"width: 65%\">Description</th>\n");
+		htmlTable.append("            <th class=\"text-left\" style=\"width: 10%\">Type</th>\n");
+		htmlTable.append("            <th class=\"text-left\" style=\"width: 55%\">Description</th>\n");
 		htmlTable.append("        </tr>\n");
 		htmlTable.append("    </thead>\n");
 		htmlTable.append("    <tbody>\n");
@@ -263,6 +268,7 @@ public class ConfigOptionsDocGenerator {
 	private static String toHtmlString(final OptionWithMetaInfo optionWithMetaInfo) {
 		ConfigOption<?> option = optionWithMetaInfo.option;
 		String defaultValue = stringifyDefault(optionWithMetaInfo);
+		String type = typeToHtml(optionWithMetaInfo);
 		Documentation.TableOption tableOption = optionWithMetaInfo.field.getAnnotation(Documentation.TableOption.class);
 		StringBuilder execModeStringBuilder = new StringBuilder();
 		if (tableOption != null) {
@@ -284,8 +290,29 @@ public class ConfigOptionsDocGenerator {
 			"        <tr>\n" +
 			"            <td><h5>" + escapeCharacters(option.key()) + "</h5>" + execModeStringBuilder.toString() + "</td>\n" +
 			"            <td style=\"word-wrap: break-word;\">" + escapeCharacters(addWordBreakOpportunities(defaultValue)) + "</td>\n" +
+			"            <td>" + type + "</td>\n" +
 			"            <td>" + formatter.format(option.description()) + "</td>\n" +
 			"        </tr>\n";
+	}
+
+	static String typeToHtml(OptionWithMetaInfo optionWithMetaInfo) {
+		ConfigOption<?> option = optionWithMetaInfo.option;
+		String typeName = option.getClazz().getSimpleName();
+		final String type;
+		if (option.isList()) {
+			type = String.format("List<%s>", typeName);
+		} else {
+			type = typeName;
+		}
+
+		if (option.getClazz().isEnum()) {
+			return String.format(
+				"<p>%s</p>Possible values: %s",
+				escapeCharacters(type),
+				escapeCharacters(Arrays.toString(option.getClazz().getEnumConstants())));
+		}
+
+		return escapeCharacters(type);
 	}
 
 	static String stringifyDefault(OptionWithMetaInfo optionWithMetaInfo) {
@@ -300,6 +327,8 @@ public class ConfigOptionsDocGenerator {
 					return "(none)";
 				}
 				return "\"" + value + "\"";
+			} else if (value instanceof Duration) {
+				return TimeUtils.getStringInMillis((Duration) value);
 			}
 			return value == null ? "(none)" : value.toString();
 		}
