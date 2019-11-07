@@ -33,7 +33,13 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  */
 public class MultipleRecordWriters<T extends IOReadableWritable> implements RecordWriterDelegate<T> {
 
+	/** The real record writer instances for this delegate. */
 	private final List<RecordWriter<T>> recordWriters;
+
+	/**
+	 * Maintains the respective record writer futures to avoid allocating new arrays every time
+	 * in {@link #getAvailableFuture()}.
+	 */
 	private final CompletableFuture<?>[] futures;
 
 	public MultipleRecordWriters(List<RecordWriter<T>> recordWriters) {

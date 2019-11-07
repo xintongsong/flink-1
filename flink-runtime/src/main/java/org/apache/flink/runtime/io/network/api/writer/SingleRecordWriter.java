@@ -24,6 +24,7 @@ import org.apache.flink.runtime.event.AbstractEvent;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
@@ -44,6 +45,8 @@ public class SingleRecordWriter<T extends IOReadableWritable> implements RecordW
 
 	@Override
 	public RecordWriter<T> getRecordWriter(int outputIndex) {
+		checkArgument(outputIndex == 0, "The index should always be 0 for the single record writer delegate.");
+
 		return recordWriter;
 	}
 

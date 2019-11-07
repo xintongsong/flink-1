@@ -30,6 +30,8 @@ import org.apache.flink.runtime.io.network.partition.consumer.BufferOrEvent;
 import org.apache.flink.runtime.io.network.util.TestPooledBufferProvider;
 import org.apache.flink.util.TestLogger;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayDeque;
@@ -47,44 +49,56 @@ import static org.junit.Assert.assertTrue;
  */
 public class RecordWriterDelegateTest extends TestLogger {
 
-	@Test
-	public void testSingleRecordWriterAvailability() throws Exception {
-		// setup
-		final NetworkBufferPool globalPool = new NetworkBufferPool(10, 128, 2);
-		try {
-			final RecordWriter recordWriter = createRecordWriter(globalPool);
-			final RecordWriterDelegate writerDelegate = new SingleRecordWriter(recordWriter);
+	private static final int numberOfBuffers = 10;
 
-			assertEquals(recordWriter, writerDelegate.getRecordWriter(0));
-			verifyAvailability(writerDelegate);
-		} finally {
-			cleanup(globalPool);
-		}
+	private static final int memorySegmentSize = 128;
+
+	private static final int numberOfSegmentsToRequest = 2;
+
+	private NetworkBufferPool globalPool;
+
+	@Before
+	public void setup() {
+		globalPool = new NetworkBufferPool(numberOfBuffers, memorySegmentSize, numberOfSegmentsToRequest);
+	}
+
+	@After
+	public void teardown() {
+		globalPool.destroyAllBufferPools();
+		globalPool.destroy();
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
+	public void testSingleRecordWriterAvailability() throws Exception {
+		final RecordWriter recordWriter = createRecordWriter(globalPool);
+		final RecordWriterDelegate writerDelegate = new SingleRecordWriter(recordWriter);
+
+		assertEquals(recordWriter, writerDelegate.getRecordWriter(0));
+		verifyAvailability(writerDelegate);
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
 	public void testMultipleRecordWritersAvailability() throws Exception {
 		// setup
 		final int numRecordWriters = 2;
-		final NetworkBufferPool globalPool = new NetworkBufferPool(10, 128, 2);
 		final List<RecordWriter> recordWriters = new ArrayList<>(numRecordWriters);
-		try {
-			for (int i = 0; i < numRecordWriters; i++) {
-				recordWriters.add(createRecordWriter(globalPool));
-			}
 
-			RecordWriterDelegate writerDelegate = new MultipleRecordWriters(recordWriters);
-			for (int i = 0; i < numRecordWriters; i++) {
-				assertEquals(recordWriters.get(i), writerDelegate.getRecordWriter(i));
-			}
-
-			verifyAvailability(writerDelegate);
-		} finally {
-			cleanup(globalPool);
+		for (int i = 0; i < numRecordWriters; i++) {
+			recordWriters.add(createRecordWriter(globalPool));
 		}
+
+		RecordWriterDelegate writerDelegate = new MultipleRecordWriters(recordWriters);
+		for (int i = 0; i < numRecordWriters; i++) {
+			assertEquals(recordWriters.get(i), writerDelegate.getRecordWriter(i));
+		}
+
+		verifyAvailability(writerDelegate);
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void testSingleRecordWriterBroadcastEvent() throws Exception {
 		// setup
 		final ArrayDeque<BufferConsumer>[] queues = new ArrayDeque[] { new ArrayDeque(), new ArrayDeque() };
@@ -95,6 +109,7 @@ public class RecordWriterDelegateTest extends TestLogger {
 	}
 
 	@Test
+	@SuppressWarnings("unchecked")
 	public void testMultipleRecordWritersBroadcastEvent() throws Exception {
 		// setup
 		final int numRecordWriters = 2;
@@ -164,10 +179,5 @@ public class RecordWriterDelegateTest extends TestLogger {
 				assertEquals(message, boe.getEvent());
 			}
 		}
-	}
-
-	private void cleanup(NetworkBufferPool globalPool) {
-		globalPool.destroyAllBufferPools();
-		globalPool.destroy();
 	}
 }
