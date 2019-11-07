@@ -142,6 +142,7 @@ For example for a prefix "prefix" and a suffix ".ext" the file create:
 ```
 └── 2019-08-25--12
     ├── prefix-0-0.ext
+    ├── prefix-0-1.ext.inprogress.bd053eb0-5ecf-4c85-8433-9eff486ac334
     ├── prefix-1-0.ext
     └── prefix-1-1.ext.inprogress.bc279efe-b16f-47d8-b828-00ef6e2fbd11
 ```
