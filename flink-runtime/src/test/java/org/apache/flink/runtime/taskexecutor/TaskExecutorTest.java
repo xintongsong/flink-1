@@ -1919,7 +1919,8 @@ public class TaskExecutorTest extends TestLogger {
 			null,
 			dummyBlobCacheService,
 			testingFatalErrorHandler,
-			new TaskExecutorPartitionTrackerImpl());
+			new TaskExecutorPartitionTrackerImpl(),
+			new BackPressureSampleService(100, Time.milliseconds(50), rpc.getScheduledExecutor()));
 	}
 
 	private TestingTaskExecutor createTestingTaskExecutor(TaskManagerServices taskManagerServices) {

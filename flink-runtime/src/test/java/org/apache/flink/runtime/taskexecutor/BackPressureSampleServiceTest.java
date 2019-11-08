@@ -100,11 +100,6 @@ public class BackPressureSampleServiceTest extends TestLogger {
 		public boolean isBackPressured() {
 			return ++counter % 2 == 0;
 		}
-
-		@Override
-		public ExecutionAttemptID getExecutionId() {
-			return executionAttemptID;
-		}
 	}
 
 	/**

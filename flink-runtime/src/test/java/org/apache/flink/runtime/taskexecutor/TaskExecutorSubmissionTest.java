@@ -24,6 +24,7 @@ import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.NettyShuffleEnvironmentOptions;
 import org.apache.flink.configuration.TaskManagerOptions;
+import org.apache.flink.configuration.WebOptions;
 import org.apache.flink.runtime.blob.PermanentBlobKey;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
@@ -560,7 +561,7 @@ public class TaskExecutorSubmissionTest extends TestLogger {
 	/**
 	 * Tests request of task back pressure.
 	 */
-	@Test(timeout = 10000L)
+	@Test(timeout = 20000L)
 	public void testRequestTaskBackPressure() throws Exception {
 		final NettyShuffleDescriptor shuffleDescriptor = createRemoteWithIdAndLocation(
 			new IntermediateResultPartitionID(), ResourceID.generate());
@@ -570,12 +571,17 @@ public class TaskExecutorSubmissionTest extends TestLogger {
 		final CompletableFuture<Void> taskRunningFuture = new CompletableFuture<>();
 		final CompletableFuture<Void> taskCanceledFuture = new CompletableFuture<>();
 
+		final Configuration configuration = new Configuration();
+		configuration.set(WebOptions.BACKPRESSURE_NUM_SAMPLES, 10);
+		configuration.set(WebOptions.BACKPRESSURE_DELAY, 200);
+
 		try (final TaskSubmissionTestEnvironment env = new TaskSubmissionTestEnvironment.Builder(jobId)
-					 .setSlotSize(1)
-					 .useRealNonMockShuffleEnvironment()
-					 .addTaskManagerActionListener(executionAttemptID, ExecutionState.RUNNING, taskRunningFuture)
-					 .addTaskManagerActionListener(executionAttemptID, ExecutionState.CANCELED, taskCanceledFuture)
-					 .build()) {
+					.setSlotSize(1)
+					.setConfiguration(configuration)
+					.useRealNonMockShuffleEnvironment()
+					.addTaskManagerActionListener(executionAttemptID, ExecutionState.RUNNING, taskRunningFuture)
+					.addTaskManagerActionListener(executionAttemptID, ExecutionState.CANCELED, taskCanceledFuture)
+					.build()) {
 			final TaskExecutorGateway tmGateway = env.getTaskExecutorGateway();
 			final TaskSlotTable taskSlotTable = env.getTaskSlotTable();
 
@@ -599,7 +605,7 @@ public class TaskExecutorSubmissionTest extends TestLogger {
 			// 2) trigger request for the blocking task.
 			double backPressureRatio = 0;
 
-			for (int i = 0; i < 15; ++i) {
+			for (int i = 0; i < 5; ++i) {
 				CompletableFuture<TaskBackPressureResponse> successfulRequestFuture =
 					tmGateway.requestTaskBackPressure(executionAttemptID, i, timeout);
 
