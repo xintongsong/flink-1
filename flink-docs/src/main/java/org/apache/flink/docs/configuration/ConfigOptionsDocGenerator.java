@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.apache.flink.docs.util.Utils.escapeCharacters;
 
@@ -326,22 +327,40 @@ public class ConfigOptionsDocGenerator {
 	static String typeToHtml(OptionWithMetaInfo optionWithMetaInfo) {
 		ConfigOption<?> option = optionWithMetaInfo.option;
 		Class<?> clazz = getClazz(option);
+		boolean isList = isList(option);
 
+		if (clazz.isEnum()) {
+			return enumTypeToHtml(clazz, isList);
+		}
+
+		return atomicTypeToHtml(clazz, isList);
+	}
+
+	private static String atomicTypeToHtml(Class<?> clazz, boolean isList) {
 		String typeName = clazz.getSimpleName();
+
 		final String type;
-		if (isList(option)) {
+		if (isList) {
 			type = String.format("List<%s>", typeName);
 		} else {
 			type = typeName;
 		}
 
-		if (clazz.isEnum()) {
-			return String.format(
-				"<p>Enum</p>Possible values: %s",
-				escapeCharacters(Arrays.toString(clazz.getEnumConstants())));
+		return escapeCharacters(type);
+	}
+
+	private static String enumTypeToHtml(Class<?> enumClazz, boolean isList) {
+		final String type;
+		if (isList) {
+			type = "List<Enum>";
+		} else {
+			type = "Enum";
 		}
 
-		return escapeCharacters(type);
+		return String.format(
+			"<p>%s</p>Possible values: %s",
+			escapeCharacters(type),
+			escapeCharacters(Arrays.toString(enumClazz.getEnumConstants())));
 	}
 
 	@VisibleForTesting
@@ -352,16 +371,31 @@ public class ConfigOptionsDocGenerator {
 			return overrideDocumentedDefault.value();
 		} else {
 			Object value = option.defaultValue();
-			if (value instanceof String) {
-				if (((String) value).isEmpty()) {
-					return "(none)";
-				}
-				return "\"" + value + "\"";
-			} else if (value instanceof Duration) {
-				return TimeUtils.getStringInMillis((Duration) value);
-			}
-			return value == null ? "(none)" : value.toString();
+			return stringifyObject(value);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static String stringifyObject(Object value) {
+		if (value instanceof String) {
+			if (((String) value).isEmpty()) {
+				return "(none)";
+			}
+			return "\"" + value + "\"";
+		} else if (value instanceof Duration) {
+			return TimeUtils.getStringInMillis((Duration) value);
+		} else if (value instanceof List) {
+			return ((List<Object>) value).stream()
+				.map(ConfigOptionsDocGenerator::stringifyObject)
+				.collect(Collectors.joining(";"));
+		} else if (value instanceof Map) {
+			return ((Map<String, String>) value)
+				.entrySet()
+				.stream()
+				.map(e -> String.format("%s:%s", e.getKey(), e.getValue()))
+				.collect(Collectors.joining(","));
+		}
+		return value == null ? "(none)" : value.toString();
 	}
 
 	private static String addWordBreakOpportunities(String value) {

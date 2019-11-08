@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,10 +81,30 @@ public class ConfigOptionsDocGeneratorTest {
 			.defaultValue(TestEnum.VALUE_1)
 			.withDescription("Description");
 
+		public static ConfigOption<List<TestEnum>> enumListOption = ConfigOptions
+			.key("option.enum.list")
+			.enumType(TestEnum.class)
+			.asList()
+			.defaultValues(TestEnum.VALUE_1, TestEnum.VALUE_2)
+			.withDescription("Description");
+
 		public static ConfigOption<MemorySize> memoryOption = ConfigOptions
 			.key("option.memory")
 			.memoryType()
 			.defaultValue(new MemorySize(1024))
+			.withDescription("Description");
+
+		public static ConfigOption<Map<String, String>> mapOption = ConfigOptions
+			.key("option.map")
+			.mapType()
+			.defaultValue(Collections.singletonMap("key1", "value1"))
+			.withDescription("Description");
+
+		public static ConfigOption<List<Map<String, String>>> mapListOption = ConfigOptions
+			.key("option.map.list")
+			.mapType()
+			.asList()
+			.defaultValues(Collections.singletonMap("key1", "value1"), Collections.singletonMap("key2", "value2"))
 			.withDescription("Description");
 
 		public static ConfigOption<Duration> durationOption = ConfigOptions
@@ -116,6 +137,24 @@ public class ConfigOptionsDocGeneratorTest {
 				"            <td><h5>option.enum</h5></td>\n" +
 				"            <td style=\"word-wrap: break-word;\">VALUE_1</td>\n" +
 				"            <td><p>Enum</p>Possible values: [VALUE_1, VALUE_2, VALUE_3]</td>\n" +
+				"            <td>Description</td>\n" +
+				"        </tr>\n" +
+				"        <tr>\n" +
+				"            <td><h5>option.enum.list</h5></td>\n" +
+				"            <td style=\"word-wrap: break-word;\">VALUE_1;<wbr>VALUE_2</td>\n" +
+				"            <td><p>List&lt;Enum&gt;</p>Possible values: [VALUE_1, VALUE_2, VALUE_3]</td>\n" +
+				"            <td>Description</td>\n" +
+				"        </tr>\n" +
+				"        <tr>\n" +
+				"            <td><h5>option.map</h5></td>\n" +
+				"            <td style=\"word-wrap: break-word;\">key1:value1</td>\n" +
+				"            <td>Map</td>\n" +
+				"            <td>Description</td>\n" +
+				"        </tr>\n" +
+				"        <tr>\n" +
+				"            <td><h5>option.map.list</h5></td>\n" +
+				"            <td style=\"word-wrap: break-word;\">key1:value1;<wbr>key2:value2</td>\n" +
+				"            <td>List&lt;Map&gt;</td>\n" +
 				"            <td>Description</td>\n" +
 				"        </tr>\n" +
 				"        <tr>\n" +
