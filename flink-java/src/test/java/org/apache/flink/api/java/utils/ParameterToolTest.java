@@ -33,6 +33,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -122,14 +123,16 @@ public class ParameterToolTest extends AbstractParameterToolTest {
 	@Test
 	public void testFromCliArgs() {
 		ParameterTool parameter = ParameterTool.fromArgs(new String[]{"--input", "myInput", "-expectedCount", "15", "--withoutValues",
-				"--negativeFloat", "-0.58", "-isWorking", "true", "--maxByte", "127", "-negativeShort", "-1024"});
-		Assert.assertEquals(7, parameter.getNumberOfParameters());
+				"--negativeFloat", "-0.58", "-isWorking", "true", "--maxByte", "127", "-negativeShort", "-1024", "--multi",
+			"multiValue1", "--multi", "multiValue2"});
+		Assert.assertEquals(8, parameter.getNumberOfParameters());
 		validate(parameter);
 		Assert.assertTrue(parameter.has("withoutValues"));
 		Assert.assertEquals(-0.58, parameter.getFloat("negativeFloat"), 0.1);
 		Assert.assertTrue(parameter.getBoolean("isWorking"));
 		Assert.assertEquals(127, parameter.getByte("maxByte"));
 		Assert.assertEquals(-1024, parameter.getShort("negativeShort"));
+		Assert.assertEquals(Arrays.asList("multiValue1", "multiValue2"), parameter.getMultiParameter("multi"));
 	}
 
 	@Test
@@ -593,6 +596,19 @@ public class ParameterToolTest extends AbstractParameterToolTest {
 		Assert.assertEquals(0, parameter.getDouble("double", 0), 0.00001);
 		Assert.assertEquals("0", parameter.get("string", "0"));
 
+		Assert.assertEquals(Collections.emptySet(), parameter.getUnrequestedParameters());
+	}
+
+	@Test
+	public void testUnrequestedMultiParameter() {
+		ParameterTool parameter = ParameterTool.fromArgs(new String[]{
+			"--multi", "v1", "--multi", "v2", "--multi2", "vv1"});
+		Assert.assertEquals(createHashSet("multi", "multi2"), parameter.getUnrequestedParameters());
+
+		Assert.assertEquals(Arrays.asList("v1", "v2"), parameter.getMultiParameter("multi"));
+		Assert.assertEquals(createHashSet("multi2"), parameter.getUnrequestedParameters());
+
+		Assert.assertEquals(Collections.singletonList("vv1"), parameter.getMultiParameterRequired("multi2"));
 		Assert.assertEquals(Collections.emptySet(), parameter.getUnrequestedParameters());
 	}
 
