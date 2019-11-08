@@ -430,20 +430,22 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 	}
 
 	private TestingTaskExecutor createTestingTaskExecutor(TaskManagerServices taskManagerServices, TaskExecutorPartitionTracker partitionTracker) throws IOException {
+		Configuration configuration = new Configuration();
 		return new TestingTaskExecutor(
 			RPC,
-			TaskManagerConfiguration.fromConfiguration(new Configuration()),
+			TaskManagerConfiguration.fromConfiguration(configuration),
 			haServices,
 			taskManagerServices,
 			new HeartbeatServices(10_000L, 30_000L),
 			UnregisteredMetricGroups.createUnregisteredTaskManagerMetricGroup(),
 			null,
 			new BlobCacheService(
-				new Configuration(),
+				configuration,
 				new VoidBlobStore(),
 				null),
 			new TestingFatalErrorHandler(),
-			partitionTracker);
+			partitionTracker,
+			TaskManagerRunner.createBackPressureSampleService(configuration, RPC.getScheduledExecutor()));
 	}
 
 	private static TaskSlotTable createTaskSlotTable() {

@@ -1919,7 +1919,8 @@ public class TaskExecutorTest extends TestLogger {
 			null,
 			dummyBlobCacheService,
 			testingFatalErrorHandler,
-			new TaskExecutorPartitionTrackerImpl());
+			new TaskExecutorPartitionTrackerImpl(),
+			TaskManagerRunner.createBackPressureSampleService(configuration, rpc.getScheduledExecutor()));
 	}
 
 	private TestingTaskExecutor createTestingTaskExecutor(TaskManagerServices taskManagerServices) {
@@ -1927,6 +1928,7 @@ public class TaskExecutorTest extends TestLogger {
 	}
 
 	private TestingTaskExecutor createTestingTaskExecutor(TaskManagerServices taskManagerServices, HeartbeatServices heartbeatServices) {
+
 		return new TestingTaskExecutor(
 			rpc,
 			TaskManagerConfiguration.fromConfiguration(configuration),
@@ -1937,7 +1939,8 @@ public class TaskExecutorTest extends TestLogger {
 			null,
 			dummyBlobCacheService,
 			testingFatalErrorHandler,
-			new TaskExecutorPartitionTrackerImpl());
+			new TaskExecutorPartitionTrackerImpl(),
+			TaskManagerRunner.createBackPressureSampleService(configuration, rpc.getScheduledExecutor()));
 	}
 
 	private static final class StartStopNotifyingLeaderRetrievalService implements LeaderRetrievalService {

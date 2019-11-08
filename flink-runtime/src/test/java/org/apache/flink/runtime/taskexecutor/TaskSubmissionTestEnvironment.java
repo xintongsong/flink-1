@@ -207,8 +207,8 @@ class TaskSubmissionTestEnvironment implements AutoCloseable {
 			null,
 			blobCacheService,
 			testingFatalErrorHandler,
-			new TaskExecutorPartitionTrackerImpl()
-		);
+			new TaskExecutorPartitionTrackerImpl(),
+			TaskManagerRunner.createBackPressureSampleService(configuration, testingRpcService.getScheduledExecutor()));
 	}
 
 	static JobManagerConnection createJobManagerConnection(JobID jobId, JobMasterGateway jobMasterGateway, RpcService testingRpcService, TaskManagerActions taskManagerActions, Time timeout) {
