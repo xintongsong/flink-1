@@ -26,6 +26,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * Gauge which returns the number of full restarts.
  */
+@Deprecated
 public class NumberOfFullRestartsGauge implements Gauge<Long> {
 
 	public static final String METRIC_NAME = "fullRestarts";
