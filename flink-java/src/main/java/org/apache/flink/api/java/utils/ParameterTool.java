@@ -35,7 +35,9 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +46,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * This class provides simple utility methods for reading and parsing program arguments from different sources.
@@ -68,7 +71,7 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	 * @return A {@link ParameterTool}
 	 */
 	public static ParameterTool fromArgs(String[] args) {
-		final Map<String, String> map = new HashMap<>(args.length / 2);
+		final Map<String, Collection<String>> map = new HashMap<>(args.length / 2);
 
 		int i = 0;
 		while (i < args.length) {
@@ -91,22 +94,23 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 
 			i += 1; // try to find the value
 
+			map.putIfAbsent(key, new ArrayList<>());
 			if (i >= args.length) {
-				map.put(key, NO_VALUE_KEY);
+				map.get(key).add(NO_VALUE_KEY);
 			} else if (NumberUtils.isNumber(args[i])) {
-				map.put(key, args[i]);
+				map.get(key).add(args[i]);
 				i += 1;
 			} else if (args[i].startsWith("--") || args[i].startsWith("-")) {
 				// the argument cannot be a negative number because we checked earlier
 				// -> the next argument is a parameter name
-				map.put(key, NO_VALUE_KEY);
+				map.get(key).add(NO_VALUE_KEY);
 			} else {
-				map.put(key, args[i]);
+				map.get(key).add(args[i]);
 				i += 1;
 			}
 		}
 
-		return fromMap(map);
+		return fromMultiMap(map);
 	}
 
 	/**
@@ -161,7 +165,25 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	 */
 	public static ParameterTool fromMap(Map<String, String> map) {
 		Preconditions.checkNotNull(map, "Unable to initialize from empty map");
-		return new ParameterTool(map);
+		Map<String, Collection<String>> multiMap = new HashMap<>();
+		map.forEach((key, value) -> {
+				if (value == null) {
+					value = NO_VALUE_KEY;
+				}
+				multiMap.put(key, Collections.singletonList(value));
+			});
+		return new ParameterTool(multiMap);
+	}
+
+	/**
+	 * Returns {@link ParameterTool} for the given multi map.
+	 *
+	 * @param multiMap A map of arguments. Key is String and value is a Collection.
+	 * @return A {@link ParameterTool}
+	 */
+	public static ParameterTool fromMultiMap(Map<String, Collection<String>> multiMap) {
+		Preconditions.checkNotNull(multiMap, "Unable to initialize from empty map");
+		return new ParameterTool(multiMap);
 	}
 
 	/**
@@ -176,13 +198,13 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	}
 
 	// ------------------ ParameterUtil  ------------------------
-	protected final Map<String, String> data;
+	protected final Map<String, Collection<String>> data;
 
 	// data which is only used on the client and does not need to be transmitted
 	protected transient Map<String, String> defaultData;
 	protected transient Set<String> unrequestedParameters;
 
-	private ParameterTool(Map<String, String> data) {
+	private ParameterTool(Map<String, Collection<String>> data) {
 		this.data = Collections.unmodifiableMap(new HashMap<>(data));
 
 		this.defaultData = new ConcurrentHashMap<>(data.size());
@@ -231,13 +253,19 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	}
 
 	/**
-	 * Returns the String value for the given key.
+	 * Returns the String value for the given key. The value should only have one item.
+	 * Use {@link #getMultiParameter(String)} instead if want to get multiple values parameter.
 	 * If the key does not exist it will return null.
 	 */
 	public String get(String key) {
 		addToDefaults(key, null);
 		unrequestedParameters.remove(key);
-		return data.get(key);
+		if (!data.containsKey(key)) {
+			return null;
+		}
+		Preconditions.checkState(data.get(key).size() == 1,
+			"Key %s should has only one value, use getMultiParameter(String) instead if want to get multiple values.", key);
+		return (String) data.get(key).toArray()[0];
 	}
 
 	/**
@@ -265,6 +293,29 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 		} else {
 			return value;
 		}
+	}
+
+	/**
+	 * Returns the Collection of String values for the given key.
+	 * If the key does not exist it will return null.
+	 */
+	public Collection<String> getMultiParameter(String key) {
+		addToDefaults(key, null);
+		unrequestedParameters.remove(key);
+		return data.getOrDefault(key, null);
+	}
+
+	/**
+	 * Returns the Collection of String values for the given key.
+	 * If the key does not exist it will throw a {@link RuntimeException}.
+	 */
+	public Collection<String> getMultiParameterRequired(String key) {
+		addToDefaults(key, null);
+		Collection<String> value = getMultiParameter(key);
+		if (value == null) {
+			throw new RuntimeException("No data for required key '" + key + "'");
+		}
+		return value;
 	}
 
 	/**
@@ -483,7 +534,7 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	 */
 	public Configuration getConfiguration() {
 		final Configuration conf = new Configuration();
-		for (Map.Entry<String, String> entry : data.entrySet()) {
+		for (Map.Entry<String, String> entry : toMap().entrySet()) {
 			conf.setString(entry.getKey(), entry.getValue());
 		}
 		return conf;
@@ -496,7 +547,7 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	 */
 	public Properties getProperties() {
 		Properties props = new Properties();
-		props.putAll(this.data);
+		props.putAll(toMap());
 		return props;
 	}
 
@@ -550,7 +601,7 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	 * @return The Merged {@link ParameterTool}
 	 */
 	public ParameterTool mergeWith(ParameterTool other) {
-		final Map<String, String> resultData = new HashMap<>(data.size() + other.data.size());
+		final Map<String, Collection<String>> resultData = new HashMap<>(data.size() + other.data.size());
 		resultData.putAll(data);
 		resultData.putAll(other.data);
 
@@ -571,8 +622,15 @@ public class ParameterTool extends ExecutionConfig.GlobalJobParameters implement
 	// ------------------------- ExecutionConfig.UserConfig interface -------------------------
 
 	@Override
+	/*
+	 * The value collection has at least one value, do not need to check null here.
+	 * If there are multiple values, only the first one will be used.
+	 */
 	public Map<String, String> toMap() {
-		return data;
+		return data.entrySet().stream().collect(Collectors.toMap(
+			Map.Entry::getKey,
+			e -> (String) e.getValue().toArray()[0]
+		));
 	}
 
 	// ------------------------- Serialization ---------------------------------------------

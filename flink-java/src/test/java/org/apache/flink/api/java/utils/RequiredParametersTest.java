@@ -125,8 +125,8 @@ public class RequiredParametersTest extends TestLogger {
 		try {
 			required.add(new Option("berlin").alt("b"));
 			parameter = required.applyTo(parameter);
-			Assert.assertEquals(parameter.data.get("berlin"), "value");
-			Assert.assertEquals(parameter.data.get("b"), "value");
+			Assert.assertEquals(parameter.get("berlin"), "value");
+			Assert.assertEquals(parameter.get("b"), "value");
 		} catch (RequiredParametersException e) {
 			fail("Exception thrown " + e.getMessage());
 		}
@@ -140,8 +140,8 @@ public class RequiredParametersTest extends TestLogger {
 		try {
 			required.add(new Option("berlin").alt("b").defaultValue("something"));
 			parameter = required.applyTo(parameter);
-			Assert.assertEquals(parameter.data.get("berlin"), "value");
-			Assert.assertEquals(parameter.data.get("b"), "value");
+			Assert.assertEquals(parameter.get("berlin"), "value");
+			Assert.assertEquals(parameter.get("b"), "value");
 		} catch (RequiredParametersException e) {
 			fail("Exception thrown " + e.getMessage());
 		}
@@ -167,7 +167,7 @@ public class RequiredParametersTest extends TestLogger {
 		try {
 			required.add(new Option("berlin"));
 			parameter = required.applyTo(parameter);
-			Assert.assertEquals(parameter.data.get("berlin"), "value");
+			Assert.assertEquals(parameter.get("berlin"), "value");
 		} catch (RequiredParametersException e) {
 			fail("Exception thrown " + e.getMessage());
 		}
@@ -180,7 +180,7 @@ public class RequiredParametersTest extends TestLogger {
 		try {
 			required.add(new Option("berlin").defaultValue("value"));
 			parameter = required.applyTo(parameter);
-			Assert.assertEquals(parameter.data.get("berlin"), "value");
+			Assert.assertEquals(parameter.get("berlin"), "value");
 		} catch (RequiredParametersException e) {
 			fail("Exception thrown " + e.getMessage());
 		}
@@ -193,8 +193,8 @@ public class RequiredParametersTest extends TestLogger {
 		try {
 			required.add(new Option("berlin").alt("b").defaultValue("value"));
 			parameter = required.applyTo(parameter);
-			Assert.assertEquals(parameter.data.get("berlin"), "value");
-			Assert.assertEquals(parameter.data.get("b"), "value");
+			Assert.assertEquals(parameter.get("berlin"), "value");
+			Assert.assertEquals(parameter.get("b"), "value");
 		} catch (RequiredParametersException e) {
 			fail("Exception thrown " + e.getMessage());
 		}
@@ -208,9 +208,9 @@ public class RequiredParametersTest extends TestLogger {
 			rq.add("input");
 			rq.add(new Option("parallelism").alt("p").defaultValue("1").type(OptionType.INTEGER));
 			parameter = rq.applyTo(parameter);
-			Assert.assertEquals(parameter.data.get("parallelism"), "1");
-			Assert.assertEquals(parameter.data.get("p"), "1");
-			Assert.assertEquals(parameter.data.get("input"), "abc");
+			Assert.assertEquals(parameter.get("parallelism"), "1");
+			Assert.assertEquals(parameter.get("p"), "1");
+			Assert.assertEquals(parameter.get("input"), "abc");
 		} catch (RequiredParametersException e) {
 			fail("Exception thrown " + e.getMessage());
 		}
@@ -227,10 +227,10 @@ public class RequiredParametersTest extends TestLogger {
 
 			parameter = required.applyTo(parameter);
 
-			Assert.assertEquals(parameter.data.get("berlin"), "value");
-			Assert.assertEquals(parameter.data.get("count"), "15");
-			Assert.assertEquals(parameter.data.get("someFlag"), "true");
-			Assert.assertEquals(parameter.data.get("sf"), "true");
+			Assert.assertEquals(parameter.get("berlin"), "value");
+			Assert.assertEquals(parameter.get("count"), "15");
+			Assert.assertEquals(parameter.get("someFlag"), "true");
+			Assert.assertEquals(parameter.get("sf"), "true");
 
 		} catch (RequiredParametersException e) {
 			fail("Exception thrown " + e.getMessage());
