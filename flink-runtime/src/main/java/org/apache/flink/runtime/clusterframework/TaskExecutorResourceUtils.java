@@ -48,7 +48,8 @@ public class TaskExecutorResourceUtils {
 		final MemorySize jvmHeapSize = taskExecutorResourceSpec.getFrameworkHeapSize()
 			.add(taskExecutorResourceSpec.getTaskHeapSize())
 			.add(taskExecutorResourceSpec.getOnHeapManagedMemorySize());
-		final MemorySize jvmDirectSize = taskExecutorResourceSpec.getTaskOffHeapSize()
+		final MemorySize jvmDirectSize = taskExecutorResourceSpec.getFrameworkOffHeapMemorySize()
+			.add(taskExecutorResourceSpec.getTaskOffHeapSize())
 			.add(taskExecutorResourceSpec.getShuffleMemSize());
 		final MemorySize jvmMetaspaceSize = taskExecutorResourceSpec.getJvmMetaspaceSize();
 
