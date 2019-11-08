@@ -105,6 +105,8 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 
 	private static final TestingRpcService RPC = new TestingRpcService();
 
+	private static final MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
+
 	private final TestingHighAvailabilityServices haServices = new TestingHighAvailabilityServices();
 	private final SettableLeaderRetrievalService jobManagerLeaderRetriever = new SettableLeaderRetrievalService();
 	private final SettableLeaderRetrievalService resourceManagerLeaderRetriever = new SettableLeaderRetrievalService();
@@ -115,6 +117,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 
 	@Before
 	public void setup() {
+		metricRegistry.startQueryService(RPC, new ResourceID("mqs"));
 		haServices.setResourceManagerLeaderRetriever(resourceManagerLeaderRetriever);
 		haServices.setJobMasterLeaderRetriever(jobId, jobManagerLeaderRetriever);
 	}
@@ -127,6 +130,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 	@AfterClass
 	public static void shutdownClass() throws ExecutionException, InterruptedException {
 		RPC.stopService().get();
+		metricRegistry.shutdown().get();
 	}
 
 	@Test
@@ -155,8 +159,6 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 		final PartitionTable<JobID> partitionTable = new PartitionTable<>();
 		final ResultPartitionID resultPartitionId = new ResultPartitionID();
 
-		final MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
-		metricRegistry.startQueryService(RPC, new ResourceID("mqs"));
 		final String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 
 		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable, metricQueryServiceAddress);
@@ -310,9 +312,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 
 		final PartitionTable<JobID> partitionTable = new PartitionTable<>();
 
-		final MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
-		metricRegistry.startQueryService(RPC, new ResourceID("mqs"));
-		String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
+		final String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 
 		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable, metricQueryServiceAddress);
 
