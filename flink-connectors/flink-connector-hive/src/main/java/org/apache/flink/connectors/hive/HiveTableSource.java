@@ -19,21 +19,19 @@
 package org.apache.flink.connectors.hive;
 
 import org.apache.flink.api.common.io.InputFormat;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.ObjectPath;
 import org.apache.flink.table.catalog.hive.client.HiveMetastoreClientFactory;
 import org.apache.flink.table.catalog.hive.client.HiveMetastoreClientWrapper;
 import org.apache.flink.table.catalog.hive.descriptors.HiveCatalogValidator;
+import org.apache.flink.table.dataformat.BaseRow;
 import org.apache.flink.table.sources.InputFormatTableSource;
 import org.apache.flink.table.sources.PartitionableTableSource;
 import org.apache.flink.table.sources.ProjectableTableSource;
 import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
-import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -54,7 +52,7 @@ import java.util.Map;
 /**
  * A TableSource implementation to read data from Hive tables.
  */
-public class HiveTableSource extends InputFormatTableSource<Row> implements PartitionableTableSource, ProjectableTableSource<Row> {
+public class HiveTableSource extends InputFormatTableSource<BaseRow> implements PartitionableTableSource, ProjectableTableSource<BaseRow> {
 
 	private static Logger logger = LoggerFactory.getLogger(HiveTableSource.class);
 
@@ -100,11 +98,12 @@ public class HiveTableSource extends InputFormatTableSource<Row> implements Part
 	}
 
 	@Override
-	public InputFormat getInputFormat() {
+	public InputFormat<BaseRow, ?> getInputFormat() {
 		if (!initAllPartitions) {
 			initAllPartitions();
 		}
-		return new HiveTableInputFormat(jobConf, catalogTable, allHivePartitions, projectedFields);
+		return InputFormatUtil.createInputFormat(
+				jobConf, catalogTable, allHivePartitions, projectedFields);
 	}
 
 	@Override
@@ -116,7 +115,7 @@ public class HiveTableSource extends InputFormatTableSource<Row> implements Part
 	public DataType getProducedDataType() {
 		TableSchema originSchema = getTableSchema();
 		if (projectedFields == null) {
-			return originSchema.toRowDataType();
+			return originSchema.toRowDataType().bridgedTo(BaseRow.class);
 		}
 		String[] names = new String[projectedFields.length];
 		DataType[] types = new DataType[projectedFields.length];
@@ -124,13 +123,7 @@ public class HiveTableSource extends InputFormatTableSource<Row> implements Part
 			names[i] = originSchema.getFieldName(projectedFields[i]).get();
 			types[i] = originSchema.getFieldDataType(projectedFields[i]).get();
 		}
-		return TableSchema.builder().fields(names, types).build().toRowDataType();
-	}
-
-	@Override
-	public TypeInformation<Row> getReturnType() {
-		TableSchema tableSchema = catalogTable.getSchema();
-		return new RowTypeInfo(tableSchema.getFieldTypes(), tableSchema.getFieldNames());
+		return TableSchema.builder().fields(names, types).build().toRowDataType().bridgedTo(BaseRow.class);
 	}
 
 	@Override
@@ -142,7 +135,7 @@ public class HiveTableSource extends InputFormatTableSource<Row> implements Part
 	}
 
 	@Override
-	public TableSource applyPartitionPruning(List<Map<String, String>> remainingPartitions) {
+	public TableSource<BaseRow> applyPartitionPruning(List<Map<String, String>> remainingPartitions) {
 		if (catalogTable.getPartitionKeys() == null || catalogTable.getPartitionKeys().size() == 0) {
 			return this;
 		} else {
@@ -246,7 +239,7 @@ public class HiveTableSource extends InputFormatTableSource<Row> implements Part
 	}
 
 	@Override
-	public TableSource<Row> projectFields(int[] fields) {
+	public TableSource<BaseRow> projectFields(int[] fields) {
 		return new HiveTableSource(jobConf, tablePath, catalogTable, allHivePartitions, hiveVersion,
 				partitionList, initAllPartitions, partitionPruned, fields);
 	}
