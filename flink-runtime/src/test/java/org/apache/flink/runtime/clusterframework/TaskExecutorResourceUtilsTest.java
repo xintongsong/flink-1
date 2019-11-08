@@ -55,7 +55,8 @@ public class TaskExecutorResourceUtilsTest extends TestLogger {
 		MemorySize.parse("5m"),
 		MemorySize.parse("6m"),
 		MemorySize.parse("7m"),
-		MemorySize.parse("8m"));
+		MemorySize.parse("8m"),
+		MemorySize.parse("9m"));
 
 	@Test
 	public void testGenerateDynamicConfigurations() {
