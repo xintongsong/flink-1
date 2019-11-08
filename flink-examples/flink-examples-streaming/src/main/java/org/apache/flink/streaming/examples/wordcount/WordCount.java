@@ -17,13 +17,25 @@
 
 package org.apache.flink.streaming.examples.wordcount;
 
-import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.core.fs.FileSystem;
+import org.apache.flink.core.plugin.PluginUtils;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.examples.wordcount.util.WordCountData;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.Preconditions;
+
+import javax.annotation.Nullable;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Implements the "WordCount" program that computes a simple word occurrence
@@ -60,10 +72,17 @@ public class WordCount {
 		env.getConfig().setGlobalJobParameters(params);
 
 		// get input data
-		DataStream<String> text;
+		DataStream<String> text = null;
 		if (params.has("input")) {
-			// read the text file from given input path
-			text = env.readTextFile(params.get("input"));
+			// union all the inputs from text files
+			for (String input : params.getMultiParameterRequired("input")) {
+				if (text == null) {
+					text = env.readTextFile(input);
+				} else {
+					text = text.union(env.readTextFile(input));
+				}
+			}
+			Preconditions.checkNotNull(text, "Input DataStream should not be null.");
 		} else {
 			System.out.println("Executing WordCount example with default input data set.");
 			System.out.println("Use --input to specify file input.");
@@ -73,7 +92,7 @@ public class WordCount {
 
 		DataStream<Tuple2<String, Integer>> counts =
 			// split up the lines in pairs (2-tuples) containing: (word,1)
-			text.flatMap(new Tokenizer())
+			text.flatMap(new Tokenizer(params.getMultiParameter("input")))
 			// group by the tuple field "0" and sum up tuple field "1"
 			.keyBy(0).sum(1);
 
@@ -99,7 +118,29 @@ public class WordCount {
 	 * splits it into multiple pairs in the form of "(word,1)" ({@code Tuple2<String,
 	 * Integer>}).
 	 */
-	public static final class Tokenizer implements FlatMapFunction<String, Tuple2<String, Integer>> {
+	public static final class Tokenizer extends RichFlatMapFunction<String, Tuple2<String, Integer>> {
+
+		private final Collection<String> inputFiles;
+
+		public Tokenizer() {
+			this(null);
+		}
+
+		public Tokenizer(@Nullable Collection<String> inputFiles) {
+			this.inputFiles = inputFiles;
+		}
+
+		@Override
+		public void open(Configuration conf) throws IOException {
+			if (inputFiles != null && inputFiles.size() > 0) {
+				List<Object> classCollection = new ArrayList<>(inputFiles.size());
+				// Use getUnguardedFileSystem to get the classloader of the real filesystem, not the wrapper filesystem
+				for (String input : inputFiles) {
+					classCollection.add(FileSystem.getUnguardedFileSystem(URI.create(input)));
+				}
+				PluginUtils.checkClassIsolationInDifferentPlugins(classCollection);
+			}
+		}
 
 		@Override
 		public void flatMap(String value, Collector<Tuple2<String, Integer>> out) {
