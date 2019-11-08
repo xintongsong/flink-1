@@ -240,7 +240,7 @@ public class TaskExecutorTest extends TestLogger {
 		nettyShuffleEnvironment = new NettyShuffleEnvironmentBuilder().build();
 
 		MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
-		metricRegistry.startQueryService(new TestingRpcService(), new ResourceID("mqs"));
+		metricRegistry.startQueryService(rpc, new ResourceID("mqs"));
 		metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 	}
 

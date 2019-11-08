@@ -156,7 +156,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 		final ResultPartitionID resultPartitionId = new ResultPartitionID();
 
 		final MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
-		metricRegistry.startQueryService(new TestingRpcService(), new ResourceID("mqs"));
+		metricRegistry.startQueryService(RPC, new ResourceID("mqs"));
 		final String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 
 		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable, metricQueryServiceAddress);
@@ -311,7 +311,7 @@ public class TaskExecutorPartitionLifecycleTest extends TestLogger {
 		final PartitionTable<JobID> partitionTable = new PartitionTable<>();
 
 		final MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
-		metricRegistry.startQueryService(new TestingRpcService(), new ResourceID("mqs"));
+		metricRegistry.startQueryService(RPC, new ResourceID("mqs"));
 		String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 
 		final TestingTaskExecutor taskExecutor = createTestingTaskExecutor(taskManagerServices, partitionTable, metricQueryServiceAddress);

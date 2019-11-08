@@ -198,7 +198,7 @@ public class DispatcherResourceCleanupTest extends TestLogger {
 		final MemoryArchivedExecutionGraphStore archivedExecutionGraphStore = new MemoryArchivedExecutionGraphStore();
 
 		MetricRegistryImpl metricRegistry = new MetricRegistryImpl(MetricRegistryConfiguration.defaultMetricRegistryConfiguration());
-		metricRegistry.startQueryService(new TestingRpcService(), new ResourceID("mqs"));
+		metricRegistry.startQueryService(rpcService, new ResourceID("mqs"));
 		final String metricQueryServiceAddress = metricRegistry.getMetricQueryServiceGatewayRpcAddress();
 
 		dispatcher = new TestingDispatcher(
