@@ -19,6 +19,7 @@
 package org.apache.flink.runtime.taskexecutor;
 
 import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.runtime.blob.BlobCacheService;
 import org.apache.flink.runtime.heartbeat.HeartbeatServices;
 import org.apache.flink.runtime.highavailability.HighAvailabilityServices;
@@ -58,7 +59,8 @@ class TestingTaskExecutor extends TaskExecutor {
 			metricQueryServiceAddress,
 			blobCacheService,
 			fatalErrorHandler,
-			partitionTable);
+			partitionTable,
+			new BackPressureSampleService(100, Time.milliseconds(50), rpcService.getScheduledExecutor()));
 	}
 
 	@Override
