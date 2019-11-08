@@ -23,6 +23,8 @@ import org.apache.flink.table.dataformat.vector.AbstractColumnVector;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LogicalType;
 
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -130,6 +132,82 @@ public abstract class AbstractHeapVector extends AbstractColumnVector {
 				return new HeapBytesVector(maxRows);
 			default:
 				throw new UnsupportedOperationException(fieldType  + " is not supported now.");
+		}
+	}
+
+	public static void fill(AbstractHeapVector vector, LogicalType fieldType, Object value) {
+		if (value == null) {
+			vector.noNulls = false;
+			Arrays.fill(vector.isNull, true);
+			return;
+		}
+
+		switch (fieldType.getTypeRoot()) {
+			case BOOLEAN:
+				Arrays.fill(((HeapBooleanVector) vector).vector, (Boolean) value);
+				return;
+			case TINYINT:
+				Arrays.fill(((HeapByteVector) vector).vector, (Byte) value);
+				return;
+			case DOUBLE:
+				Arrays.fill(((HeapDoubleVector) vector).vector, (Double) value);
+				return;
+			case FLOAT:
+				Arrays.fill(((HeapFloatVector) vector).vector, (Float) value);
+				return;
+			case INTEGER:
+			case DATE:
+			case TIME_WITHOUT_TIME_ZONE:
+				Arrays.fill(((HeapIntVector) vector).vector, (Integer) value);
+				return;
+			case BIGINT:
+			case TIMESTAMP_WITHOUT_TIME_ZONE:
+			case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+				Arrays.fill(((HeapLongVector) vector).vector, (Long) value);
+				return;
+			case SMALLINT:
+				Arrays.fill(((HeapShortVector) vector).vector, (Short) value);
+				return;
+			case DECIMAL:
+				DecimalType decimalType = (DecimalType) fieldType;
+				Decimal decimal = Decimal.fromBigDecimal(
+						(BigDecimal) value, decimalType.getPrecision(), decimalType.getScale());
+				if (decimal == null) {
+					throw new RuntimeException("Decimal conversion fail: " + value);
+				}
+
+				if (Decimal.is32BitDecimal(decimalType.getPrecision())) {
+					Arrays.fill(((HeapIntVector) vector).vector, (int) decimal.toUnscaledLong());
+					return;
+				} else if (Decimal.is64BitDecimal(decimalType.getPrecision())) {
+					Arrays.fill(((HeapLongVector) vector).vector, decimal.toUnscaledLong());
+					return;
+				} else {
+					byte[] bytes = decimal.toUnscaledBytes();
+					fillBytes((HeapBytesVector) vector, bytes);
+					return;
+				}
+			case CHAR:
+			case VARCHAR:
+				byte[] bytes = ((String) value).getBytes(StandardCharsets.UTF_8);
+				fillBytes((HeapBytesVector) vector, bytes);
+				return;
+			case BINARY:
+			case VARBINARY:
+				fillBytes((HeapBytesVector) vector, (byte[]) value);
+				return;
+			default:
+				throw new UnsupportedOperationException(fieldType  + " is not supported now.");
+		}
+	}
+
+	private static void fillBytes(HeapBytesVector vector, byte[] bytes) {
+		vector.buffer = new byte[vector.start.length * bytes.length];
+		for (int i = 0; i < vector.start.length; i++) {
+			int start = bytes.length * i;
+			System.arraycopy(bytes, 0, vector.buffer, start, bytes.length);
+			vector.start[i] = start;
+			vector.length[i] = bytes.length;
 		}
 	}
 }

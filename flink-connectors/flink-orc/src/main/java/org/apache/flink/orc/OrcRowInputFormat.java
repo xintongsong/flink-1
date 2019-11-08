@@ -21,11 +21,14 @@ package org.apache.flink.orc;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
+import org.apache.flink.core.fs.FileInputSplit;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.types.Row;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.orc.TypeDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -34,14 +37,13 @@ import java.io.IOException;
  */
 public class OrcRowInputFormat extends OrcInputFormat<Row> implements ResultTypeQueryable<Row> {
 
+	private static final Logger LOG = LoggerFactory.getLogger(OrcRowInputFormat.class);
+
 	// the number of rows read in a batch
 	private static final int DEFAULT_BATCH_SIZE = 1000;
 
 	// the type information of the Rows returned by this InputFormat.
 	private transient RowTypeInfo rowType;
-
-	// the vector of rows that is read in a batch
-	private transient Row[] rows;
 
 	/**
 	 * Creates an OrcRowInputFormat.
@@ -87,30 +89,17 @@ public class OrcRowInputFormat extends OrcInputFormat<Row> implements ResultType
 	}
 
 	@Override
-	public void openInputFormat() throws IOException {
-		super.openInputFormat();
-		// create and initialize the row batch
-		this.rows = new Row[batchSize];
-		for (int i = 0; i < batchSize; i++) {
-			rows[i] = new Row(selectedFields.length);
-		}
-	}
-
-	@Override
-	public void closeInputFormat() throws IOException {
-		this.rows = null;
-		super.closeInputFormat();
-	}
-
-	@Override
-	public int fillRows() {
-		return OrcBatchReader.fillRows(rows, schema, rowBatch, selectedFields);
-	}
-
-	@Override
-	public Row nextRecord(Row reuse) throws IOException {
-		// return the next row
-		return rows[this.nextRow++];
+	public void open(FileInputSplit fileSplit) throws IOException {
+		LOG.debug("Opening ORC file {}", fileSplit.getPath());
+		this.reader = new OrcRowReader(
+				conf,
+				schema,
+				selectedFields,
+				conjunctPredicates,
+				batchSize,
+				fileSplit.getPath(),
+				fileSplit.getStart(),
+				fileSplit.getLength());
 	}
 
 	@Override
