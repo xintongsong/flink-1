@@ -31,6 +31,7 @@ import org.apache.flink.util.function.ThrowingConsumer;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -160,6 +161,7 @@ public class ConfigOptionsDocGenerator {
 		});
 	}
 
+	@VisibleForTesting
 	static void processConfigOptions(String rootDir, String module, String packageName, String pathPrefix, ThrowingConsumer<Class<?>, IOException> classConsumer) throws IOException, ClassNotFoundException {
 		Path configDir = Paths.get(rootDir, module, pathPrefix, packageName.replaceAll("\\.", "/"));
 
@@ -204,6 +206,7 @@ public class ConfigOptionsDocGenerator {
 		return tables;
 	}
 
+	@VisibleForTesting
 	static List<OptionWithMetaInfo> extractConfigOptions(Class<?> clazz) {
 		try {
 			List<OptionWithMetaInfo> configOptions = new ArrayList<>(8);
@@ -295,26 +298,53 @@ public class ConfigOptionsDocGenerator {
 			"        </tr>\n";
 	}
 
+	private static Class<?> getClazz(ConfigOption<?> option) {
+		try {
+			Method getClazzMethod = ConfigOption.class.getDeclaredMethod("getClazz");
+			getClazzMethod.setAccessible(true);
+			Class clazz = (Class) getClazzMethod.invoke(option);
+			getClazzMethod.setAccessible(false);
+			return clazz;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private static boolean isList(ConfigOption<?> option) {
+		try {
+			Method getClazzMethod = ConfigOption.class.getDeclaredMethod("isList");
+			getClazzMethod.setAccessible(true);
+			boolean isList = (boolean) getClazzMethod.invoke(option);
+			getClazzMethod.setAccessible(false);
+			return isList;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@VisibleForTesting
 	static String typeToHtml(OptionWithMetaInfo optionWithMetaInfo) {
 		ConfigOption<?> option = optionWithMetaInfo.option;
-		String typeName = option.getClazz().getSimpleName();
+		Class<?> clazz = getClazz(option);
+
+		String typeName = clazz.getSimpleName();
 		final String type;
-		if (option.isList()) {
+		if (isList(option)) {
 			type = String.format("List<%s>", typeName);
 		} else {
 			type = typeName;
 		}
 
-		if (option.getClazz().isEnum()) {
+		if (clazz.isEnum()) {
 			return String.format(
-				"<p>%s</p>Possible values: %s",
-				escapeCharacters(type),
-				escapeCharacters(Arrays.toString(option.getClazz().getEnumConstants())));
+				"<p>Enum</p>Possible values: %s",
+				escapeCharacters(Arrays.toString(clazz.getEnumConstants())));
 		}
 
 		return escapeCharacters(type);
 	}
 
+	@VisibleForTesting
 	static String stringifyDefault(OptionWithMetaInfo optionWithMetaInfo) {
 		ConfigOption<?> option = optionWithMetaInfo.option;
 		Documentation.OverrideDefault overrideDocumentedDefault = optionWithMetaInfo.field.getAnnotation(Documentation.OverrideDefault.class);

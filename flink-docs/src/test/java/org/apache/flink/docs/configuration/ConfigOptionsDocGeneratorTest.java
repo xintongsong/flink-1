@@ -115,7 +115,7 @@ public class ConfigOptionsDocGeneratorTest {
 				"        <tr>\n" +
 				"            <td><h5>option.enum</h5></td>\n" +
 				"            <td style=\"word-wrap: break-word;\">VALUE_1</td>\n" +
-				"            <td><p>TestEnum</p>Possible values: [VALUE_1, VALUE_2, VALUE_3]</td>\n" +
+				"            <td><p>Enum</p>Possible values: [VALUE_1, VALUE_2, VALUE_3]</td>\n" +
 				"            <td>Description</td>\n" +
 				"        </tr>\n" +
 				"        <tr>\n" +
@@ -394,13 +394,13 @@ public class ConfigOptionsDocGeneratorTest {
 			"        <tr>\n" +
 			"            <td><h5>" + TestCommonOptions.COMMON_POSITIONED_OPTION.key() + "</h5></td>\n" +
 			"            <td style=\"word-wrap: break-word;\">" + TestCommonOptions.COMMON_POSITIONED_OPTION.defaultValue() + "</td>\n" +
-			"            <td>" + TestCommonOptions.COMMON_POSITIONED_OPTION.getClazz().getSimpleName() + "</td>\n" +
+			"            <td>Integer</td>\n" +
 			"            <td>" + formatter.format(TestCommonOptions.COMMON_POSITIONED_OPTION.description()) + "</td>\n" +
 			"        </tr>\n" +
 			"        <tr>\n" +
 			"            <td><h5>" + TestCommonOptions.COMMON_OPTION.key() + "</h5></td>\n" +
 			"            <td style=\"word-wrap: break-word;\">" + TestCommonOptions.COMMON_OPTION.defaultValue() + "</td>\n" +
-			"            <td>" + TestCommonOptions.COMMON_OPTION.getClazz().getSimpleName() + "</td>\n" +
+			"            <td>Integer</td>\n" +
 			"            <td>" + formatter.format(TestCommonOptions.COMMON_OPTION.description()) + "</td>\n" +
 			"        </tr>\n" +
 			"    </tbody>\n" +

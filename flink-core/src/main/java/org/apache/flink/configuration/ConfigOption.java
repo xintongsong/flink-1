@@ -73,11 +73,11 @@ public class ConfigOption<T> {
 
 	// ------------------------------------------------------------------------
 
-	public Class getClazz() {
+	Class getClazz() {
 		return clazz;
 	}
 
-	public boolean isList() {
+	boolean isList() {
 		return isList;
 	}
 
