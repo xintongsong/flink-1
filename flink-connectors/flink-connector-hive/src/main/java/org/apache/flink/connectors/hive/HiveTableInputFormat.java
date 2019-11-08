@@ -274,6 +274,7 @@ public class HiveTableInputFormat extends HadoopInputFormatCommonBase<BaseRow, H
 		out.writeObject(partitionColNames);
 		out.writeObject(partitions);
 		out.writeObject(fields);
+		out.writeObject(fieldTypes);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -291,5 +292,6 @@ public class HiveTableInputFormat extends HadoopInputFormatCommonBase<BaseRow, H
 		partitionColNames = (List<String>) in.readObject();
 		partitions = (List<HiveTablePartition>) in.readObject();
 		fields = (int[]) in.readObject();
+		fieldTypes = (DataType[]) in.readObject();
 	}
 }

@@ -70,9 +70,11 @@ class InputFormatUtil {
 			}
 		});
 
-		boolean hasPartField = Arrays.stream(projectedFields).anyMatch(i ->
-				catalogTable.getPartitionKeys().contains(
-						catalogTable.getSchema().getFieldNames()[i]));
+		boolean hasPartField = projectedFields == null ?
+				!catalogTable.getPartitionKeys().isEmpty() :
+				Arrays.stream(projectedFields).anyMatch(i ->
+						catalogTable.getPartitionKeys().contains(
+								catalogTable.getSchema().getFieldNames()[i]));
 		if (hasPartField) {
 			support = false;
 		}
