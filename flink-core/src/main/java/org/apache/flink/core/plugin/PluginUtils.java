@@ -20,6 +20,9 @@ package org.apache.flink.core.plugin;
 
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.FlinkRuntimeException;
+import org.apache.flink.util.Preconditions;
+
+import javax.annotation.Nonnull;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -51,5 +54,34 @@ public final class PluginUtils {
 		else {
 			return new PluginManager(Collections.emptyList(), pluginConfig.getAlwaysParentFirstPatterns());
 		}
+	}
+
+	/**
+	 * Check class isolation of different plugins. Each plugin classes should have only one object in the collection.
+	 * @param objectInDifferentPlugins object collection of different plugins.
+	 */
+	public static void checkClassIsolationInDifferentPlugins(@Nonnull Collection<Object> objectInDifferentPlugins) {
+		if (objectInDifferentPlugins.size() < 2) {
+			return;
+		}
+		objectInDifferentPlugins.forEach(
+			e -> objectInDifferentPlugins.forEach(another -> checkVisibility(e, another))
+		);
+	}
+
+	private static void checkVisibility(Object objectInPlugin, Object objectInAnotherPlugin) {
+		if (objectInPlugin.getClass().getCanonicalName().equals(objectInAnotherPlugin.getClass().getCanonicalName())) {
+			return;
+		}
+
+		boolean visible = true;
+		try {
+			objectInPlugin.getClass().getClassLoader().loadClass(objectInAnotherPlugin.getClass().getCanonicalName());
+		} catch (ClassNotFoundException e) {
+			visible = false;
+		}
+		Preconditions.checkState(!visible, "%s should not be visible for class %s in another plugin.",
+			objectInAnotherPlugin.getClass().getCanonicalName(),
+			objectInPlugin.getClass().getCanonicalName());
 	}
 }
