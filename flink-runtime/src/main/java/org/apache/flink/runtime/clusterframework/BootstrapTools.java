@@ -362,6 +362,18 @@ public class BootstrapTools {
 		return config;
 	}
 
+	public static String getTaskManagerShellCommand(
+		Configuration flinkConfig,
+		ContaineredTaskManagerParameters tmParams,
+		String configDirectory,
+		String logDirectory,
+		boolean hasLogback,
+		boolean hasLog4j,
+		boolean hasKrb5,
+		Class<?> mainClass) {
+		return getTaskManagerShellCommand(flinkConfig, tmParams, configDirectory, logDirectory, hasLogback, hasLog4j, hasKrb5, mainClass, "");
+	}
+
 	/**
 	 * Generates the shell command to start a task manager.
 	 * @param flinkConfig The Flink configuration.
@@ -381,7 +393,8 @@ public class BootstrapTools {
 			boolean hasLogback,
 			boolean hasLog4j,
 			boolean hasKrb5,
-			Class<?> mainClass) {
+			Class<?> mainClass,
+			String mainArgs) {
 
 		final Map<String, String> startCommandValues = new HashMap<>();
 		startCommandValues.put("java", "$JAVA_HOME/bin/java");
@@ -427,7 +440,7 @@ public class BootstrapTools {
 		startCommandValues.put("redirects",
 			"1> " + logDirectory + "/taskmanager.out " +
 			"2> " + logDirectory + "/taskmanager.err");
-		startCommandValues.put("args", "--configDir " + configDirectory);
+		startCommandValues.put("args", "--configDir " + configDirectory + " " + mainArgs);
 
 		final String commandTemplate = flinkConfig
 			.getString(ConfigConstants.YARN_CONTAINER_START_COMMAND_TEMPLATE,
