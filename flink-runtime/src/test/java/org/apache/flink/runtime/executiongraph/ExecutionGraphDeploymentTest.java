@@ -87,6 +87,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.function.Function;
@@ -246,13 +247,15 @@ public class ExecutionGraphDeploymentTest extends TestLogger {
 			JobVertex v1 = new JobVertex("v1", jid1);
 			JobVertex v2 = new JobVertex("v2", jid2);
 
-			Map<ExecutionAttemptID, Execution> executions = setupExecution(v1, 7650, v2, 2350).f1;
+			Tuple2<ExecutionGraph, Map<ExecutionAttemptID, Execution>> graphExecutionsTuple = setupExecution(v1, 7650, v2, 2350);
+			ExecutionGraph testExecutionGraph = graphExecutionsTuple.f0;
+			Map<ExecutionAttemptID, Execution> executions = new ConcurrentHashMap<>(graphExecutionsTuple.f1);
 
 			for (Execution e : executions.values()) {
 				e.markFinished();
 			}
 
-			assertEquals(0, executions.size());
+			assertEquals(0, testExecutionGraph.getRegisteredExecutions().size());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -270,13 +273,15 @@ public class ExecutionGraphDeploymentTest extends TestLogger {
 			JobVertex v1 = new JobVertex("v1", jid1);
 			JobVertex v2 = new JobVertex("v2", jid2);
 
-			Map<ExecutionAttemptID, Execution> executions = setupExecution(v1, 7, v2, 6).f1;
+			Tuple2<ExecutionGraph, Map<ExecutionAttemptID, Execution>> graphExecutionsTuple = setupExecution(v1, 7, v2, 6);
+			ExecutionGraph testExecutionGraph = graphExecutionsTuple.f0;
+			Map<ExecutionAttemptID, Execution> executions = new ConcurrentHashMap<>(graphExecutionsTuple.f1);
 
 			for (Execution e : executions.values()) {
 				e.markFailed(null);
 			}
 
-			assertEquals(0, executions.size());
+			assertEquals(0, testExecutionGraph.getRegisteredExecutions().size());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -294,13 +299,15 @@ public class ExecutionGraphDeploymentTest extends TestLogger {
 			JobVertex v1 = new JobVertex("v1", jid1);
 			JobVertex v2 = new JobVertex("v2", jid2);
 
-			Map<ExecutionAttemptID, Execution> executions = setupExecution(v1, 7, v2, 6).f1;
+			Tuple2<ExecutionGraph, Map<ExecutionAttemptID, Execution>> graphExecutionsTuple = setupExecution(v1, 7, v2, 6);
+			ExecutionGraph testExecutionGraph = graphExecutionsTuple.f0;
+			Map<ExecutionAttemptID, Execution> executions = new ConcurrentHashMap<>(graphExecutionsTuple.f1);
 
 			for (Execution e : executions.values()) {
 				e.fail(null);
 			}
 
-			assertEquals(0, executions.size());
+			assertEquals(0, testExecutionGraph.getRegisteredExecutions().size());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -397,14 +404,16 @@ public class ExecutionGraphDeploymentTest extends TestLogger {
 			JobVertex v1 = new JobVertex("v1", jid1);
 			JobVertex v2 = new JobVertex("v2", jid2);
 
-			Map<ExecutionAttemptID, Execution> executions = setupExecution(v1, 19, v2, 37).f1;
+			Tuple2<ExecutionGraph, Map<ExecutionAttemptID, Execution>> graphExecutionsTuple = setupExecution(v1, 19, v2, 37);
+			ExecutionGraph testExecutionGraph = graphExecutionsTuple.f0;
+			Map<ExecutionAttemptID, Execution> executions = new ConcurrentHashMap<>(graphExecutionsTuple.f1);
 
 			for (Execution e : executions.values()) {
 				e.cancel();
 				e.completeCancelling();
 			}
 
-			assertEquals(0, executions.size());
+			assertEquals(0, testExecutionGraph.getRegisteredExecutions().size());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
